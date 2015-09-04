@@ -58,6 +58,8 @@ function processStrata(strata, strataSampleSets, $div) {
 }
 
 BoxPlotChartData = function(pivotData, exclusions) {
+    debugger
+
     var h = pivotData.getRowKeys();
     var value_color_scale = d3.scale.category10();
     var rowCategoricalVariables = [];
