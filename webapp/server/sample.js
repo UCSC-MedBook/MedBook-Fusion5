@@ -180,7 +180,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     q.Study_ID = {$in:ChartDocument.studies}; 
     q.CRF = "Clinical_Info";
     var chartData = Collections.CRFs.find(q).fetch();
-    charData.map(function(cd) {  // in the future, it may be useful to tag each data item with the form it came from.
+    chartData.map(function(cd) {  // in the future, it may be useful to tag each data item with the form it came from.
        delete cd["CRF"];
     })
 
