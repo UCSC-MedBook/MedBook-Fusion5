@@ -164,8 +164,9 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                }});
 }
 
-
+// Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
+    // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
       console.log("No studies selected");
@@ -175,19 +176,18 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
     var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
 
+    // Step 1. Use Clinical_Info as primary key
     q.Study_ID = {$in:ChartDocument.studies}; 
     q.CRF = "Clinical_Info";
     var chartData = Collections.CRFs.find(q).fetch();
-    /*
-    charData.map(function(cd) {
+    chartData.map(function(cd) {  // in the future, it may be useful to tag each data item with the form it came from.
        delete cd["CRF"];
     })
-    */
 
 
+    // Step 2. Built Map and other bookkeeping 
     var chartDataMap = {};
     var mapPatient_ID_to_Sample_ID = {};
-
     chartData.map(function (cd) { 
         delete cd["_id"];
         chartDataMap[cd.Sample_ID] = cd;
@@ -196,6 +196,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
 
         
+    // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
     var gld = ChartDocument.geneLikeDataDomain;
     var gl  = ChartDocument.genelist;
@@ -261,6 +262,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     var mapPatient_ID_to_Sample_ID = null;
 
 
+    // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
              var query = JSON.parse(unescape(query));
@@ -294,6 +296,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
 
+    // Step 5. Transform any data.
     var keyUnion = {};  
     chartData.map(function(datum) { 
         Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
@@ -323,6 +326,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                  } 
              });
         });
+
+    // Step 6. We are done. Store the result back in the database and let the client take it form here.
       console.log("renderChartData", chartData.length);
       Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 

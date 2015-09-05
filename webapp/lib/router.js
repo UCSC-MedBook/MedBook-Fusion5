@@ -54,8 +54,19 @@ Router.map(function() {
 });
 
 Router.map(function() {
+  this.route('displaySimple', {
+    template: "ChartDisplay",
+    onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
+    path: '/fusion/display/',
+    data: data,
+    waitOn: waitOn, 
+  });
+});
+
+Router.map(function() {
   this.route('display', {
-    template: "SampleFusion",
+    template: "ChartDisplay",
+    onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
     path: '/fusion/display/:_id/',
     data: data,
     waitOn: waitOn, 

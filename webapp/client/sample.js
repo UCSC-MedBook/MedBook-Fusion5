@@ -528,7 +528,6 @@ renderChart = function() {
 
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
         $(".output").pivotUI(currentChart.chartData, pivotConf, true);
-
     } // refreshChart
 
     /*
@@ -547,3 +546,4 @@ renderChart = function() {
 
 
 Template.Controls.rendered = renderChart;
+Template.ChartDisplay.rendered = renderChart;
