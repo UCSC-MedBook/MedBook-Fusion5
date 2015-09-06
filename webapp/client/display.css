@@ -7,3 +7,6 @@
 .display .output tr:nth-child(1) {
     display: none;
 }
+.noControls .pvtControls {
+    display:none;
+}

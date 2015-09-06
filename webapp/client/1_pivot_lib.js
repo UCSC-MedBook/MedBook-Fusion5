@@ -1385,7 +1385,7 @@ Meteor.startup(function() {
         $("<td>").addClass('pvtVals pvtControls').appendTo(tr1).append(aggregator).append($("<br>"));
         $("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtHorizList pvtCols pvtControls').appendTo(tr1);
         tr2 = $("<tr>").appendTo(uiTable);
-        tr2.append($("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtRows').attr("valign", "top"));
+        tr2.append($("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtRows pvtControls').attr("valign", "top"));
         pivotTable = $("<td>").attr("valign", "top").addClass('pvtRendererArea').appendTo(tr2);
         if (opts.unusedAttrsVertical === true || unusedAttrsVerticalAutoOverride) {
           uiTable.find('tr:nth-child(1)').prepend(rendererControl);
