@@ -1131,7 +1131,7 @@ Meteor.startup(function() {
     /*
     Pivot Table UI: calls Pivot Table core above with options set by user
      */
-    $.fn.pivotUI = function(input, inputOpts, overwrite, locale) {
+    $.fn.pivotUI = function(input, inputOpts, overwrite, locale, _id) {
       var a, aggregator, attrLength, axisValues, c, colList, defaults, e, existingOpts, i, initialRender, k, opts, pivotTable, refresh, refreshDelayed, renderer, rendererControl, shownAttributes, tblCols, tr1, tr2, uiTable, unusedAttrsVerticalAutoOverride, x, _fn, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3, _ref4;
       if (overwrite == null) {
         overwrite = false;
@@ -1508,6 +1508,28 @@ Meteor.startup(function() {
               }).appendTo(unusedAttrsContainer);
             }
             pivotTable.css("opacity", 1);
+
+            var svgPlot = $.find('.svgPlot');
+            if (_id && svgPlot.length > 0) {
+
+
+                   var $svg = $(svgPlot[0]);
+
+                  var $svg = (parent != window) && parent.getSvg ? parent.getSvg() : null;
+                  if ($svg) {
+                      var width = $svg.width();
+                      var height = $svg.height();
+                      var html = $svg.html();
+
+                      svgHtml = "<div style='border:1px solid black;width:800;height:400px'> " 
+                        + '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="100%" height="100%" viewBox="0 0 ' + width + ' ' +  height + '" id="svg2" version="1.1" inkscape:version="0.48.0 r9654">'
+                        + html + "</svg> </div>";
+
+
+                   if (svgHtml && svgHtml.length > 0) 
+                       Charts.update(_id, { $set: {svgHtml: svgHtml}});
+                  }
+            }
             if (opts.onRefresh != null) {
               return opts.onRefresh(pivotUIOptions);
             }

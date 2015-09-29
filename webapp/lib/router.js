@@ -82,3 +82,15 @@ Router.map(function() {
   });
 });
 
+
+Router.map(function() {
+  this.route('all', {
+    template: "AllCharts",
+    path: '/fusion/all/',
+    data: data,
+    waitOn: function() {
+       return Meteor.subscribe("AllCharts");
+    }
+  });
+});
+

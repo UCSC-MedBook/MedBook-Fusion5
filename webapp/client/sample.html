@@ -1,3 +1,11 @@
+<template name="AllCharts">
+ {{#each allCharts}}
+    <div style="display: inline-block;" class="dataExplorerControlPanel noControls">
+        {{{this.svgHtml}}}
+    </div>
+ {{/each }}
+</template>
+
 <template name="ChartDisplay">
     <div style="display: inline-block;" class="dataExplorerControlPanel noControls">
         <div class="output" style="margin: 30px;"></div>

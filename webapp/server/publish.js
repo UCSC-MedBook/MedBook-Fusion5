@@ -109,6 +109,11 @@ Meteor.publish('GeneMutations', function(studies, genes) {
     return cursor;
 });
 
+Meteor.publish('AllCharts', function() {
+    var cursor = Charts.find();
+    console.log("AllCharts publish", cursor.count());
+    return cursor;
+});
 Meteor.publish('GeneSets', function() {
     var cursor = GeneSets.find();
     console.log("GeneSets publish", cursor.count());

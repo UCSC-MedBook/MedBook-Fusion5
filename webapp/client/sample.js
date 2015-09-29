@@ -480,7 +480,7 @@ renderChart = function() {
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
 
-    RefreshChart = function(id, fields) {
+    RefreshChart = function(id, fields, element) {
         console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
@@ -488,13 +488,16 @@ renderChart = function() {
         var f = null;
 
         if (fields != true) {
-            f = Object.keys(fields);
+
+
+            f = Object.keys(fields).sort();
             if (f.length == 1 && f[0] == "updatedAt")
                 return;
-            if (f.length == 2 && _.isEqual(f.sort(), [ "pivotTableConfig", "updatedAt"])
+            if (f.length == 2 && _.isEqual(f, [ "svgHtml", "updatedAt"]))
+                return
+            if (f.length == 2 && _.isEqual(f, [ "pivotTableConfig", "updatedAt"])
                 && _.isEqual(currentChart.pivotTableConfig,  fields.pivotTableConfig))
                 return
-
 
             $.extend(currentChart, fields); // VERY IMPORTNT
 
@@ -527,7 +530,10 @@ renderChart = function() {
         }
 
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
-        $(".output").pivotUI(currentChart.chartData, pivotConf, true);
+        if (element) {
+           $(element).pivotUI(currentChart.chartData, pivotConf, true, null, currentChart._id);
+        }
+
     } // refreshChart
 
     /*
@@ -535,7 +541,7 @@ renderChart = function() {
         ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
     */
 
-    RefreshChart(_id, true);
+    RefreshChart(_id, true, this.find(".output"));
 
     watch.observeChanges({
         changed: RefreshChart
@@ -547,3 +553,10 @@ renderChart = function() {
 
 Template.Controls.rendered = renderChart;
 Template.ChartDisplay.rendered = renderChart;
+
+Template.AllCharts.helpers({
+    allCharts: function() {
+        return Charts.find({svgHtml: {$exists:1}}, {fields: {svgHtml:1}});
+     }
+});
+
