@@ -455,8 +455,11 @@ st = new Date();
 
 console.log("onstartup");
 
+cc = null;
+
 CurrentChart = function(name) {
     var x = Template.currentData();
+    cc = x;
     if (name)
         return x[name];
     else
