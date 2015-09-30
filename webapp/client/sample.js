@@ -479,11 +479,13 @@ renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
     var currentChart = watch.fetch()[0];
+    var element = this.find(".output");
+    debugger;
 
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
 
-    RefreshChart = function(id, fields, element) {
+    RefreshChart = function(id, fields) {
         console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
@@ -544,7 +546,7 @@ renderChart = function() {
         ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
     */
 
-    RefreshChart(_id, true, this.find(".output"));
+    RefreshChart(_id, true);
 
     watch.observeChanges({
         changed: RefreshChart
