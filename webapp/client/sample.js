@@ -255,7 +255,8 @@ Template.Controls.events({
                    value: $(e).val()
                });
         });
-       transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
+       // BUG the sort changes this into an object:
+       // transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
        UpdateCurrentChart("Transforms", transforms);
    },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
@@ -480,7 +481,6 @@ renderChart = function() {
     var watch = Charts.find({_id: _id});
     var currentChart = watch.fetch()[0];
     var element = this.find(".output");
-    debugger;
 
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
