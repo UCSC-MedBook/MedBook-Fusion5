@@ -1179,6 +1179,7 @@ Meteor.startup(function() {
           }
           return _results;
         })();
+	tblCols = tblCols.sort();
         _ref = opts.derivedAttributes;
         for (c in _ref) {
           if (!__hasProp.call(_ref, c)) continue;
