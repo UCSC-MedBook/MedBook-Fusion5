@@ -179,15 +179,24 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     // Step 1. Use Clinical_Info as primary key
     q.Study_ID = {$in:ChartDocument.studies}; 
     q.CRF = "Clinical_Info";
+
     var chartData = Collections.CRFs.find(q).fetch();
-    chartData.map(function(cd) {  // in the future, it may be useful to tag each data item with the form it came from.
+    console.log("chartData CRFs length", q, chartData.length);
+
+    // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
+    var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
+    Object.keys(metadata).map(function(f) {
+	metadata[f].collection = "CRF";
+	metadata[f].crf = "Clinical_Info";
+    });
+
+    chartData.map(function(cd) {  
        delete cd["CRF"];
     })
 
 
-    // Step 2. Built Map and other bookkeeping 
+    // Step 2. Build Map and other bookkeeping 
     var chartDataMap = {};
-    var mapPatient_ID_to_Sample_ID = {};
     chartData.map(function (cd) { 
         delete cd["_id"];
         chartDataMap[cd.Sample_ID] = cd;
@@ -212,15 +221,27 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             var cursor = DomainCollections[domain.collection].find(query);
             console.log("GeneLikeDomain", domain.label, domain.collection, query, cursor.count());
 
+
+	    
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression
                 if (geneData.Hugo_Symbol) { 
                     var geneName = geneData.Hugo_Symbol;
                     var label = geneName + ' ' + domain.labelItem;
+
                     var sampleID = geneData.sample;
+
                     if (sampleID in chartDataMap) {
                         chartDataMap[sampleID][label] = geneData.Variant_Type;
-                    console.log("found", sampleID,label, chartDataMap[sampleID][label]);
+
+			if (metadata[label] == null)
+			    metadata[label] = { 
+				collection: domain.collection,
+				crf: null, 
+				label: label,
+				max: 200,
+				type: "String"
+			    };
                     }
                 } else if (geneData.gene) {
 
@@ -236,9 +257,15 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                         var f = parseFloat(geneData.samples[sampleID][domain.field]);
                         if (!isNaN(f)) {
                             if (sampleID in chartDataMap) {
-                    //            if (f != 0.0)  KEEP ZERO
                                 chartDataMap[sampleID][label] = f;
-                                console.log("cdm", sampleID, label, f);
+
+				if (metadata[label] == null)
+				    metadata[label] = { 
+					collection: domain.collection,
+					crf: null, 
+					label: label,
+					type: "Number"
+				    };
                             }
                         }
                     });
@@ -259,41 +286,52 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
           }); // .map 
     } // if gld 
 
-    var mapPatient_ID_to_Sample_ID = null;
+    var mapPatient_ID_to_Sample_ID = {};
+    chartData.map(function(cd) {
+	 if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
+	     mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
+	 else
+	     mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
+    });
 
 
     // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
              var query = JSON.parse(unescape(query));
-             var collName = query.c;
+             var crfName = query.c;
              var fieldName = query.f;
+             var joinOn = query.j;
+             var study = query.s;
 
+
+	     if (study == null) study = "prad_wcdt";
+
+	     var label = study + ":" + crfName + ":" + fieldName;
+	     var ms = Collections.Metadata.findOne({ name: crfName,  study: study}).schema;  
+	     var msf = ms[fieldName];
+	     msf.collection = "CRF";
+	     msf.crf = crfName;
+	     // console.log("META QUERY", label, msf);
+	     metadata[label] = msf;
 
              var fl = {};
              fl[fieldName] = 1;
-             Collections.CRFs.find({CRF:collName}, fl).forEach(function(doc) {
+             Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
+
+		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
                  if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
-                     chartDataMap[doc.Sample_ID][collName + ":" + fieldName] = doc[fieldName];
+                     chartDataMap[doc.Sample_ID][label] = doc[fieldName];
                  } else {
-                    if (mapPatient_ID_to_Sample_ID == null)  {
-                         mapPatient_ID_to_Sample_ID = {};
-                         chartData.map(function(cd) {
-                             if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
-                                 mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
-                             else
-                                 mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
-                         });
-                     }
                      if (doc.Patient_ID in mapPatient_ID_to_Sample_ID)
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
-                             chartDataMap[sample_ID][collName + ":" + fieldName] = doc[fieldName];
+                             chartDataMap[sample_ID][label] = doc[fieldName];
                          });
-                     // else console.log("addQ", collName, fieldName, doc);
+                     // else console.log("addQ", crfName, fieldName, doc);
                 } // else
              }); // forEach
-        }); //  ChartDocument.additionalQueries.map
 
+        }); //  ChartDocument.additionalQueries.map
 
 
     // Step 5. Transform any data.
@@ -327,15 +365,19 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              });
         });
 
-    // Step 6. We are done. Store the result back in the database and let the client take it form here.
+    // Step 6. We are done. Store the result back in the database and let the client take it from here.
       console.log("renderChartData", chartData.length);
-      Charts.direct.update({ _id : ChartDocument._id }, 
+      var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
                 dataFieldNames: dataFieldNames,
                 selectedFieldNames: selectedFieldNames,
+		metadata: metadata,
                 chartData: chartData
                }});
+
+   // Possible Step 7. Render the visualization on the server (possible with D3, not clear how to do with Google Vis).
+      console.log("done", ret);
 } 
 
 
