@@ -205,8 +205,11 @@ Template.Controls.helpers({
            });
            vv.fieldOrder.map(function(fieldName, i) {
 
-               var meta = { c: collName, f: fieldName, 
-                   j: hasSample_ID ? "Sample_ID" : "Patient_ID" 
+               var meta = { 
+		   c: collName,
+		   f: fieldName, 
+                   j: hasSample_ID ? "Sample_ID" : "Patient_ID" ,
+		   s: vv.study
                };
                var value = escape(JSON.stringify(meta));
                  
@@ -355,8 +358,28 @@ Template.Controls.events({
         })
    },
 
+   'click #saveNewTable': function(evt, tmpl) {
+	var currentChart = Template.currentData();
+	/*
+	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
+	var data = currentChart.chartData.map( function(doc) {
+	    var newDoc = {};
+	    fields.map(function(f) {
+	    	newDoc[f] = doc[f];
+	    });
+	    return newDoc;
+	});
+	schema = [];
+	fields.map(function(f) {
+	   schema.push(currentChart.metadata[f]);
+	});
+	*/
 
-   'clicgg.inspect': function(evt, tmpl) {
+        Overlay("saveNewTable", {_id: currentChart._id});
+    },
+
+
+   'click .inspect': function(evt, tmpl) {
         var $link = $(evt.target);
         var v = $link.data("var");
         var data = CurrentChart(v);

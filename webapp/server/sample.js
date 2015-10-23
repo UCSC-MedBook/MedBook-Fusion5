@@ -308,7 +308,12 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     if (study == null) study = "prad_wcdt";
 
 	     var label = study + ":" + crfName + ":" + fieldName;
-	     var ms = Collections.Metadata.findOne({ name: crfName,  study: study}).schema;  
+	     var m = Collections.Metadata.findOne({ name: crfName,  study: study});
+	     if (m == null) {
+		console.log("Missing additional query", label, m);
+	     	return;
+	     }
+	     var ms = m.schema;  
 	     var msf = ms[fieldName];
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
