@@ -125,6 +125,33 @@ Meteor.publish('Metadata', function() {
     console.log("Metadata publish", cursor.count());
     return cursor;
 });
+Meteor.publish('CRFs', function(studies, crfs) {
+    console.log("this.userId", this.userId);
+    var user_record = Meteor.users.findOne({_id:this.userId}, {fields: {'profile.collaborations':1}});
+    console.log("user_record", user_record);
+    var collaborations = ["public"];
+    collaborations = _.union(collaborations, user_record.profile.collaborations);
+    studies = _.union(studies, "user:" + user_record.username);
+
+    console.log("collaborations", collaborations);
+    console.log("studies", studies);
+
+    var study_ids = Collections.studies.find(
+	{
+	    id: {$in: studies},
+	    collaborations: {$in: collaborations}
+	}, 
+	{fields:{id:1}}
+    ).map(function(doc){ return doc.id});
+
+    var cursor =  Collections.CRFs.find({ 
+	CRF:      {$in: crfs},
+	Study_ID: {$in: study_ids}
+    }, { sort: {"name":1}});
+
+    console.log("CRFs publish", crfs, studies, study_ids, cursor.count());
+    return cursor;
+});
 
 QuickR.allow({
   insert: function (userId, doc) { return userId != null; }, 

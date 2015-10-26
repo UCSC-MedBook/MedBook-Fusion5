@@ -1,0 +1,37 @@
+<template name="saveNewTable">
+ <div class="saveNewTable">
+
+    {{#if save}}
+
+    <div class="panel panel-default">
+      <div class="panel-heading" >
+          <h3 class="panel-title">Save this table(required)</h3>
+       </div>
+       <div id="p1" class="panel-body ">
+         <input id="newTableName" placeholder="new table name">
+         <input id="collaborators" placeholder="Collaborators">
+         <button id="saveNewTable" class="btn btn-default">Save</button>
+       </div>
+    </div>
+
+    {{/if}}
+
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3 class="panel-title">Existing Tables</h3> </div>
+      <div id="p1" class="panel-body ">
+	 {{> reactiveTable showFilter=true  rowClass="existingTablesRow" showNavigation="auto" collection=myTables settings=myTablesSettings class=mergeClass }}
+       </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3 class="panel-title">Table </h3> </div>
+      <div id="p1" class="panel-body ">
+	 {{> reactiveTable showFilter=true  showNavigation="auto" collection=browseTable class=mergeClass }}
+       </div>
+    </div>
+
+
+ </div>
+
+</template>
+

@@ -153,7 +153,7 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                         Mean: e.mean.rsem_quan_log2
                       }
                    });
-    console.log("big",big.length);
+    // console.log("big",big.length);
 
      Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
@@ -169,7 +169,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
-      console.log("No studies selected");
+      // console.log("No studies selected");
       return { dataFieldNames: [], chartData: []};
     }
 
@@ -181,7 +181,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     q.CRF = "Clinical_Info";
 
     var chartData = Collections.CRFs.find(q).fetch();
-    console.log("chartData CRFs length", q, chartData.length);
+    // console.log("chartData CRFs length", q, chartData.length);
 
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
@@ -219,7 +219,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             query[qf] = {$in: gl};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("GeneLikeDomain", domain.label, domain.collection, query, cursor.count());
+            // console.log("GeneLikeDomain", domain.label, domain.collection, query, cursor.count());
 
 
 	    
@@ -299,6 +299,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
              var query = JSON.parse(unescape(query));
+	     // console.log("ChartDocument.additionalQueries", query);
+
              var crfName = query.c;
              var fieldName = query.f;
              var joinOn = query.j;
@@ -315,6 +317,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     }
 	     var ms = m.schema;  
 	     var msf = ms[fieldName];
+
+	     if (msf == null) {
+	         console.log("ERROR", query, ms);
+		 return;
+	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
 	     // console.log("META QUERY", label, msf);
@@ -322,17 +329,23 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
              var fl = {};
              fl[fieldName] = 1;
+	     fl.Sample_ID = 1;
+	     fl.Patient_ID = 1;
              Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
+
 
 		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
                  if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
                      chartDataMap[doc.Sample_ID][label] = doc[fieldName];
+		     // console.log("joined Sample_ID", doc);
                  } else {
-                     if (doc.Patient_ID in mapPatient_ID_to_Sample_ID)
+                     if (doc.Patient_ID in mapPatient_ID_to_Sample_ID) {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
                              chartDataMap[sample_ID][label] = doc[fieldName];
                          });
-                     // else console.log("addQ", crfName, fieldName, doc);
+			 // console.log("joined through Patient_ID", doc);
+		     } 
+			 // else console.log("addQ", crfName, fieldName, doc);
                 } // else
              }); // forEach
 
@@ -371,7 +384,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         });
 
     // Step 6. We are done. Store the result back in the database and let the client take it from here.
-      console.log("renderChartData", chartData.length);
+      // console.log("renderChartData", chartData.length);
       var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
@@ -382,7 +395,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                }});
 
    // Possible Step 7. Render the visualization on the server (possible with D3, not clear how to do with Google Vis).
-      console.log("done", ret);
+      // console.log("done", ret);
 } 
 
 

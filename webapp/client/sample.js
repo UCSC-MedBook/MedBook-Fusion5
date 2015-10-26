@@ -375,7 +375,7 @@ Template.Controls.events({
 	});
 	*/
 
-        Overlay("saveNewTable", {_id: currentChart._id});
+        Overlay("saveNewTable", {_id: currentChart._id, save:true});
     },
 
 

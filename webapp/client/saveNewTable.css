@@ -1,0 +1,5 @@
+.XscrollTableBody > tbody {
+    height: 400;
+    overflow-y: auto;
+    display: block;
+}

@@ -38,7 +38,7 @@ Meteor.methods( {
 	metadata = {
 		"Form_Name" : "Blood_Labs_V2",
 		"Fields" : fields,
-	},
+	};
 
 
 	var targetTableType = {
@@ -50,13 +50,13 @@ Meteor.methods( {
 	    "metadata" : metadata,
 	    "fieldOrder" : fieldOrder,
 	    "study" :  "user:" + user.username,
-	}
-      Collections.Metadata.upsert({name: target_name}, targetTableType)
-      source_chart.chartData.map(function(doc) {
-          doc.Study_ID = "user:" + user.username,
-	  doc.CRF = target_name,
-	  Collections.CRFs.insert(doc);
-      })
-   }
+	};
+	Collections.Metadaa.upsert({name: target_name}, targetTableType)
+	source_chart.chartData.map(function(doc) {
+	    doc.Study_ID = "user:" + user.username,
+	    doc.CRF = target_name,
+	    Collections.CRFs.insert(doc);
+	})
+   } // newTable
 });
 
