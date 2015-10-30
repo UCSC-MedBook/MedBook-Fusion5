@@ -58,7 +58,7 @@ Handlebars.registerHelper('TabularTables', function (){
     return TabularTables;
 });
 
-Template.saveNewTable.helpers({
+Template.TableBrowser.helpers({
     mergeClass : function() {
        var a = "table table-fixed table-bordered table-hover Inspector scrollTableBody";
        var b = this["class"];
@@ -119,7 +119,7 @@ Template.saveNewTable.helpers({
 
 });
 
-Template.saveNewTable.events({
+Template.TableBrowser.events({
  'click .selectable' : function(evt, tmpl) {
      var data;
      if (evt.target.data) 
@@ -139,7 +139,7 @@ Template.saveNewTable.events({
     Session.set("BrowseStudies", nextStudies);
  },
 
- 'click #saveNewTable' : function(evt, tmpl) {
+ 'click #TableBrowser' : function(evt, tmpl) {
     var source_chart_id = Template.currentData()._id;
     if (source_chart_id == null)
     	return;
@@ -154,6 +154,6 @@ Template.saveNewTable.events({
 
 
 
-Template.saveNewTable.rendered = function() {
+Template.TableBrowser.rendered = function() {
 };
 

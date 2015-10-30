@@ -97,7 +97,7 @@ Router.map(function() {
 
 Router.map(function() {
   this.route('fusionTables', {
-    template: "saveNewTable",
+    template: "TableBrowser",
     path: '/fusion/tables/',
     data: data,
     waitOn: function() {
@@ -113,7 +113,7 @@ Router.map(function() {
 
 Router.map(function() {
   this.route('fusionTablesStudyTable', {
-    template: "saveNewTable",
+    template: "TableBrowser",
     path: '/fusion/tables/:_study/:_table/',
     data: data,
     waitOn: function() {

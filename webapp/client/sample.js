@@ -358,7 +358,7 @@ Template.Controls.events({
         })
    },
 
-   'click #saveNewTable': function(evt, tmpl) {
+   'click #TableBrowser': function(evt, tmpl) {
 	var currentChart = Template.currentData();
 	/*
 	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
@@ -375,7 +375,7 @@ Template.Controls.events({
 	});
 	*/
 
-        Overlay("saveNewTable", {_id: currentChart._id, save:true});
+        Overlay("TableBrowser", {_id: currentChart._id, save:true});
     },
 
 
