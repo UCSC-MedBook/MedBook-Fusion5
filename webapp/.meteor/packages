@@ -30,3 +30,4 @@ ucscmedbook:api
 momentjs:moment
 aldeed:tabular
 mrt:datatables-bootstrap3
+raix:handlebar-helpers
