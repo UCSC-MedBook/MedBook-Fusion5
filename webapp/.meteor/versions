@@ -7,6 +7,7 @@ accounts-ui-unstyled@1.1.7
 ajduke:bootstrap-tagsinput@0.6.0
 aldeed:autoform@4.2.2
 aldeed:simple-schema@1.1.0
+aldeed:tabular@1.4.0
 anti:i18n@0.4.3
 aslagle:reactive-table@0.8.0
 autoupdate@1.2.1
@@ -24,6 +25,7 @@ deps@1.0.7
 ejson@1.0.6
 email@1.0.6
 fastclick@1.0.3
+foldor:bootstrap-3@3.2.0-1
 fongandrew:find-and-modify@0.2.1
 geojson-utils@1.0.3
 google@1.1.5
@@ -60,6 +62,7 @@ mobile-status-bar@1.0.3
 momentjs:moment@2.8.4
 mongo@1.1.0
 mongo-livedata@1.0.8
+mrt:datatables-bootstrap3@0.1.0
 mrt:jquery-ui@1.9.2
 npm-bcrypt@0.7.8_2
 npm-container@1.0.0

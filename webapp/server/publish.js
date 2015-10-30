@@ -127,27 +127,47 @@ Meteor.publish('Metadata', function() {
 });
 Meteor.publish('CRFs', function(studies, crfs) {
     console.log("this.userId", this.userId);
+
     var user_record = Meteor.users.findOne({_id:this.userId}, {fields: {'profile.collaborations':1}});
     console.log("user_record", user_record);
     var collaborations = ["public"];
+
     collaborations = _.union(collaborations, user_record.profile.collaborations);
     studies = _.union(studies, "user:" + user_record.username);
 
     console.log("collaborations", collaborations);
     console.log("studies", studies);
+    console.log("crfs", crfs);
 
-    var study_ids = Collections.studies.find(
-	{
-	    id: {$in: studies},
-	    collaborations: {$in: collaborations}
-	}, 
-	{fields:{id:1}}
-    ).map(function(doc){ return doc.id});
+    var metadata = Collections.Metadata.findOne({name: {$in: crfs}}, { sort: {"name":1}});
+    if (metadata == null) {
+	console.log("no metadata for", crfs);
+        return [];
+    }
 
-    var cursor =  Collections.CRFs.find({ 
-	CRF:      {$in: crfs},
-	Study_ID: {$in: study_ids}
-    }, { sort: {"name":1}});
+    var studyQuery = {
+	collaborations: {$in: collaborations}
+    };
+
+    if (!_.contains(studies, "common")) {
+	studyQuery.id = {$in: studies};
+    }
+
+    var crfsQuery = {CRF: {$in: crfs}};
+
+    if (metadata.study == "common") {
+	var study_ids = Collections.studies.find(
+	    studyQuery, 
+	    {fields:{id:1}}
+	).map(function(study){ return study.id});
+
+	if (study_ids.length == 0)  // The user is not a collaborator in any of the selected studies
+	    return [];
+	else
+	    crfsQuery.Study_ID = {$in: study_ids};
+    }
+
+    var cursor =  Collections.CRFs.find(crfsQuery, { sort: {"name":1}});
 
     console.log("CRFs publish", crfs, studies, study_ids, cursor.count());
     return cursor;

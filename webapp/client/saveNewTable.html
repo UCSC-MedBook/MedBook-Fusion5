@@ -20,13 +20,19 @@
       <div class="panel-heading" > <h3 class="panel-title">Existing Tables</h3> </div>
       <div id="p1" class="panel-body ">
 	 {{> reactiveTable showFilter=true  rowClass="existingTablesRow" showNavigation="auto" collection=myTables settings=myTablesSettings class=mergeClass }}
+      <!--
+	 {{> tabular table=TabularTables.Tables  class="scrollTableBody table table-striped table-bordered table-condensed"}}
+       -->
        </div>
     </div>
 
     <div class="panel panel-default">
       <div class="panel-heading" > <h3 class="panel-title">Table </h3> </div>
       <div id="p1" class="panel-body ">
-	 {{> reactiveTable showFilter=true  showNavigation="auto" collection=browseTable class=mergeClass }}
+	 {{> reactiveTable showFilter=true  showNavigation="auto" fields=browseTableFields collection=browseTable  settings=crfTablesSettings class=mergeClass }}
+      <!--
+	 {{> tabular table=TabularTables.OneTable  class="scrollTableBody table table-striped table-bordered table-condensed"}}
+       -->
        </div>
     </div>
 

@@ -1,0 +1,11 @@
+.scrollTableBody > tbody {
+    overflow-y: auto;
+}
+.scrollTableBody > tbody > tr > td {
+    word-wrap: break-word;
+    max-width: 500px;
+}
+
+.scrollTableBody > tbody > tr > td:first-child {
+    max-width: 100px;
+}

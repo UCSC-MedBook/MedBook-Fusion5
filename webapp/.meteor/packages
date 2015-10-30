@@ -27,3 +27,6 @@ meteorhacks:aggregate
 npm-container
 fongandrew:find-and-modify
 ucscmedbook:api
+momentjs:moment
+aldeed:tabular
+mrt:datatables-bootstrap3

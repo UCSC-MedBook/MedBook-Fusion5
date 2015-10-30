@@ -94,3 +94,49 @@ Router.map(function() {
   });
 });
 
+
+Router.map(function() {
+  this.route('fusionTables', {
+    template: "saveNewTable",
+    path: '/fusion/tables/',
+    data: data,
+    waitOn: function() {
+       return Meteor.subscribe("Metadata");
+    },
+    onBeforeAction : function(arg) {
+       Session.set("BrowseStudies", null);
+       Session.set("BrowseTable", null);
+       this.next();
+    }
+  });
+});
+
+Router.map(function() {
+  this.route('fusionTablesStudyTable', {
+    template: "saveNewTable",
+    path: '/fusion/tables/:_study/:_table/',
+    data: data,
+    waitOn: function() {
+       return Meteor.subscribe("Metadata");
+    },
+    onBeforeAction : function(arg) {
+       var study =  this.params._study;
+       var table = this.params._table; 
+       var user = Meteor.user();
+
+       if (study == null) {
+	   var last = user && user.profile && user.profile.lastCRFroute;
+	   if (last) {
+	       var a = last.split("/");
+	       study = a[2];
+	       table = a[3];
+	   }
+       }
+
+       Session.set("BrowseStudies", [study]);
+       Session.set("BrowseTable", table);
+       this.next();
+    }
+  });
+});
+
