@@ -240,6 +240,11 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'click button[name="newChart"]' : function(e) {
+	var _id =  Charts.insert({});
+	var d = Charts.findOne({_id: _id});
+	updateUrl("/fusion", _id);
+   },
   'click button[name="focus"]' : function(e) {
       var clickedButton = e.currentTarget;
       UpdateCurrentChart("Join", $(clickedButton).val());
@@ -492,6 +497,8 @@ cc = null;
 
 CurrentChart = function(name) {
     var x = Template.currentData();
+    if (x == null)
+       debugger;
     cc = x;
     if (name)
         return x[name];
@@ -568,7 +575,9 @@ renderChart = function() {
 
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
         if (element) {
-           $(element).pivotUI(currentChart.chartData, pivotConf, true, null, currentChart._id);
+	   var cd = currentChart.chartData;
+	   if (cd == null) cd = [];
+           $(element).pivotUI(cd, pivotConf, true, null, currentChart._id);
         }
 
     } // refreshChart

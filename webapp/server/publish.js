@@ -37,6 +37,7 @@ Meteor.publish('Chart', function(_id) {
     return cursor;
 });
 
+
 Charts.allow({
   insert: function (userId, doc) { return true; }, 
   update: function (userId, doc, fieldNames, modifier) { return true; },

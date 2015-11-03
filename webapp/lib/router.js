@@ -19,6 +19,14 @@ Router.configure({
   loadingTemplate: 'appLoading',
 });
 
+if (Meteor.isClient)
+    window.updateUrl = function(url, id) {
+	if (url.indexOf('?') > 0)
+	    url += '&id=' +id;
+	else
+	    url += '?id=' +id;
+	window.history.replaceState(null, null, url);
+    }
 
 
 function data() {
@@ -35,14 +43,7 @@ function data() {
 	if (data && this.params.query._id == null) {
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
-	    {
-		if (url.indexOf('?') > 0)
-		    url += '&id=';
-		else
-		    url += '?id=';
-		url += data._id
-		window.history.replaceState(null, null, url);
-	    }
+		updateUrl(url, data._id);
 	}
     }
     return data;
@@ -60,27 +61,16 @@ Router.map(function() {
   this.route('home', {
     template: "SampleFusion",
     path: '/fusion/',
-    data: data,
     waitOn: waitOn, 
+    data: data, 
   });
 });
-
-Router.map(function() {
-  this.route('homeId', {
-    template: "SampleFusion",
-    path: '/fusion/:_id/',
-    data: data,
-    waitOn: waitOn, 
-  });
-});
-
-/*
 
 Router.map(function() {
   this.route('display', {
     template: "ChartDisplay",
     onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
-    path: '/fusion/:_id/display',
+    path: '/fusion/display',
     data: data,
     waitOn: waitOn, 
   });
@@ -89,7 +79,7 @@ Router.map(function() {
 Router.map(function() {
   this.route('edit', {
     template: "SampleFusion",
-    path: '/fusion/:_id/edit',
+    path: '/fusion/edit',
     data: data,
     waitOn: waitOn, 
   });
@@ -123,7 +113,6 @@ Router.map(function() {
   });
 });
 
-/*
 Router.map(function() {
   this.route('fusionTablesStudyTable', {
     template: "TableBrowser",
@@ -152,7 +141,6 @@ Router.map(function() {
     }
   });
 });
-*/
 
 Router.map(function() {
   this.route('hot', {

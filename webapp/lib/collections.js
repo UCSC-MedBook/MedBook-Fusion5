@@ -21,6 +21,8 @@ DomainCollections = {
 Charts.before.insert( function ChartsUpdate(userId, doc) {
   doc.updatedAt = Date.now();
   doc.userId = userId;
+  if (doc.chartData == null)
+      doc.chartData = [];
 });
 
 Charts.before.update(function (userId, doc, fieldNames, modifier, options) {

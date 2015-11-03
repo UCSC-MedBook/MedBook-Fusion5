@@ -360,7 +360,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
     var dataFieldNames =  Object.keys(keyUnion);
-    var selectedFieldNames = _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null);
+
+    var selectedFieldNames = 
+    ChartDocument.pivotTableConfig ?
+      _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null)     : [];
+
 
     chartData = chartData.map(Transform_Clinical_Info, keyUnion);
 

@@ -1152,6 +1152,7 @@ Meteor.startup(function() {
           $("<option>").val(x).html(x).appendTo(renderer);
         }
         colList = $("<td>").addClass('pvtAxisContainer pvtUnused');
+        colList.addClass("pvtControls");
         shownAttributes = (function() {
           var _j, _len1, _results;
           _results = [];
@@ -1283,6 +1284,7 @@ Meteor.startup(function() {
         }
 
         tr1 = $("<tr>").appendTo(uiTable);
+        tr1.addClass("pvtControls");
         aggregator = $("<select>").addClass('pvtAggregator').bind("change", function() {
           return refresh();
         });
@@ -1291,10 +1293,10 @@ Meteor.startup(function() {
           if (!__hasProp.call(_ref2, x)) continue;
           aggregator.append($("<option>").val(x).html(x));
         }
-        $("<td>").addClass('pvtVals').appendTo(tr1).append(aggregator).append($("<br>"));
-        $("<td>").addClass('pvtAxisContainer pvtHorizList pvtCols').appendTo(tr1);
+        $("<td>").addClass('pvtVals pvtControls').appendTo(tr1).append(aggregator).append($("<br>"));
+        $("<td>").addClass('pvtAxisContainer pvtControls pvtHorizList pvtCols pvtControls' ).appendTo(tr1);
         tr2 = $("<tr>").appendTo(uiTable);
-        tr2.append($("<td>").addClass('pvtAxisContainer pvtRows').attr("valign", "top"));
+        tr2.append($("<td>").addClass('pvtAxisContainer pvtRows pvtControls').attr("valign", "top"));
         pivotTable = $("<td>").attr("valign", "top").addClass('pvtRendererArea').appendTo(tr2);
         if (opts.unusedAttrsVertical === true || unusedAttrsVerticalAutoOverride) {
           uiTable.find('tr:nth-child(1)').prepend(rendererControl);
