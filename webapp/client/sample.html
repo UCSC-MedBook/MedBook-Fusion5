@@ -48,7 +48,7 @@
        <div id="p1" class="panel-body collapse">
          <select id="studies"  multiple="multiple">
             {{#each studies}}
-               <option value="{{this.id}}">{{this.name}}</option>
+                <option {{this.selected}} value="{{this.id}}">{{this.name}}</option>
             {{/each}}
          </select>
          <div>

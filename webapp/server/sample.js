@@ -193,6 +193,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.map(function(cd) {  
        delete cd["CRF"];
     })
+    console.log(q, "chartData length", chartData.length);
 
 
     // Step 2. Build Map and other bookkeeping 
@@ -376,6 +377,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                             datum[transform.field] = flooredValue * binValue;
                          }
                      } else if (transform.op == "rename") {
+                        // console.log("rename", transform.value,"<-", transform.field);
                         datum[transform.value] = datum[transform.field];
                         delete datum[transform.field];
                      }

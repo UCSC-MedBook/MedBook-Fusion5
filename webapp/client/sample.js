@@ -165,7 +165,16 @@ Template.Controls.helpers({
    },
 
    studies : function() {
-      return Collections.studies.find({}, {sort: {"name":1}});
+      var studies = CurrentChart("studies");
+      var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+      ret.map(function(r) {
+          if (_.contains(studies, r.id)) {
+              r.selected = "selected";
+          } else {
+              r.selected = "";
+          }
+      })
+      return ret;
    },
    genesets : function() {
        var html = '';

@@ -26,13 +26,19 @@ function data() {
         post: {$exists: 0},
         userId: Meteor.userId()
     };
-    var data;
+    var data = null;
 
-    if (this.params._id != null) {
-        data = Charts.findOne({_id: this.params._id});
-    } else {
-        data = Charts.findOne(defaultQ);
-    }
+    try {
+        if (this.params._id != null) {
+            data = Charts.findOne({_id: this.params._id});
+        } else {
+            data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
+            if (data) {
+                var url = Router.current().url;
+                window.history.replaceState(null, null, url + "/" + data._id);
+            }
+        }
+    } catch(err) {};
     return data;
 }
 
@@ -54,20 +60,21 @@ Router.map(function() {
 });
 
 Router.map(function() {
-  this.route('displaySimple', {
-    template: "ChartDisplay",
-    onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
-    path: '/fusion/display/',
+  this.route('homeId', {
+    template: "SampleFusion",
+    path: '/fusion/:_id/',
     data: data,
     waitOn: waitOn, 
   });
 });
 
+/*
+
 Router.map(function() {
   this.route('display', {
     template: "ChartDisplay",
     onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
-    path: '/fusion/display/:_id/',
+    path: '/fusion/:_id/display',
     data: data,
     waitOn: waitOn, 
   });
@@ -76,12 +83,11 @@ Router.map(function() {
 Router.map(function() {
   this.route('edit', {
     template: "SampleFusion",
-    path: '/fusion/edit/:_id/',
+    path: '/fusion/:_id/edit',
     data: data,
     waitOn: waitOn, 
   });
 });
-
 
 Router.map(function() {
   this.route('all', {
