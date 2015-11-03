@@ -28,23 +28,29 @@ function data() {
     };
     var data = null;
 
-    try {
-        if (this.params._id != null) {
-            data = Charts.findOne({_id: this.params._id});
-        } else {
-            data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-            if (data) {
-                var url = Router.current().url;
-                window.history.replaceState(null, null, url + "/" + data._id);
-            }
-        }
-    } catch(err) {};
+    if (this.params.query._id != null) {
+	data = Charts.findOne({_id: this.params.query.id});
+    } else {
+	data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
+	if (data && this.params.query._id == null) {
+	    var url = Router.current().url;
+	    if (url && url.length > 0 && url.indexOf('id=') < 0)
+	    {
+		if (url.indexOf('?') > 0)
+		    url += '&id=';
+		else
+		    url += '?id=';
+		url += data._id
+		window.history.replaceState(null, null, url);
+	    }
+	}
+    }
     return data;
 }
 
 function waitOn() {
     return [
-      Meteor.subscribe('Chart', this.params._id),
+      Meteor.subscribe('Chart', this.params.query.id),
       Meteor.subscribe('Metadata'),
       Meteor.subscribe('studies')
     ]
