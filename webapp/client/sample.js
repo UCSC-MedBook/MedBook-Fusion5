@@ -255,8 +255,8 @@ Template.Controls.events({
                    value: $(e).val()
                });
         });
-       transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
-       UpdateCurrentChart("Transforms", transforms);
+       //  BUG: transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
+       UpdateCurrentChart("transforms", transforms);
    },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)

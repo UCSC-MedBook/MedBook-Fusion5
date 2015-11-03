@@ -183,6 +183,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.map(function(cd) {  // in the future, it may be useful to tag each data item with the form it came from.
        delete cd["CRF"];
     })
+    console.log(q, "chartData length", chartData.length);
 
 
     // Step 2. Built Map and other bookkeeping 
@@ -320,6 +321,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                             datum[transform.field] = flooredValue * binValue;
                          }
                      } else if (transform.op == "rename") {
+                        // console.log("rename", transform.value,"<-", transform.field);
                         datum[transform.value] = datum[transform.field];
                         delete datum[transform.field];
                      }
