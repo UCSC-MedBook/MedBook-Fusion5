@@ -169,7 +169,6 @@ Template.Controls.helpers({
       var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
       ret.map(function(r) {
           if (_.contains(studies, r.id)) {
-              debugger;
               r.selected = "selected";
           } else {
               r.selected = "";
