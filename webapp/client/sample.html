@@ -1,7 +1,10 @@
 <template name="AllCharts">
  {{#each allCharts}}
-    <div style="display: inline-block;" class="dataExplorerControlPanel noControls">
+    <div style="display: inline-block;width:300px;height:200px;" class="dataExplorerControlPanel noControls">
+
+      <svg preserveAspectRatio="none" viewBox="0 0 800 400">
         {{{this.svgHtml}}}
+      </svg>
     </div>
  {{/each }}
 </template>

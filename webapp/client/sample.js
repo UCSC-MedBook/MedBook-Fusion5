@@ -569,7 +569,13 @@ renderChart = function() {
                     rendererName: config.rendererName,
                     exclusions: config.exclusions,
                 };
-                Charts.update(currentChart._id, { $set: {pivotTableConfig: currentChart.pivotTableConfig}});
+		var doc = {pivotTableConfig: currentChart.pivotTableConfig};
+		var $svg = $(".pvtRendererArea").children().children("svg");
+		if ($svg.length === 1)
+		    doc.svgHtml = $svg.html();
+		else
+		    doc.svgHtml = asSvg( config.cols, config.rows );
+                Charts.update(currentChart._id, { $set: doc});
             }
         }
 
@@ -606,3 +612,6 @@ Template.AllCharts.helpers({
      }
 });
 
+function asSvg(cols, rows) {
+    return "<svg > <title>SVG Table</title> <g id='columnGroup'> <rect x='65' y='10' width='75' height='110' fill='gainsboro'/> <rect x='265' y='10' width='75' height='110' fill='gainsboro'/> <text x='30' y='30' font-size='18px' font-weight='bold' fill='crimson'> <tspan x='30' dy='1.5em'>Q1</tspan> <tspan x='30' dy='1em'>Q2</tspan> <tspan x='30' dy='1em'>Q3</tspan> <tspan x='30' dy='1em'>Q4</tspan> </text> </g> </svg>";
+}
