@@ -111,6 +111,7 @@ Router.map(function() {
   });
 });
 
+/*
 Router.map(function() {
   this.route('fusionTablesStudyTable', {
     template: "TableBrowser",
@@ -139,4 +140,11 @@ Router.map(function() {
     }
   });
 });
+*/
 
+Router.map(function() {
+  this.route('hot', {
+    template: "hot",
+    path: '/fusion/hot',
+  });
+});
