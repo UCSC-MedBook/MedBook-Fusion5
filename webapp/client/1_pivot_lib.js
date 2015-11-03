@@ -15,7 +15,7 @@ Meteor.startup(function() {
 
   function preflight(input, subopts) {
      var chartType = $('.pvtRenderer').val();
-     if (chartType != "Bar Chart" && chartType  != "Box Plot" && chartType != "Scatter Chart")
+     if (chartType  != "Box Plot" && chartType != "Scatter Chart")
         return true;
 
      var analysis = {};
@@ -56,40 +56,12 @@ Meteor.startup(function() {
      input.boxplot.rowsAllNumbers = rowsAllNumbers;
      input.boxplot.colsAllNumbers = colsAllNumbers;
 
-
      if (chartType == "Scatter Chart" && 
              (subopts.cols.length == 0 || !allNumbers(extract(subopts.cols[0]))
               ||  subopts.rows.length == 0 || !allNumbers(extract(subopts.rows[0])))) {
          $(".pvtRendererArea").html("<div style='min-width:200px;text-align-center;'><h3>For Scatter Plot, please select numerical values such as gene expression for both columns (top) and rows (left size)</h3></div>")
 
          return false;
-     }
-     if (chartType  == "Bar Chart" && !colsAnyNumbers) {
-         return false;
-     }
-     if (chartType  == "Bar Chart")
-         subopts.cols.compactLabels = true;
-
-     if (chartType  == "Bar Chart" && colsAllNumbers && subopts.aggregatorName == "Count" && subopts.cols.length == 1) {
-             subopts.cols.compactLabels = true;
-
-             var col = subopts.cols[0];
-             var vals = allColValues[0].map(parseFloat).filter(function(f) { return !isNaN(f) })
-                 .sort(function(a, b){return a-b});
-             if (vals.length > 3) {
-                 var min = vals[0];
-                 var max = vals[vals.length -1];
-                 var range = max - min;
-                 var binWidth = range / 3;
-                 if (binWidth > 1)
-                     binWidth = parseInt(binWidth);
-                 input.map(function(record) {
-                      var v = parseFloat(record[col]);
-                      if (!isNaN(v))
-                          record[col] = v - v % binWidth;
-                 });
-             }
-             return true;
      }
 
      if (chartType  == "Box Plot" && !colsAnyNumbers) {
@@ -319,32 +291,6 @@ Meteor.startup(function() {
           };
         };
       },
-      value: function(formatter) {
-        if (formatter == null) {
-          formatter = usFmt;
-        }
-        return function(_arg) {
-          var attr;
-          attr = _arg[0];
-          return function(data, rowKey, colKey) {
-            return {
-              memo: 0,
-              push: function(record) {
-                GROUPER(this, record, rowKey, colKey);
-                if (!isNaN(parseFloat(record[attr]))) {
-                  this.memo = parseFloat(record[attr]);
-                  return 0;
-                }
-              },
-              value: function() {
-                return this.memo
-              },
-              format: formatter,
-              numInputs: attr != null ? 0 : 1
-            };
-          };
-        };
-      },
       average: function(formatter) {
         if (formatter == null) {
           formatter = usFmt;
@@ -469,13 +415,13 @@ Meteor.startup(function() {
     };
     aggregators = (function(tpl) {
       return {
-        "Value": tpl.value(usFmtInt),
         "Count": tpl.count(usFmtInt),
-        "Mean": tpl.average(usFmt),
-        "Sum": tpl.sum(usFmt),
         /*
         "Count Unique Values": tpl.countUnique(usFmtInt),
         "List Unique Values": tpl.listUnique(", "),
+        */
+        "Sum": tpl.sum(usFmt),
+        /*
         "Integer Sum": tpl.sum(usFmtInt),
         "Average": tpl.average(usFmt),
         "Minimum": tpl.min(usFmt),
@@ -689,20 +635,13 @@ Meteor.startup(function() {
         this.colTotals = {};
         this.allTotal = this.aggregator(this, [], []);
         this.sorted = false;
-        this.saveInput = _.clone(input);
-        this.saveInput.boxplot = input.boxplot;
-        var filteredInput = [];
-        filteredInput.boxplot = input.boxplot;
-
         PivotData.forEachRecord(input, opts.derivedAttributes, (function(_this) {
           return function(record) {
             if (opts.filter(record)) {
-              filteredInput.push(record);
               return _this.processRecord(record);
             }
           };
         })(this));
-        this.input = filteredInput;
       }
 
       PivotData.forEachRecord = function(input, derivedAttributes, f) {
@@ -815,26 +754,6 @@ Meteor.startup(function() {
         this.sortKeys();
         return this.rowKeys;
       };
-      PivotData.prototype.label = function(x, record) {
-          var l = record[x];
-
-          if (this.aggregatorName == "Value")
-              return record.Sample_ID;
-
-          if (this.colAttrs.compactLabels)
-              return l;
-
-          if (x != null && l != null)
-              return  x +":"+ l;
-
-          if (x != null)
-              return  x;
-
-          if (l != null)
-              return  l;
-
-          return "null";
-      }
 
       PivotData.prototype.processRecord = function(record) {
         var colKey, flatColKey, flatRowKey, rowKey, x, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
@@ -843,12 +762,12 @@ Meteor.startup(function() {
         _ref = this.colAttrs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           x = _ref[_i];
-          colKey.push(this.label(x, record));
+          colKey.push((_ref1 = record[x]) != null ? x +":"+ _ref1 : "null");
         }
         _ref2 = this.rowAttrs;
         for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
           x = _ref2[_j];
-          rowKey.push(this.label(x, record));
+          rowKey.push((_ref3 = record[x]) != null ? x +":"+ _ref3 : "null");
         }
         flatRowKey = rowKey.join(String.fromCharCode(0));
         flatColKey = colKey.join(String.fromCharCode(0));
@@ -1090,12 +1009,7 @@ Meteor.startup(function() {
         },
         aggregator: aggregatorTemplates.count()(),
         aggregatorName: "Count",
-        sorters: function(attr) {
-            return function(a,b) {
-                console.log(a,b,attr);
-                // debugger;
-            }
-        },
+        sorters: function() {},
         derivedAttributes: {},
         renderer: pivotTableRenderer,
         rendererOptions: null,
@@ -1131,7 +1045,7 @@ Meteor.startup(function() {
     /*
     Pivot Table UI: calls Pivot Table core above with options set by user
      */
-    $.fn.pivotUI = function(input, inputOpts, overwrite, locale, _id) {
+    $.fn.pivotUI = function(input, inputOpts, overwrite, locale) {
       var a, aggregator, attrLength, axisValues, c, colList, defaults, e, existingOpts, i, initialRender, k, opts, pivotTable, refresh, refreshDelayed, renderer, rendererControl, shownAttributes, tblCols, tr1, tr2, uiTable, unusedAttrsVerticalAutoOverride, x, _fn, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3, _ref4;
       if (overwrite == null) {
         overwrite = false;
@@ -1217,7 +1131,7 @@ Meteor.startup(function() {
           return _results;
         });
         uiTable = $("<table>").attr("cellpadding", 5);
-        rendererControl = $("<td>").addClass('pvtControls');
+        rendererControl = $("<td>");
         var controlPanel = $("<div class='dataExplorerControlPanel'>").appendTo(rendererControl);
         var controlPanel2 = $("<div style='text-align:center;'><label>Chart Type</label></div>").appendTo(controlPanel);
         renderer = $("<select>").addClass('pvtRenderer').appendTo(controlPanel2).bind("change", function() {
@@ -1236,7 +1150,7 @@ Meteor.startup(function() {
           if (!__hasProp.call(_ref1, x)) continue;
           $("<option>").val(x).html(x).appendTo(renderer);
         }
-        colList = $("<td>").addClass('pvtAxisContainer pvtUnused pvtControls');
+        colList = $("<td>").addClass('pvtAxisContainer pvtUnused');
         shownAttributes = (function() {
           var _j, _len1, _results;
           _results = [];
@@ -1329,8 +1243,6 @@ Meteor.startup(function() {
             } else {
               attrElem.removeClass("pvtFilteredAttribute");
             }
-            if (opts.onRefresh != null) 
-              opts.onRefresh(inputOpts);
             if (keys.length > opts.menuLimit) {
               return valueList.toggle();
             } else {
@@ -1353,11 +1265,7 @@ Meteor.startup(function() {
           if (hasExcludedItem) {
             attrElem.addClass('pvtFilteredAttribute');
           }
-          // colList.append(attrElem).append(valueList);
-          // TG: Critical change: I want valueList to be under the attrElem so that where the button is tells us whether it is operational our not. Specifically this allows us to do a find(".pvtUsed")  
-          attrElem.append(valueList);
-          colList.append(attrElem);
-
+          colList.append(attrElem).append(valueList);
           return attrElem.bind("dblclick", showFilterList);
         };
 
@@ -1382,10 +1290,10 @@ Meteor.startup(function() {
           if (!__hasProp.call(_ref2, x)) continue;
           aggregator.append($("<option>").val(x).html(x));
         }
-        $("<td>").addClass('pvtVals pvtControls').appendTo(tr1).append(aggregator).append($("<br>"));
-        $("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtHorizList pvtCols pvtControls').appendTo(tr1);
+        $("<td>").addClass('pvtVals').appendTo(tr1).append(aggregator).append($("<br>"));
+        $("<td>").addClass('pvtAxisContainer pvtHorizList pvtCols').appendTo(tr1);
         tr2 = $("<tr>").appendTo(uiTable);
-        tr2.append($("<td>Drag datum here").addClass('pvtAxisContainer pvtUsed pvtRows pvtControls').attr("valign", "top"));
+        tr2.append($("<td>").addClass('pvtAxisContainer pvtRows').attr("valign", "top"));
         pivotTable = $("<td>").attr("valign", "top").addClass('pvtRendererArea').appendTo(tr2);
         if (opts.unusedAttrsVertical === true || unusedAttrsVerticalAutoOverride) {
           uiTable.find('tr:nth-child(1)').prepend(rendererControl);
@@ -1467,7 +1375,7 @@ Meteor.startup(function() {
             subopts.aggregator = opts.aggregators[aggregator.val()](vals);
             subopts.renderer = opts.renderers[renderer.val()];
             exclusions = {};
-            _this.find(".pvtUsed").find('input.pvtFilter').not(':checked').each(function() {
+            _this.find('input.pvtFilter').not(':checked').each(function() {
               var filter;
               filter = $(this).data("filter");
               if (exclusions[filter[0]] != null) {
@@ -1508,28 +1416,6 @@ Meteor.startup(function() {
               }).appendTo(unusedAttrsContainer);
             }
             pivotTable.css("opacity", 1);
-
-            var svgPlot = $.find('.svgPlot');
-            if (_id && svgPlot.length > 0) {
-
-
-                   var $svg = $(svgPlot[0]);
-
-                  var $svg = (parent != window) && parent.getSvg ? parent.getSvg() : null;
-                  if ($svg) {
-                      var width = $svg.width();
-                      var height = $svg.height();
-                      var html = $svg.html();
-
-                      svgHtml = "<div style='border:1px solid black;width:800;height:400px'> " 
-                        + '<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="100%" height="100%" viewBox="0 0 ' + width + ' ' +  height + '" id="svg2" version="1.1" inkscape:version="0.48.0 r9654">'
-                        + html + "</svg> </div>";
-
-
-                   if (svgHtml && svgHtml.length > 0) 
-                       Charts.update(_id, { $set: {svgHtml: svgHtml}});
-                  }
-            }
             if (opts.onRefresh != null) {
               return opts.onRefresh(pivotUIOptions);
             }

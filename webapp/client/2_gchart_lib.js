@@ -24,28 +24,12 @@ Meteor.startup(function() {
           aggregationTarget: 'auto',
 
         };
-        pts = $.extend({}, defaults, opts);
+        opts = $.extend({}, defaults, opts);
         rowKeys = pivotData.getRowKeys();
         if (rowKeys.length === 0) {
           rowKeys.push([]);
         }
-
-        if ($('.pvtRenderer').val() == "Bar Chart" && this.aggregatorName == "Value") {
-            var ns = $.pivotUtilities.naturalSort;
-            var cols = this.cols;
-
-
-            function sortByColumnValue(a,b) {
-                for (var i = 0; i < cols.length; i++) {
-                    var k = cols[i];
-                    return - ns(a[k], b[k]);
-                }
-            }
-            pivotData.input = pivotData.input.sort(sortByColumnValue);
-            colKeys = pivotData.input.map(function(d) { return [d.Sample_ID]; });
-        } else {
-            colKeys = pivotData.getColKeys();
-        }
+        colKeys = pivotData.getColKeys();
         if (colKeys.length === 0) {
           colKeys.push([]);
         }
@@ -195,14 +179,12 @@ Meteor.startup(function() {
         editChartBtn.click(editChart);
         */
         addMedBookButtons(result, groupArray);
-
         return result;
       };
     };
     $.pivotUtilities.gchart_renderers = {
       "Box Plot": makeD3BoxPlotChart("BoxPlot"),
-      "Google Scatter Chart": makeGoogleScatter("ScatterChart"),
-      "D3 Scatter Chart": makeD3Scatter("ScatterChart"),
+      "Scatter Chart": makeGoogleScatter("ScatterChart"),
       "Table": makeReactiveTable("Reactive Table"),
       /*
       "Pie Chart": makeGoogleChart2("PieChart"),
