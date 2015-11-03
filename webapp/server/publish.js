@@ -1,7 +1,4 @@
 
-Meteor.publish('studies', function() {
-    return Collections.studies.find({});
-});
 Meteor.publish('DIPSC', function(_id) {
     var cursor = DIPSC_coll.find({_id: _id});
     console.log("DIPSC publish", _id, cursor.count());
@@ -66,10 +63,7 @@ Contrast.deny({
   remove: function (userId, doc) { return false; }
 });
 
-/*
-function assure(userId, collaborations)  {
-    Meteor.findOne();
-
+Meteor.publish('studies', function()  {
     var collaborations = ["public"]
     if (this.userId) {
         var user_record = Meteor.users.findOne({_id:this.userId}, {_id:0,'profile.collaborations':1})
@@ -79,8 +73,7 @@ function assure(userId, collaborations)  {
     var cnt = Collections.studies.find({collaborations: {$in: collaborations}}).count();
     console.log ('member of',cnt, 'study based on ',collaborations)
     return Collections.studies.find({collaborations: {$in: collaborations}});
-}
-*/
+});
 
 Meteor.publish('GeneExpression', function(studies, genes) {
     var q = ({Study_ID:{$in: studies}, gene: {$in: genes}});
