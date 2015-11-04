@@ -1,3 +1,7 @@
+
+
+
+
 <template name="TableBrowser">
  <div class="TableBrowser">
 
@@ -8,9 +12,18 @@
           <h3 class="panel-title">Save this table(required)</h3>
        </div>
        <div id="p1" class="panel-body ">
-         <input id="newTableName" placeholder="new table name">
-         <input id="collaborators" placeholder="Collaborators">
-         <button id="TableBrowser" class="btn btn-default">Save</button>
+	   <div class="input-group ">
+		 <select style="width:250px;" class="form-control" id="studyForNewTable">
+	   	    <option selected value="{{myStudy}}">{{myStudy}}</option>
+		    {{#each studies}}
+			<option value="{{this._id}}">{{this.name}}</option>
+		    {{/each}}
+		 </select>
+		 &nbsp; &nbsp;
+	     <input id="newTableName" placeholder="new table name" style="width:250px;" >
+		 &nbsp; &nbsp;
+	     <button id="TableBrowser" class="btn btn-default">Save</button>
+	  </div>
        </div>
     </div>
 

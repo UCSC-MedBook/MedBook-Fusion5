@@ -249,7 +249,6 @@ Template.checkBox.helpers({
 Template.Controls.events({
   'change #previousCharts' : function(e) {
 	var _id = $(e.target).val();
-	debugger;
 	Router.go("/fusion/?id=" +_id);
    },
   'click button[name="newChart"]' : function(e) {

@@ -36,7 +36,8 @@
 
        <div class="input-group ">
 	     <button type="button" name="newChart" value="new" class="btn ">New Chart</button>
-
+	     &nbsp;
+	     &nbsp;
 	     <select style="width:250px;" class="form-control" id="previousCharts">
 		{{#each previousCharts}}
 		    <option {{this.selected}} placeHolder="Previous charts" value="{{this._id}}">{{this.label}}</option>
@@ -44,10 +45,6 @@
 	     </select>
       </div>
 
-<!--
-             <button type="button" name="focus" value="Sample_ID" class="btn btn-default">Samples</button>
-             <button type="button" name="focus" value="Gene"      class="btn btn-default">Genes</button>
--->
       </div>
     </div>
 

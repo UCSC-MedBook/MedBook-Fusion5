@@ -58,7 +58,17 @@ Handlebars.registerHelper('TabularTables', function (){
     return TabularTables;
 });
 
+Handlebars.registerHelper('myStudy', function (){
+      var un = Meteor.user().username;
+      return "user:"+un;
+});
+
+
 Template.TableBrowser.helpers({
+    studies : function() {
+      var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+      return ret;
+    },
     mergeClass : function() {
        var a = "table table-fixed table-bordered table-hover Inspector scrollTableBody";
        var b = this["class"];
@@ -146,9 +156,9 @@ Template.TableBrowser.events({
 
     var target_name = $("#newTableName").val();
     var source_fields = null;
-    var target_collaborations = $("#collaborators").val()
+    var studyForNewTable = $("#studyForNewTable").val()
 
-    Meteor.call("newTable", target_name, target_collaborations, source_fields, source_chart_id, function(err, status) { });
+    Meteor.call("newTable", target_name, studyForNewTable, source_fields, source_chart_id, function(err, status) { });
   }
 });
 
