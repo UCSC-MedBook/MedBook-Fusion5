@@ -142,8 +142,14 @@ Router.map(function() {
 });
 
 Router.map(function() {
-  this.route('hot', {
-    template: "hot",
-    path: '/fusion/hot',
+  this.route('import', {
+    template: "DataImport",
+    path: '/fusion/import',
+    waitOn: function() {
+	return [
+	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('studies')
+	]
+    }
   });
 });
