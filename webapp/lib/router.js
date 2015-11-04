@@ -36,11 +36,11 @@ function data() {
     };
     var data = null;
 
-    if (this.params.query._id != null) {
+    if (this.params.query.id != null) {
 	data = Charts.findOne({_id: this.params.query.id});
     } else {
 	data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (data && this.params.query._id == null) {
+	if (data && this.params.query.id == null) {
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
 		updateUrl(url, data._id);
@@ -89,7 +89,6 @@ Router.map(function() {
   this.route('all', {
     template: "AllCharts",
     path: '/fusion/all/',
-    data: data,
     waitOn: function() {
        return Meteor.subscribe("AllCharts");
     }
