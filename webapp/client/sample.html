@@ -1,12 +1,15 @@
+
+<!--
 <template name="AllCharts">
  {{#each allCharts}}
-    <div style="display: inline-block;width:1024px;height:1024px;" data-_id="{{this._id}}" class="aChart dataExplorerControlPanel noControls">
-       <svg preserveAspectRatio="none" viewBox="0 0 1024 1024">
+    <div data-_id="{{this._id}}" style="display: inline-block;width:300px;height:200px;" class="aChart dataExplorerControlPanel noControls">
+      <svg preserveAspectRatio="none" viewBox="0 0 300 200">
         {{{this.svgHtml}}}
-       </svg>
+      </svg>
     </div>
  {{/each }}
 </template>
+-->
 
 <template name="ChartDisplay">
     <div style="display: inline-block;" class="dataExplorerControlPanel noControls">
@@ -16,13 +19,6 @@
 
 <template name="SampleFusion">
 
-<div class="around-intro">
-    <div class="intro">
-      <h1>Data Fusion Tool</h1>
-        This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations
-        based around using Patient Samples from SU2C and TCGA datasets.
-    </div>
-</div>
 
     {{> Controls }}
 
@@ -31,12 +27,23 @@
 
 <template name="Controls">
     <div class="panel panel-default">
-      <div class="panel-heading" data-toggle="collapse" data-target="#p0" >
-         <h3 class="panel-title">Manage Chart Controls</h3>
-	</div>
-       <div id="p0" class="panel-body collapse">
+      <div class="panel-heading" >
 
-	 <button type="button" name="newChart" value="new" class="btn btn-default">New Chart</button>
+      <h1 >Data Fusion Tool</h1>
+       This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations based around using Patient Samples from SU2C and TCGA datasets.
+	</div>
+       <div id="p" class="panel-body ">
+
+       <div class="input-group ">
+	     <button type="button" name="newChart" value="new" class="btn ">New Chart</button>
+
+	     <select style="width:250px;" class="form-control" id="previousCharts">
+		{{#each previousCharts}}
+		    <option {{this.selected}} placeHolder="Previous charts" value="{{this._id}}">{{this.label}}</option>
+		{{/each}}
+	     </select>
+      </div>
+
 <!--
              <button type="button" name="focus" value="Sample_ID" class="btn btn-default">Samples</button>
              <button type="button" name="focus" value="Gene"      class="btn btn-default">Genes</button>
@@ -122,6 +129,15 @@
         <div class="output" style="margin: 30px;"></div>
     </div>
 
+<!--
+    <div class="panel panel-default">
+      <div class="panel-heading"  >
+          <h3 class="panel-title">Preview</h3>
+       </div>
+       <div style="height:400px;" class="panel-body collapse">
+            {{{svgHtml}}}
+       </div>
+    </div>
     <div class="panel panel-default">
       <div class="panel-heading"  data-toggle="collapse" data-target="#pb">
           <h3 class="panel-title">Box Plot Contrast</h3>
@@ -130,7 +146,7 @@
             {{> BoxPlotContrastTable}}
        </div>
     </div>
-
+-->
 
     {{#with dipsc}}
         <div class="panel panel-default">

@@ -51,6 +51,13 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+   previousCharts : function() {
+      var prev = Charts.find({}, {fields: {updatedAt:1}, sort: {updatedAt:-1}, limit: 30}).fetch();
+      prev.map(function(p) {
+         p.label = moment(p.updatedAt).fromNow();
+      });
+      return prev;
+   },
    Join : function() {
       var j = CurrentChart("Join");
       if (j == null) {
@@ -240,6 +247,11 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'change #previousCharts' : function(e) {
+	var _id = $(e.target).val();
+	debugger;
+	Router.go("/fusion/?id=" +_id);
+   },
   'click button[name="newChart"]' : function(e) {
 	var _id =  Charts.insert({});
 	var d = Charts.findOne({_id: _id});
@@ -570,16 +582,23 @@ renderChart = function() {
                     exclusions: config.exclusions,
                 };
 		var doc = {pivotTableConfig: currentChart.pivotTableConfig};
+
+		/*
 		var $svg = $(".pvtRendererArea").children().children("svg");
-		if ($svg.length === 1)
-		    doc.svgHtml = $svg.html();
-		else {
-		    $svg = $(".pvtRendererArea").find("svg");
+		if (currentChart.pivotTableConfig.rendererName== "Box Plot") {
 		    if ($svg.length === 1)
 			doc.svgHtml = $svg.html();
-		    else
-			doc.svgHtml = asSvgHtml( config.cols, config.rows );
-		}
+		    else {
+			$svg = $(".pvtRendererArea").find("svg");
+			if ($svg.length === 1)
+			    doc.svgHtml = $svg.html();
+			else
+			    doc.svgHtml = asSvgHtml( config.cols, config.rows );
+		    }
+		} else
+		    doc.svgHtml = asSvgHtml( config.cols, config.rows );
+		*/
+
                 Charts.update(currentChart._id, { $set: doc});
             }
         }
@@ -611,6 +630,7 @@ renderChart = function() {
 Template.Controls.rendered = renderChart;
 Template.ChartDisplay.rendered = renderChart;
 
+/*
 Template.AllCharts.helpers({
     allCharts: function() {
         return Charts.find({svgHtml: {$exists:1}}, {fields: {svgHtml:1}});
@@ -618,7 +638,9 @@ Template.AllCharts.helpers({
 });
 
 function asSvgHtml(cols, rows) {
-    return "<svg > <title>SVG Table</title> <g id='columnGroup'> <rect x='65' y='10' width='75' height='110' fill='gainsboro'/> <rect x='265' y='10' width='75' height='110' fill='gainsboro'/> <text x='30' y='30' font-size='18px' font-weight='bold' fill='crimson'> <tspan x='30' dy='1.5em'>Q1</tspan> <tspan x='30' dy='1em'>Q2</tspan> <tspan x='30' dy='1em'>Q3</tspan> <tspan x='30' dy='1em'>Q4</tspan> </text> </g> </svg>";
+    function get(a,i) { return a.length > i ? a[i] : "";};
+
+    return "<svg > <title>SVG Table</title> <g id='columnGroup'> <rect x='65' y='10' width='75' height='110' fill='gainsboro'/> <rect x='265' y='10' width='75' height='110' fill='gainsboro'/> <text x='30' y='30' font-size='18px' font-weight='bold' fill='crimson'> <tspan x='30' dy='1.5em'>"+get(col,0)+"</tspan> <tspan x='30' dy='1em'>"+get(col,0)+"</tspan> <tspan x='30' dy='1em'>"+get(col,0)+"</tspan> <tspan x='30' dy='1em'>"+get(col,0)+"</tspan> </text> </g> </svg>";
 }
 Template.AllCharts.events({
   'click div.aChart' : function(e) {
@@ -628,3 +650,4 @@ Template.AllCharts.events({
 	Router.go("/fusion/?id=" + id);
    }
 });
+*/
