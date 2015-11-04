@@ -209,9 +209,41 @@ Template.Controls.helpers({
    },
    additionalQueries : function() {
        var html = '';
-       Collections.Metadata.find({}).forEach(function(vv) {
+       var coll = Collections.Metadata.find({}).fetch();
+       var myStudy = "user:" + Meteor.user().username;
+
+       var mine = [];
+       var others = [];
+       var rest = [];
+       coll.map(function(c) {
+          if (c.study == "admin")
+	      return;
+          else if (c.study == myStudy)
+	      mine.push(c);
+	  else if (c.study.indexOf("user:") == 0)
+	      others.push(c);
+	  else 
+	      rest.push(c);
+       });
+       function ss(a, b){
+          var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
+	  if (studyA < studyB) return -1 
+	  if (studyA > studyB) return 1
+
+          var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
+	  if (nameA < nameB) return -1 
+	  if (nameA > nameB) return 1
+	  return 0 //default return value (no sorting)
+       };
+       mine   = mine.sort(ss);
+       others = others.sort(ss);
+       rest   = rest.sort(ss);
+
+       coll = mine.concat(others).concat(rest);
+
+       coll.map(function(vv) {
            var collName = vv.name;
-           html += '<optGroup label="'+ collName +'">';
+           html += '<optGroup label="'+vv.study+":"+ collName +'">';
 
            var ft = vv.fieldTypes;
            var hasSample_ID = false;
