@@ -6,7 +6,6 @@ echo MEDBOOK_WORKSPACE is $MEDBOOK_WORKSPACE
 cd webapp
 
 # export MONGO_URL=mongodb://localhost:27017/MedBook
-export ROOT_URL=http://$HOST/fusion/
-export ROOT_URL_PATH_PREFIX=fusion
-echo $MONGO_URL $ROOT_URL $ROOT_URL_PATH_PREFIX
-meteor  --port $PORT "../logs/log.fusion.$$" &
+export ROOT_URL=https://su2c.ucsc.edu/fusion/
+echo $MONGO_URL $ROOT_URL 
+meteor  --port $PORT >& "../logs/log.fusion.$$"

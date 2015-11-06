@@ -543,7 +543,7 @@ renderChart = function() {
 
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
         if (element) {
-           $(element).pivotUI(currentChart.chartData, pivotConf, true, null, currentChart._id);
+           $(element).pivotUI(currentChart.chartData ? currentChart.chartData : [], pivotConf, true, null, currentChart._id);
         }
 
     } // refreshChart
