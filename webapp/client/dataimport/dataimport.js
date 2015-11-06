@@ -18,17 +18,85 @@ Template.DataImport.helpers({
    },
 });
 
+
+function transpose(data) {
+  var newData = [];
+  data[0].map(function() {newData.push([])});
+  data.map(function(oldRow) {
+     oldRow.map(function(item, j){
+	 newData[j].push(item);
+     });
+  });
+  return newData
+}
+
+function analyze(rowData) {
+ rowData.shift(); // discard first row
+ var columns = transpose(rowData);
+
+ function and(a,b) { return a && b };
+ function or(a,b) { return a || b };
+
+ function allStrings(column) {
+     if (column.length == 0)
+	return [];
+     return column.map(function(v) { return v == "" || v == "N/A" || typeof(v) == "string"} ).reduce(and);
+ }
+ function allNumbers(column) {
+     if (column.length == 0)
+	return [];
+     return column.map(function(v) { return v == "" || v == "N/A" || !isNaN(v)} ).reduce(and);
+ }
+ function allDates(column) {
+     if (column.length == 0)
+	return [];
+     return column.map(function(v) { return v == "" || v == "N/A" || moment(v).isValid()} ).reduce(and);
+ }
+ function unique(column) {
+     var seen = {};
+     var dupes = {};
+     for (var i = 0; i < column.length; i++) {
+	 if (column[i] in seen)
+	     dupes[column[i]] = true;
+	 else
+	     seen[column[i]] = true;
+     }
+     return  {
+	 uniqueValues: Object.keys(seen),
+	 dupeValues: Object.keys(dupes),
+     }
+ }
+  function judge(isNumber, i) {
+       if (isNumber)
+	   return "number";
+
+       if (stringsBoolVec[i]) 
+	   return "date";
+
+       if (stringsBoolVec[i]) 
+	   return "strings";
+       return "unknown"
+  }
+
+  var dataBoolVec= columns.map(allDates);
+  var numbersBoolVec= columns.map(allNumbers);
+  var stringsBoolVec= columns.map(allNumbers);
+  var valueSpace= columns.map(unique);
+  var results = numbersBoolVec.map(judge);
+   
+  return results;
+}
+
 Template.DataImport.events({
+ 'click #analyze' : function() {
+    var rowData = DataImportSpreadSheet.getData();
+    var results = analyze(rowData);
+    console.log(results);
+  },
+
  'click #transpose' : function() {
-      debugger;
       var data = DataImportSpreadSheet.getData();
-      var newData = [];
-      data[0].map(function() {newData.push([])});
-      data.map(function(oldRow) {
-         oldRow.map(function(item, j){
-	     newData[j].push(item);
-	 });
-      });
+      var newData = transpose(data);
       DataImportSpreadSheet.updateSettings({data: newData}, false);
       return ret;
    },
