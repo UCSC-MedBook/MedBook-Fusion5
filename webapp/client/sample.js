@@ -51,6 +51,13 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+   previousCharts : function() {
+      var prev = Charts.find({}, {fields: {updatedAt:1}, sort: {updatedAt:-1}, limit: 30}).fetch();
+      prev.map(function(p) {
+         p.label = moment(p.updatedAt).fromNow();
+      });
+      return prev;
+   },
    Join : function() {
       var j = CurrentChart("Join");
       if (j == null) {
@@ -202,9 +209,41 @@ Template.Controls.helpers({
    },
    additionalQueries : function() {
        var html = '';
-       Collections.Metadata.find({}).forEach(function(vv) {
+       var coll = Collections.Metadata.find({}).fetch();
+       var myStudy = "user:" + Meteor.user().username;
+
+       var mine = [];
+       var others = [];
+       var rest = [];
+       coll.map(function(c) {
+          if (c.study == "admin")
+	      return;
+          else if (c.study == myStudy)
+	      mine.push(c);
+	  else if (c.study.indexOf("user:") == 0)
+	      others.push(c);
+	  else 
+	      rest.push(c);
+       });
+       function ss(a, b){
+          var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
+	  if (studyA < studyB) return -1 
+	  if (studyA > studyB) return 1
+
+          var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
+	  if (nameA < nameB) return -1 
+	  if (nameA > nameB) return 1
+	  return 0 //default return value (no sorting)
+       };
+       mine   = mine.sort(ss);
+       others = others.sort(ss);
+       rest   = rest.sort(ss);
+
+       coll = mine.concat(others).concat(rest);
+
+       coll.map(function(vv) {
            var collName = vv.name;
-           html += '<optGroup label="'+ collName +'">';
+           html += '<optGroup label="'+vv.study+":"+ collName +'">';
 
            var ft = vv.fieldTypes;
            var hasSample_ID = false;
@@ -214,8 +253,11 @@ Template.Controls.helpers({
            });
            vv.fieldOrder.map(function(fieldName, i) {
 
-               var meta = { c: collName, f: fieldName, 
-                   j: hasSample_ID ? "Sample_ID" : "Patient_ID" 
+               var meta = { 
+		   c: collName,
+		   f: fieldName, 
+                   j: hasSample_ID ? "Sample_ID" : "Patient_ID" ,
+		   s: vv.study
                };
                var value = escape(JSON.stringify(meta));
                  
@@ -237,6 +279,15 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'change #previousCharts' : function(e) {
+	var _id = $(e.target).val();
+	Router.go("/fusion/?id=" +_id);
+   },
+  'click button[name="newChart"]' : function(e) {
+	var _id =  Charts.insert({});
+	var d = Charts.findOne({_id: _id});
+	Router.go("/fusion/?id=" +_id);
+   },
   'click button[name="focus"]' : function(e) {
       var clickedButton = e.currentTarget;
       UpdateCurrentChart("Join", $(clickedButton).val());
@@ -264,8 +315,9 @@ Template.Controls.events({
                    value: $(e).val()
                });
         });
-       //  BUG: transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
-       UpdateCurrentChart("transforms", transforms);
+       // BUG the sort changes this into an object:
+       // transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
+       UpdateCurrentChart("Transforms", transforms);
    },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)
@@ -363,8 +415,28 @@ Template.Controls.events({
         })
    },
 
+   'click #TableBrowser': function(evt, tmpl) {
+	var currentChart = Template.currentData();
+	/*
+	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
+	var data = currentChart.chartData.map( function(doc) {
+	    var newDoc = {};
+	    fields.map(function(f) {
+	    	newDoc[f] = doc[f];
+	    });
+	    return newDoc;
+	});
+	schema = [];
+	fields.map(function(f) {
+	   schema.push(currentChart.metadata[f]);
+	});
+	*/
 
-   'clicgg.inspect': function(evt, tmpl) {
+        Overlay("TableBrowser", {_id: currentChart._id, save:true});
+    },
+
+
+   'click .inspect': function(evt, tmpl) {
         var $link = $(evt.target);
         var v = $link.data("var");
         var data = CurrentChart(v);
@@ -468,6 +540,8 @@ cc = null;
 
 CurrentChart = function(name) {
     var x = Template.currentData();
+    if (x == null)
+       debugger;
     cc = x;
     if (name)
         return x[name];
@@ -488,11 +562,12 @@ renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
     var currentChart = watch.fetch()[0];
+    var element = this.find(".output");
 
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
 
-    RefreshChart = function(id, fields, element) {
+    RefreshChart = function(id, fields) {
         console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
@@ -537,12 +612,33 @@ renderChart = function() {
                     rendererName: config.rendererName,
                     exclusions: config.exclusions,
                 };
-                Charts.update(currentChart._id, { $set: {pivotTableConfig: currentChart.pivotTableConfig}});
+		var doc = {pivotTableConfig: currentChart.pivotTableConfig};
+
+		/*
+		var $svg = $(".pvtRendererArea").children().children("svg");
+		if (currentChart.pivotTableConfig.rendererName== "Box Plot") {
+		    if ($svg.length === 1)
+			doc.svgHtml = $svg.html();
+		    else {
+			$svg = $(".pvtRendererArea").find("svg");
+			if ($svg.length === 1)
+			    doc.svgHtml = $svg.html();
+			else
+			    doc.svgHtml = asSvgHtml( config.cols, config.rows );
+		    }
+		} else
+		    doc.svgHtml = asSvgHtml( config.cols, config.rows );
+		*/
+
+                Charts.update(currentChart._id, { $set: doc});
             }
         }
 
         var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
         if (element) {
+	   var cd = currentChart.chartData;
+	   if (cd == null) cd = [];
+           $(element).pivotUI(cd, pivotConf, true, null, currentChart._id);
            $(element).pivotUI(currentChart.chartData ? currentChart.chartData : [], pivotConf, true, null, currentChart._id);
         }
 
@@ -553,7 +649,7 @@ renderChart = function() {
         ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
     */
 
-    RefreshChart(_id, true, this.find(".output"));
+    RefreshChart(_id, true);
 
     watch.observeChanges({
         changed: RefreshChart
@@ -566,9 +662,24 @@ renderChart = function() {
 Template.Controls.rendered = renderChart;
 Template.ChartDisplay.rendered = renderChart;
 
+/*
 Template.AllCharts.helpers({
     allCharts: function() {
         return Charts.find({svgHtml: {$exists:1}}, {fields: {svgHtml:1}});
      }
 });
 
+function asSvgHtml(cols, rows) {
+    function get(a,i) { return a.length > i ? a[i] : "";};
+
+    return "<svg > <title>SVG Table</title> <g id='columnGroup'> <rect x='65' y='10' width='75' height='110' fill='gainsboro'/> <rect x='265' y='10' width='75' height='110' fill='gainsboro'/> <text x='30' y='30' font-size='18px' font-weight='bold' fill='crimson'> <tspan x='30' dy='1.5em'>"+get(col,0)+"</tspan> <tspan x='30' dy='1em'>"+get(col,0)+"</tspan> <tspan x='30' dy='1em'>"+get(col,0)+"</tspan> <tspan x='30' dy='1em'>"+get(col,0)+"</tspan> </text> </g> </svg>";
+}
+Template.AllCharts.events({
+  'click div.aChart' : function(e) {
+	var id = $(e.target).data("_id");
+	if (id == null)
+	  id = $(e.target).parents(".aChart").data("_id")
+	Router.go("/fusion/?id=" + id);
+   }
+});
+*/

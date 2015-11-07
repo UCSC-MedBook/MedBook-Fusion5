@@ -1,0 +1,50 @@
+
+
+
+
+<template name="TableBrowser">
+ <div class="TableBrowser">
+
+    {{#if save}}
+
+    <div class="panel panel-default">
+      <div class="panel-heading" >
+          <h3 class="panel-title">Save this table(required)</h3>
+       </div>
+       <div id="p1" class="panel-body ">
+	   <div class="input-group ">
+		 <select style="width:250px;" class="form-control" id="studyForNewTable">
+	   	    <option selected value="{{myStudy}}">{{myStudy}}</option>
+		    {{#each studies}}
+			<option value="{{this._id}}">{{this.name}}</option>
+		    {{/each}}
+		 </select>
+		 &nbsp; &nbsp;
+	     <input id="newTableName" placeholder="new table name" style="width:250px;" >
+		 &nbsp; &nbsp;
+	     <button id="TableBrowser" class="btn btn-default">Save</button>
+	  </div>
+       </div>
+    </div>
+
+    {{/if}}
+
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3 class="panel-title">Existing Tables</h3> </div>
+      <div id="p1" class="panel-body ">
+	 {{> reactiveTable showFilter=true  rowClass="existingTablesRow" showNavigation="auto" collection=myTables settings=myTablesSettings class=mergeClass }}
+       </div>
+    </div>
+
+    <div class="panel panel-default" style="display:inline-block;">
+      <div class="panel-heading" > <h3 class="panel-title">Table {{$.Session.get "BrowseTable"}}</h3> </div>
+      <div id="p1" class="panel-body ">
+	 {{> reactiveTable showFilter=true  showNavigation="auto" fields=browseTableFields collection=browseTable  settings=crfTablesSettings }}
+       </div>
+    </div>
+
+
+ </div>
+
+</template>
+

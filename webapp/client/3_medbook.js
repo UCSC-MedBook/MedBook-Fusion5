@@ -23,6 +23,7 @@ addMedBookButtons = function (result, groupArray) {
 
     var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  appendTo(span);
     var DownloadBtn = $('<button type="button" onclick="DownloadButton()" style="margin:10px;" class="btn btn-default">Download</button>').  appendTo(span);
+    var saveNewTableBtn = $('<button type="button" id="TableBrowser" style="margin:10px;" class="btn btn-default">New Table</button>').  appendTo(span);
     /*
     var sliderDiv = $('<span class="sliderContainer">Legend</span>').appendTo(result);
     var slider = $('<input id="test" value="' + window.LEGEND_PROPORTION * 100+ '" min="10" max="90" class="slider" type="range"/>').appendTo(sliderDiv);
