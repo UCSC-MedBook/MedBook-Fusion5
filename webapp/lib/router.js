@@ -21,10 +21,16 @@ Router.configure({
 
 if (Meteor.isClient)
     window.updateUrl = function(url, id) {
+
+
 	if (url.indexOf('?') > 0)
 	    url += '&id=' +id;
-	else
-	    url += '?id=' +id;
+	else {
+	    if (url.length > 0 && url[url.length -1] != '/')
+                url += '/?id=' +id;
+            else
+                url += '?id=' +id;
+        }
 	window.history.replaceState(null, null, url);
     }
 
