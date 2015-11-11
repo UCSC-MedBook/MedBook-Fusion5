@@ -28,7 +28,7 @@ Meteor.startup(function() {
     window.PivotCommonParams = {
         renderers: renderers,
         derivedAttributes: { "Age Bin": derivers.bin("age", 10), },
-        hiddenAttributes: [ "_id", "Patient_ID", "Sample_ID"] 
+        // hiddenAttributes: [ "_id", "Patient_ID", "Sample_ID"] 
     };
 
 });
