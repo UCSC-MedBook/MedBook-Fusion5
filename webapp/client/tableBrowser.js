@@ -47,10 +47,11 @@ function fn(value, obj) {
 function browseTableFields() {
    var table = Session.get("BrowseTable");
    if (table == null)
-      return null;
+      return [];
    var met = Collections.Metadata.findOne({name: table});
    if (met == null)
-      return null;
+      return [];
+   Session.set("BrowseTableFields", met.fieldOrder);
    return met.fieldOrder;
 };
 
@@ -86,7 +87,7 @@ Template.TableBrowser.helpers({
 
        if (studies != null && table != null) {
           Meteor.subscribe("CRFs", studies, [table]);
-          var data = Collections.CRFs.find({CRF: table, Study_ID: {$in: studies}}).fetch();
+          var data = Collections.CRFs.find({CRF: table/*, Study_ID: {$in: studies} */}).fetch();
 	  data.map(function(row,i) {
 	      Object.keys(row).map(function(key) {
 	          if (Array.isArray(row[key]))
@@ -94,6 +95,7 @@ Template.TableBrowser.helpers({
 	    
 	      });
 	  });
+          Session.set("BrowseTableData", data);
 	  return data;
        }
        return [];
@@ -130,6 +132,19 @@ Template.TableBrowser.helpers({
 });
 
 Template.TableBrowser.events({
+
+ 'click .downloadBrowseTable' : function(evt, tmpl) {
+       var table = Session.get("BrowseTable");
+       var data = Session.get("BrowseTableData");
+       var fields = Session.get("BrowseTableFields");
+       var studies = Session.get("BrowseStudies");
+
+       if (table && data && fields) {
+          var name = table + "_" + studies.join("_") + "_" + data.length + ".txt";
+          saveTextAs(ConvertToTSV(data, fields), name);
+       }
+ },
+
  'click .selectable' : function(evt, tmpl) {
      var data;
      if (evt.target.data) 
