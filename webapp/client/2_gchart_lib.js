@@ -49,7 +49,7 @@ Meteor.startup(function() {
           for (_i = 0, _len = rowKeys.length; _i < _len; _i++) {
             h = rowKeys[_i].map(function(k, n) { 
                 var rowAttr = pivotData.rowAttrs.length > 0 ? pivotData.rowAttrs[n] : "";
-                return rowAttr + ":" + k;
+                return rowAttr // + ":" + k;
             });
             _results.push(h.join(","));
           }
@@ -66,7 +66,7 @@ Meteor.startup(function() {
 
           grouprow = [colKey.map(function(k, i) {
                   var colAttr = pivotData.colAttrs.length > 0 ? pivotData.colAttrs[_i] : "";
-                  return  colAttr + ":" + k
+                  return  colAttr // + ":" + k
           }).join(",")];
           numCharsInHAxis += row[0].length;
           for (_j = 0, _len1 = rowKeys.length; _j < _len1; _j++) {
