@@ -141,30 +141,6 @@ Meteor.startup(function() {
       suffix: "%"
     });
     aggregatorTemplates = {
-      mean: function(formatter) {
-        if (formatter == null) {
-          formatter = usFmt;
-        }
-        return function() {
-          return function(data, rowKey, colKey) {
-            return {
-              count: 0,
-              sum: 0,
-              push: function(record) {
-                GROUPER(this, record, rowKey, colKey);
-                if (!isNaN(parseFloat(record[attr]))) {
-                  return this.sum += parseFloat(record[attr]);
-                }
-                return this.count++;
-              },
-              value: function() {
-                return this.sum / this.count;
-              },
-              format: formatter
-            };
-          };
-        };
-      },
       count: function(formatter) {
         if (formatter == null) {
           formatter = usFmtInt;
