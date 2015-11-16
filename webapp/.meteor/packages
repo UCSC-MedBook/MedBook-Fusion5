@@ -30,3 +30,4 @@ ucscmedbook:api
 momentjs:moment
 mrt:datatables-bootstrap3
 raix:handlebar-helpers
+http

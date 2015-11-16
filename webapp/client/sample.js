@@ -492,6 +492,8 @@ function initializeSpecialJQueryElements(document) {
      } );
 
      var $genelist = $("#genelist");
+     var httpGenesUrl = "/fusion/genes";
+     var httpGeneListPreciseUrl = "/fusion/geneListPrecise";
      $genelist.select2({
           initSelection : function (element, callback) {
             var prev = document;
@@ -500,7 +502,7 @@ function initializeSpecialJQueryElements(document) {
           },
           multiple: true,
           ajax: {
-            url: "/fusion/genes",
+            url: httpGenesUrl ,
             dataType: 'json',
             delay: 250,
             data: function (term) {
@@ -511,6 +513,26 @@ function initializeSpecialJQueryElements(document) {
             },
             results: function (data, page, query) { return { results: data.items }; },
             cache: true
+          },
+
+
+	  tokenizer: function(input, selection, callback) {
+	  debugger;
+	    var parts = input.split(/[ ;,\t]/)
+		.filter(function(s) { return s && s.length > 1})
+		.filter(function(s) { return s.match(/^[a-z0-9]+$/i)});
+            if (parts.length == 1) return;
+
+	    // We only get here on a paste
+	    // AR, TP53
+	     HTTP.get(httpGeneListPreciseUrl+"?q=" + parts.join(","), function(error, result) {
+		if (error == null)
+		    try {
+		    	var prevItems = $("#genelist").select2("data");
+			var newItems = prevItems.concat(JSON.parse(result.content).items);
+			$("#genelist").select2("data", newItems);
+		    } catch (exc) {}
+	     });
           },
           escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
           minimumInputLength: 2,
@@ -656,6 +678,18 @@ renderChart = function() {
     }); // watch.observeChanges
 
     $('#genesets').select2({ placeholder: "Select a pathway or geneset" });
+    // AR TP53
+    /*
+    $('body').on('paste', '.select2-input', function () {
+	    debugger;
+	    var that = this;
+	    setTimeout(function () {
+		var tokens = that.value.split(/[\,\s]+/);$(that).blur();
+		$('#genesets').val(tokens, true);
+		console.log($('#genesets').select2('val'));
+	    }, 1);
+	});
+    */
 } // renderChart;
 
 
