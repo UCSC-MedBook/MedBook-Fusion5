@@ -3,8 +3,11 @@
 function confirmBackspaceNavigations () {
     // http://stackoverflow.com/a/22949859/2407309
     var backspaceIsPressed = false
+    var last = new Date();
 
     $(document).keydown(function(event){
+        console.log(document.activeElement);
+        last = new Date();
         if (event.which == 8) {
             backspaceIsPressed = true
         }
@@ -15,10 +18,12 @@ function confirmBackspaceNavigations () {
         }
     })
     $(window).on('beforeunload', function(){
+        alert(new Date() - last);
         if (backspaceIsPressed) {
             backspaceIsPressed = false
             return "Hitting backspace causes the browser to navigate back a page."
         }
+        return "Unloading page"
     })
 } // confirmBackspaceNavigations
 
