@@ -66,6 +66,11 @@ Handlebars.registerHelper('myStudy', function (){
 
 
 Template.TableBrowser.helpers({
+    geneLikeDomains: function() {
+      return GeneLikeDataDomainsPrototype.map(function(gld) {
+          return {name: gld.label};
+      });
+    },
     studies : function() {
       var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
       return ret;

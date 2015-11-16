@@ -361,6 +361,14 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     var dataFieldNames =  Object.keys(keyUnion);
 
+    // Step 5b. placeholder for genesets.
+    if (ChartDocument.genesets) {
+        var gs = ChartDocument.genesets;
+        console.log("gs", gs);
+        var gsn = GeneSets.find({_id: {$in: gs}});
+        console.log(gsn);
+    }
+
     var selectedFieldNames = 
     ChartDocument.pivotTableConfig ?
       _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null)     : [];
