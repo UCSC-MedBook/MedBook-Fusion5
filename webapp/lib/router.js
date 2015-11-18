@@ -41,12 +41,13 @@ function data() {
         userId: Meteor.userId()
     };
     var data = null;
+    var id = this.params._id || this.params.query.id;
 
     if (this.params.query.id != null) {
-	data = Charts.findOne({_id: this.params.query.id});
+	data = Charts.findOne({_id: id});
     } else {
 	data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (data && this.params.query.id == null) {
+	if (data && id == null) {
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
 		updateUrl(url, data._id);
@@ -57,7 +58,7 @@ function data() {
 
 function waitOn() {
     return [
-      Meteor.subscribe('Chart', this.params.query.id),
+      Meteor.subscribe('Chart', this.params._id || this.params.query.id),
       Meteor.subscribe('Metadata'),
       Meteor.subscribe('studies')
     ]
@@ -74,9 +75,9 @@ Router.map(function() {
 
 Router.map(function() {
   this.route('display', {
-    template: "ChartDisplay",
+    template: "SampleFusion",
     onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
-    path: '/fusion/display',
+    path: '/fusion/display/:_id',
     data: data,
     waitOn: waitOn, 
   });
