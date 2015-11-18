@@ -661,7 +661,7 @@ renderChart = function() {
 	   var cd = currentChart.chartData;
 	   if (cd == null) cd = [];
            $(element).pivotUI(cd, pivotConf, true, null, currentChart._id);
-           $(element).pivotUI(currentChart.chartData ? currentChart.chartData : [], pivotConf, true, null, currentChart._id);
+           // $(element).pivotUI(currentChart.chartData ? currentChart.chartData : [], pivotConf, true, null, currentChart._id);
         }
 
     } // refreshChart
