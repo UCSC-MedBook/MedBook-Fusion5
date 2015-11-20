@@ -14,8 +14,9 @@ output <- list();
 MINLENGTH = 2;
 for (i in 1:(n-1))
     for (j in (i+1):n) {
+        print( length(data$input));
         if (length(data$input[[i]]$value) > MINLENGTH && length(data$input[[j]]$value) > MINLENGTH) {
-            pVal = t.test(data$input[[i]]$value, data$input[[j]]$value)$p.value;
+            pVal = t.test(unlist(data$input[[i]]$value), unlist(data$input[[j]]$value))$p.value;
             key = paste( data$input[[i]]$key, "***", data$input[[j]]$key, sep="");
             output[key] = pVal;
         }

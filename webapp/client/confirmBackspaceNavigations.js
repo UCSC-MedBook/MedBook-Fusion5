@@ -21,6 +21,7 @@ function confirmBackspaceNavigations () {
             backspaceIsPressed = false
             return "Hitting backspace causes the browser to navigate back a page."
         }
+        return "Are you sure you want to leave this page?"
     })
 } // confirmBackspaceNavigations
 
