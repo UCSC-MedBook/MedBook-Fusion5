@@ -149,14 +149,25 @@ Router.map(function() {
 });
 
 Router.map(function() {
+  this.route('GeneFusion', {
+    template: "GeneFusion",
+    path: '/fusion/gene/',
+    data: data,
+    waitOn: function() {
+       return [
+	   Meteor.subscribe("Metadata"),
+	   Meteor.subscribe('studies')
+       ]
+    }
+  });
+});
+
+
+
+Router.map(function() {
   this.route('import', {
     template: "DataImport",
     path: '/fusion/import',
-    waitOn: function() {
-	return [
-	  Meteor.subscribe('Metadata'),
-	  Meteor.subscribe('studies')
-	]
-    }
+    waitOn: waitOn, 
   });
 });

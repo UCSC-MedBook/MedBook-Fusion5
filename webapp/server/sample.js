@@ -205,11 +205,12 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
 
-        
+
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
-    var gld = ChartDocument.geneLikeDataDomain;
     var gl  = ChartDocument.genelist;
+    var gld = ChartDocument.geneLikeDataDomain;
+
     if (gld && gl && gld.length > 0 && gl.length > 0)  {
 
         gld
@@ -221,8 +222,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
             var cursor = DomainCollections[domain.collection].find(query);
             // console.log("GeneLikeDomain", domain.label, domain.collection, query, cursor.count());
-
-
 	    
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression
@@ -360,14 +359,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
     var dataFieldNames =  Object.keys(keyUnion);
-
-    // Step 5b. placeholder for genesets.
-    if (ChartDocument.genesets) {
-        var gs = ChartDocument.genesets;
-        console.log("gs", gs);
-        var gsn = GeneSets.find({_id: {$in: gs}});
-        console.log(gsn);
-    }
 
     var selectedFieldNames = 
     ChartDocument.pivotTableConfig ?

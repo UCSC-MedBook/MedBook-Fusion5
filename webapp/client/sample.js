@@ -200,7 +200,7 @@ Template.Controls.helpers({
            selected = _.contains(vv._id, selectedGenesets) ? " selected " : "";
            if (selected.length > 0)
                debuggger
-           html += '    <option value="'+ vv._id + '"' + selected + '>' + vv.name + '</option>';
+           html += '    <option value="'+ vv.name + '"' + selected + '>' + vv.name + '</option>';
        });
        html += '</optGroup>\n';
 
@@ -466,6 +466,7 @@ Template.Controls.events({
        var genesets = [];
        $(evt.target.selectedOptions).each(function(i, opt) {
            var _id = $(opt).val();
+	   debugger;
            genesets.push(_id);
        });
        UpdateCurrentChart("genesets", genesets); 
