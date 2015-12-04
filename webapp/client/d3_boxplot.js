@@ -217,7 +217,9 @@ window.makeD3BoxPlotChart= function(chartType, extraOptions) {
         }
         var $pVals = $("<div class='d3boxplot'></div>").appendTo(window.$div);
 
-        processStrata(strata, strataSampleSets, $pVals);
+        setTimeout(function() {
+            processStrata(strata, strataSampleSets, $pVals);
+	}, 3000);
 
         addMedBookButtons(window.$div, null)
         $('<button type="button" onclick="selectContrast()" style="margin:10px;" class="btn btn-default">Select Contrast</button>').  
