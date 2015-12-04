@@ -251,7 +251,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                         ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                         : geneName + ' ' + domain.labelItem
                     label = label.replace(/\./g,"_");
-                    var samplelist =  _.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) );
+                    var samplelist =  ChartDocument.samplelist  && ChartDocument.samplelist.length > 0 ?
+			_.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) )
+			: Object.keys(geneData.samples);
 
 
                     samplelist.map(function (sampleID) {
