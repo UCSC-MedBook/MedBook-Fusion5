@@ -8,4 +8,4 @@ cd webapp
 # export MONGO_URL=mongodb://localhost:27017/MedBook
 export ROOT_URL=https://su2c.ucsc.edu/fusion/
 echo $MONGO_URL $ROOT_URL 
-meteor  --port $PORT >& "../logs/log.fusion.$$"
+meteor --release 1.1  --port $PORT >& "../logs/log.fusion.$$"

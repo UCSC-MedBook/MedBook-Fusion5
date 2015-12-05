@@ -160,3 +160,96 @@ Router.map(function() {
     }
   });
 });
+
+function parseCookies (request) {
+    var list = {},
+        rc = request.headers.cookie;
+
+    rc && rc.split(';').forEach(function( cookie ) {
+        var parts = cookie.split('=');
+        list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+
+    return list;
+}
+
+dataFile = function() {
+  console.log("datafile");
+
+  var attachmentFilename = 'filename.txt';
+  if (this.query && this.query.params && this.query.params.filename)
+      attachmentFilename = this.query.params.filename;
+  var cookies = parseCookies(this.request);
+  var mlt = cookies["meteor_login_token"];
+  var hash_mlt =  Accounts._hashLoginToken(mlt);
+  var user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+  if (user == null)
+      throw new Error("user must be logged in");
+
+  var studiesRequested;
+  if (this.query && this.query.params && this.query.params.study)
+      studiesRequested = [this.query.params.study];
+  else if (this.query && this.query.params && this.query.params.studies)
+      studiesRequested = this.query.params.studies;
+  else
+      studiesRequested = ["prad_wcdt"];
+
+  var response = this.response;
+  response.writeHead(200, {
+    'Content-Type': 'text/tab-separated-values',
+    'Content-Disposition': 'attachment; filename=' + attachmentFilename,
+  });
+
+  // filter studies to only thosea allowed by collaborations
+  var studiesFiltered = [];
+  var samplesAllowed = [];
+
+  Collections.studies.find( {
+        id: {$in: studiesRequested},
+        collaborations: {$in: user.profile.collaborations}
+      }, 
+      {fields: {id:1, Sample_IDs: 1}}
+  ).forEach( function(doc) {
+      studiesFiltered.push(doc.id)
+      samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
+  });
+
+  if (studiesFiltered.length == 0 || samplesAllowed.length == 0)
+      throw new Error("must specify studies that your collaborations are allowed to use");
+
+  samplesAllowed = samplesAllowed.sort();
+
+  console.log(samplesAllowed);
+
+  response.write("Gene");
+  samplesAllowed.map(function(sample_label) {
+      response.write("\t");
+      response.write(sample_label);
+  });
+  response.write("\n");
+  Expression.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
+      var line = doc.gene;
+      var any_got_rsem = false;
+      samplesAllowed.map(function(sample_label) {
+          line += "\t";
+
+          var value_container = doc.samples[sample_label];
+          if (value_container && "rsem_quan_log2" in value_container) {
+              any_got_rsem = true;
+              line += String(value_container.rsem_quan_log2);
+          }
+      });
+      line += "\n";
+      if (any_got_rsem)
+          response.write(line);
+  });
+  response.end();
+};
+
+
+Router.map(function() {
+  this.route('download', {
+    where: 'server',
+    action: dataFile,
+  });
+});
