@@ -338,7 +338,7 @@ genomicData = function() {
 
 
 Router.map(function() {
-  this.route('genomicData', {
+  this.route('export', {
     where: 'server',
     action: genomicData,
   });
