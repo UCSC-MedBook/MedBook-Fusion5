@@ -68,7 +68,7 @@ Handlebars.registerHelper('myStudy', function (){
 Template.TableBrowser.helpers({
     geneLikeDomains: function() {
       return GeneLikeDataDomainsPrototype.map(function(gld) {
-          return {name: gld.label};
+          return {name: gld.label, collection: gld.collection};
       });
     },
     studies : function() {
@@ -160,6 +160,9 @@ Template.TableBrowser.events({
          Session.set("BrowseStudies", [data.study]);
          Session.set("BrowseTable", data.name);
      }
+ },
+ 'click .gldRow' : function(evt, tmpl) {
+    Router.go("/fusion/genomicData/?datatype="+this.collection)
  },
  'click .existingTablesRow' : function(evt, tmpl) {
     Session.set("BrowseTable", this.name);

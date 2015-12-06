@@ -1,3 +1,13 @@
+
+/*
+Meteor.startup(function() {
+  if (Meteor.isServer) {
+     Expression.ensureIndex( {gene:1, studies:1});
+     Expression_Isoform.ensureIndex( {gene:1, studies:1});
+  }
+});
+*/
+
 /*
 Router.onBeforeAction(function () {
   // all properties available in the route function
@@ -184,66 +194,51 @@ function parseCookies (request) {
     return list;
 }
 
-dataFile = function() {
-  console.log("datafile");
+function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  {
+  var Hugo_Symbol = null;
 
-  var attachmentFilename = 'filename.txt';
-  if (this.query && this.query.params && this.query.params.filename)
-      attachmentFilename = this.query.params.filename;
-  var cookies = parseCookies(this.request);
-  var mlt = cookies["meteor_login_token"];
-  var hash_mlt =  Accounts._hashLoginToken(mlt);
-  var user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
-  if (user == null)
-      throw new Error("user must be logged in");
-
-  var studiesRequested;
-  if (this.query && this.query.params && this.query.params.study)
-      studiesRequested = [this.query.params.study];
-  else if (this.query && this.query.params && this.query.params.studies)
-      studiesRequested = this.query.params.studies;
-  else
-      studiesRequested = ["prad_wcdt"];
-
-  var response = this.response;
-  response.writeHead(200, {
-    'Content-Type': 'text/tab-separated-values',
-    'Content-Disposition': 'attachment; filename=' + attachmentFilename,
-  });
-
-  // filter studies to only thosea allowed by collaborations
-  var studiesFiltered = [];
-  var samplesAllowed = [];
-
-  Collections.studies.find( {
-        id: {$in: studiesRequested},
-        collaborations: {$in: user.profile.collaborations}
+  var cursor = coll.find(
+      {
+	  Study_ID: {$in: studiesFiltered}, 
+	  sample: {$in: samplesAllowed},
+	  "MA_FImpact": {$in: ["medium", "high"]},
       }, 
-      {fields: {id:1, Sample_IDs: 1}}
-  ).forEach( function(doc) {
-      studiesFiltered.push(doc.id)
-      samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
+      {sort:{Hugo_Symbol:1, sample:1}});
+
+
+  var bucket = {};
+  function flush(symbol) {
+      response.write(symbol);
+      samplesAllowed.map(function(sample) {
+	  response.write("\t");
+	  if (sample in bucket)
+	      response.write("1");
+	  else
+	      response.write("0");
+      });
+      response.write("\n");
+      bucket = {};
+  }
+
+  cursor.forEach(function(doc) {
+      if (Hugo_Symbol != doc.Hugo_Symbol) {
+	  Hugo_Symbol = doc.Hugo_Symbol;
+	  flush(Hugo_Symbol);
+      }
+      bucket[doc.sample] = 1;
   });
+  flush(Hugo_Symbol);
+}
 
-  if (studiesFiltered.length == 0 || samplesAllowed.length == 0)
-      throw new Error("must specify studies that your collaborations are allowed to use");
 
-  samplesAllowed = samplesAllowed.sort();
-
-  console.log(samplesAllowed);
-
-  response.write("Gene");
-  samplesAllowed.map(function(sample_label) {
-      response.write("\t");
-      response.write(sample_label);
-  });
-  response.write("\n");
-  Expression.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
+function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
+  coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
       var line = doc.gene;
+      if ('transcript' in doc) // for isoforms
+         line  += ' '+ doc.transcript;
       var any_got_rsem = false;
       samplesAllowed.map(function(sample_label) {
           line += "\t";
-
           var value_container = doc.samples[sample_label];
           if (value_container && "rsem_quan_log2" in value_container) {
               any_got_rsem = true;
@@ -254,13 +249,97 @@ dataFile = function() {
       if (any_got_rsem)
           response.write(line);
   });
+}
+
+
+genomicData = function() {
+
+
+  // First Security Check, is the user logged in?
+  var cookies = parseCookies(this.request);
+  var mlt = cookies["meteor_login_token"];
+  var user = null;
+  if (mlt) {
+      var hash_mlt =  Accounts._hashLoginToken(mlt);
+      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+  }
+  if (user == null)
+      throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+
+  // Datatype parameter
+  var datatype = 'Expression';
+  if (this.params && this.params.query && this.params.query.datatype) {
+      datatype = this.params.query.datatype;
+      if (!(datatype in DomainCollections))
+	  throw new Error("Allowed datatypes are" + Object.keys(DomainCollections).sort().join(","));
+  }
+
+  // Filename parameter
+  var attachmentFilename = 'filename.txt';
+  if (this.params && this.params.query && this.params.query.filename)
+      attachmentFilename = this.params.query.filename;
+
+
+  // Studies requsted parameter, default to prad_wcdt for now
+  var studiesRequested;
+  if (this.params && this.params.query && this.params.query.study)
+      studiesRequested = [this.params.query.study];
+  else if (this.params && this.params.query && this.params.query.studies)
+      studiesRequested = this.params.query.studies;
+  else
+      studiesRequested = ["prad_wcdt"];
+
+
+  // Filter studies to only thosea allowed by collaborations
+  var studiesFiltered = [];
+  var samplesAllowed = [];
+  Collections.studies.find( {
+        id: {$in: studiesRequested},
+        collaborations: {$in: ["public"].concat(user.profile.collaborations)}
+      }, 
+      {fields: {id:1, Sample_IDs: 1}}
+  ).forEach( function(doc) {
+      studiesFiltered.push(doc.id)
+      samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
+  });
+
+  // Last Security check
+  if (studiesFiltered.length == 0 || samplesAllowed.length == 0)
+      throw new Error("must specify studies that your collaborations are allowed to use");
+
+
+  
+  var response = this.response;
+  response.writeHead(200, {
+    // 'Content-Type': 'text/tab-separated-values',
+    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+  });
+
+
+  samplesAllowed = samplesAllowed.sort();
+
+  response.write("Gene");
+  samplesAllowed.map(function(sample_label) {
+      response.write("\t");
+      response.write(sample_label);
+  });
+  response.write("\n");
+
+  
+  var coll =  DomainCollections[datatype];
+  if (datatype == "Mutations")
+      genomicDataMutations(coll, samplesAllowed, studiesFiltered, response);
+  else
+      genomicDataSamples(coll, samplesAllowed, studiesFiltered, response);
+
+
   response.end();
 };
 
 
 Router.map(function() {
-  this.route('download', {
+  this.route('genomicData', {
     where: 'server',
-    action: dataFile,
+    action: genomicData,
   });
 });

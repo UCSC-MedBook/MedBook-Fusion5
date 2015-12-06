@@ -31,6 +31,11 @@
     <div class="panel panel-default">
       <div class="panel-heading" > <h3 >Genomic Data</h3> </div>
       <div id="p1" class="panel-body ">
+	    {{#each geneLikeDomains}}
+	        <a href="/fusion/genomicData/?datatype={{this.collection}}" target="_blank">Download {{this.name}}</a> 
+		<br>
+	    {{/each}}
+          
 	 {{> reactiveTable showFilter=true  rowClass="gldRow" showNavigation="auto" collection=geneLikeDomains }}
        </div>
     </div>

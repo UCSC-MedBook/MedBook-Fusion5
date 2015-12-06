@@ -21,7 +21,13 @@ function confirmBackspaceNavigations () {
             backspaceIsPressed = false
             return "Hitting backspace causes the browser to navigate back a page."
         }
-        return "Are you sure you want to leave this page?"
+
+	// this is a server side route which doesn't change the page.
+	var url = Router.current().originalUrl;
+	if (!(url && url.startsWith("/fusion/genomicData"))) {
+	    return "Are you sure you want to leave this page?"
+	}
+	// I'm not sure why falling off the function is diffrent from return null, but it is on Chrome
     })
 } // confirmBackspaceNavigations
 
