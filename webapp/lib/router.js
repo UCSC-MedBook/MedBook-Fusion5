@@ -114,12 +114,34 @@ Router.map(function() {
 
 
 Router.map(function() {
+  this.route('fusionDownload', {
+    template: "Download",
+    path: '/fusion/download/',
+    waitOn: function() {
+      return [
+	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('studies')
+      ];
+    },
+    onBeforeAction : function(arg) {
+       Session.set("BrowseStudies", null);
+       Session.set("BrowseTable", null);
+       this.next();
+    }
+  });
+});
+
+
+Router.map(function() {
   this.route('fusionTables', {
     template: "TableBrowser",
     path: '/fusion/tables/',
     data: data,
     waitOn: function() {
-       return Meteor.subscribe("Metadata");
+      return [
+	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('studies')
+      ];
     },
     onBeforeAction : function(arg) {
        Session.set("BrowseStudies", null);
@@ -251,10 +273,28 @@ function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
   });
 }
 
+function clinical(coll, samplesAllowed, studiesFiltered, response)  {
+  coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
+      var line = doc.gene;
+      if ('transcript' in doc) // for isoforms
+         line  += ' '+ doc.transcript;
+      var any_got_rsem = false;
+      samplesAllowed.map(function(sample_label) {
+          line += "\t";
+          var value_container = doc.samples[sample_label];
+          if (value_container && "rsem_quan_log2" in value_container) {
+              any_got_rsem = true;
+              line += String(value_container.rsem_quan_log2);
+          }
+      });
+      line += "\n";
+      if (any_got_rsem)
+          response.write(line);
+  });
+}
 
-genomicData = function() {
 
-
+exportData = function() {
   // First Security Check, is the user logged in?
   var cookies = parseCookies(this.request);
   var mlt = cookies["meteor_login_token"];
@@ -266,12 +306,17 @@ genomicData = function() {
   if (user == null)
       throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
 
+  // Kind parameter
+  var kind = 'genomic';
+  if (this.params && this.params.query && this.params.query.kind) {
+      kind = this.params.query.kind;
+  }
+
+
   // Datatype parameter
-  var datatype = 'Expression';
-  if (this.params && this.params.query && this.params.query.datatype) {
-      datatype = this.params.query.datatype;
-      if (!(datatype in DomainCollections))
-	  throw new Error("Allowed datatypes are" + Object.keys(DomainCollections).sort().join(","));
+  var table = 'Expression';
+  if (this.params && this.params.query && this.params.query.table) {
+      table = this.params.query.table;
   }
 
   // Filename parameter
@@ -307,7 +352,6 @@ genomicData = function() {
   if (studiesFiltered.length == 0 || samplesAllowed.length == 0)
       throw new Error("must specify studies that your collaborations are allowed to use");
 
-
   
   var response = this.response;
   response.writeHead(200, {
@@ -315,23 +359,32 @@ genomicData = function() {
     'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
   });
 
-
   samplesAllowed = samplesAllowed.sort();
 
-  response.write("Gene");
-  samplesAllowed.map(function(sample_label) {
-      response.write("\t");
-      response.write(sample_label);
-  });
-  response.write("\n");
+  if (kind == "genomic") {
+      response.write("Gene");
+      samplesAllowed.map(function(sample_label) {
+	  response.write("\t");
+	  response.write(sample_label);
+      });
+      response.write("\n");
+      var coll =  DomainCollections[table];
+      if (table == "Mutations")
+	  genomicDataMutations(coll, samplesAllowed, studiesFiltered, response);
+      else
+	  genomicDataSamples(coll, samplesAllowed, studiesFiltered, response);
 
-  
-  var coll =  DomainCollections[datatype];
-  if (datatype == "Mutations")
-      genomicDataMutations(coll, samplesAllowed, studiesFiltered, response);
-  else
-      genomicDataSamples(coll, samplesAllowed, studiesFiltered, response);
-
+  } else if (kind == "clinical") {
+      var meta = Collections.Metadata.findOne({name: table})
+      var data = Collections.CRFs.find({CRF: table, Study_ID: {$in: studiesFiltered}}, {sort: {Sample_ID:1}}).fetch();
+      data.map(function(row,i) {
+	  Object.keys(row).map(function(key) {
+	      if (Array.isArray(row[key]))
+		  row[key] = row[key].join(";");
+	  });
+      });
+      response.write(ConvertToTSV(data, meta.fieldOrder));
+  }
 
   response.end();
 };
@@ -340,6 +393,6 @@ genomicData = function() {
 Router.map(function() {
   this.route('export', {
     where: 'server',
-    action: genomicData,
+    action: exportData,
   });
 });

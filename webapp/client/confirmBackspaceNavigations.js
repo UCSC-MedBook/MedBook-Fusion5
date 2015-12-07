@@ -24,7 +24,7 @@ function confirmBackspaceNavigations () {
 
 	// this is a server side route which doesn't change the page.
 	var url = Router.current().originalUrl;
-	if (!(url && url.startsWith("/fusion/genomicData"))) {
+	if (!(url && url.startsWith("/fusion/export"))) {
 	    return "Are you sure you want to leave this page?"
 	}
 	// I'm not sure why falling off the function is diffrent from return null, but it is on Chrome
