@@ -480,6 +480,9 @@ Template.Controls.events({
 })
 
 function initializeSpecialJQueryElements(document) {
+     $("#samplelist").val(document.samplelist);
+
+
      $('.studiesSelectedTable th').hide()
 
      $("#additionalQueries").select2( {
