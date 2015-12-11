@@ -466,7 +466,6 @@ Template.Controls.events({
        var genesets = [];
        $(evt.target.selectedOptions).each(function(i, opt) {
            var _id = $(opt).val();
-	   debugger;
            genesets.push(_id);
        });
        UpdateCurrentChart("genesets", genesets); 
@@ -521,7 +520,6 @@ function initializeSpecialJQueryElements(document) {
 
 
 	  tokenizer: function(input, selection, callback) {
-	  debugger;
 	    var parts = input.split(/[ ;,\t]/)
 		.filter(function(s) { return s && s.length > 1})
 		.filter(function(s) { return s.match(/^[a-z0-9]+$/i)});
@@ -566,8 +564,7 @@ cc = null;
 
 CurrentChart = function(name) {
     var x = Template.currentData();
-    if (x == null)
-       debugger;
+    if (x == null) return null;
     cc = x;
     if (name)
         return x[name];
@@ -685,7 +682,6 @@ renderChart = function() {
     // AR TP53
     /*
     $('body').on('paste', '.select2-input', function () {
-	    debugger;
 	    var that = this;
 	    setTimeout(function () {
 		var tokens = that.value.split(/[\,\s]+/);$(that).blur();
