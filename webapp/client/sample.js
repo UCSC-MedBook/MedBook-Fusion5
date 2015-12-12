@@ -130,14 +130,16 @@ Template.Controls.helpers({
    geneLikeDataDomains : function() {
       var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
       if (prevGeneLikeDataDomains)
-          GeneLikeDataDomainsPrototype.map(function(newDomain) {
-              prevGeneLikeDataDomains.map(function(prevDomain) {
+          GeneLikeDataDomainsPrototype.map(function(prevDomain) {
+              prevGeneLikeDataDomains.map(function(newDomain) {
                   if (prevDomain.collection == newDomain.collection  && prevDomain.field == newDomain.field ) {
                       newDomain.state = prevDomain.state;
                   }
               });
           });
-      return GeneLikeDataDomainsPrototype;
+      else
+          prevGeneLikeDataDomainsPrototype = JSON.parse(JSON.stringify(GeneLikeDataDomainsPrototype));
+      return prevGeneLikeDataDomainsPrototype;
    },
 
    studiesSelected: function() {
@@ -479,7 +481,17 @@ Template.Controls.events({
 })
 
 function initializeSpecialJQueryElements(document) {
-     $("#samplelist").val(document.samplelist);
+    if (document & document.samplelist)
+         $("#samplelist").val(document.samplelist);
+
+     GeneLikeDataDomainsPrototype.map(function(domain) {
+          $("input[name='" + domain.checkBoxName + "']").prop("checked", domain.state);
+     });
+     if (document && document.geneLikeDataDomain) {
+         document.geneLikeDataDomain.map(function(domain) {
+             $("input[name='" + domain.checkBoxName + "']").prop("checked", domain.state);
+         });
+     }
 
 
      $('.studiesSelectedTable th').hide()
