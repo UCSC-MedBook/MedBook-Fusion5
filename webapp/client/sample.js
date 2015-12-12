@@ -138,8 +138,8 @@ Template.Controls.helpers({
               });
           });
       else
-          prevGeneLikeDataDomainsPrototype = JSON.parse(JSON.stringify(GeneLikeDataDomainsPrototype));
-      return prevGeneLikeDataDomainsPrototype;
+          prevGeneLikeDataDomains = JSON.parse(JSON.stringify(GeneLikeDataDomainsPrototype));
+      return prevGeneLikeDataDomains;
    },
 
    studiesSelected: function() {
@@ -603,7 +603,7 @@ renderChart = function() {
     Meteor.subscribe("DIPSC", dipsc_id);
 
     RefreshChart = function(id, fields) {
-        console.log("RefreshChart", id, fields);
+        // console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
 
