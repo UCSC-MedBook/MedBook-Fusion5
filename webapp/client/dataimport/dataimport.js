@@ -87,9 +87,34 @@ function analyze(rowData) {
   return results;
 }
 
+function saveTable(rowData) {
+    var headers = _.clone(rowData[0]);
+    var primaryKeys = rowData.map(function(row) { return row[0]; });
+
+    var fields =  headers.map(function(fieldName) {
+	return {
+		  "Field_Name": fieldName,
+		  "optional": true,
+		  "type": "String"
+	}
+    };
+
+    Meteor.call("newTableFromSpreadsheet", 
+       $("newTableName").val(), $("#studyForNewTable").val(), fields, rowData, 
+
+       function(err, ret) {
+       }
+    );
+}
+
 Template.DataImport.events({
+ 'click #save' : function() {
+    var rowData = _.clone(DataImportSpreadSheet.getData());
+    saveTable(rowData);
+
+  }, 
  'click #analyze' : function() {
-    var rowData = DataImportSpreadSheet.getData();
+    var rowData = _.clone(DataImportSpreadSheet.getData());
     var results = analyze(rowData);
     console.log(results);
   },
