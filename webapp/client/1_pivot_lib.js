@@ -1404,6 +1404,11 @@ Meteor.startup(function() {
             if (preflight(input, subopts))
                 pivotTable.pivot(input, subopts, exclusions);
 
+	    Session.set("ChartDataFinal", input);
+	    var keys = subopts.cols.concat(subopts.rows);
+            Session.set("ChartDataFinalKeys", ["Patient_ID", "Sample_ID"].concat(keys));
+
+
             pivotUIOptions = $.extend(opts, {
               cols: subopts.cols,
               rows: subopts.rows,

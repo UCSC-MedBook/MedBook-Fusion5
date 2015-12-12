@@ -1,12 +1,4 @@
 
-window.DownloadButton = function () {
-    var data = Session.get('ChartDataFinal');
-    var name = Session.get('CurrentChart').studies.join("_") + "_" + data.length + ".txt";
-    var keys = Session.get("ChartDataFinalKeys");
-
-    saveTextAs(ConvertToTSV(data, keys), name);
-}
-
 window.postButton = function () { 
     var cloned = _.clone(Session.get("CurrentChart"));
     delete cloned["_id"];
@@ -22,7 +14,10 @@ addMedBookButtons = function (result, groupArray) {
     var span = $('<span>').appendTo(result);
 
     var postBtn = $('<button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>').  appendTo(span);
-    var DownloadBtn = $('<button type="button" onclick="DownloadButton()" style="margin:10px;" class="btn btn-default">Download</button>').  appendTo(span);
+    var cc = Session.get('CurrentChart');
+    var id = cc ? cc._id : "";
+
+    var DownloadBtn = $('<a id="DownloadButton" href="/fusion/exportChart/?id=' + id + '" style="margin:10px;" class="btn btn-default">Download</a>').  appendTo(span);
     var saveNewTableBtn = $('<button type="button" id="TableBrowser" style="margin:10px;" class="btn btn-default">New Table</button>').  appendTo(span);
     /*
     var sliderDiv = $('<span class="sliderContainer">Legend</span>').appendTo(result);
