@@ -11,7 +11,7 @@ function valueIn(field, value) {
 var PivotTableInit = {
     cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
 
-    rendererName: "Bar Chart",
+    rendererName: "Table",
 };
 id_text = function(array) {
     return array.map(function(e) { return { id: e, text: e} });
