@@ -97,7 +97,7 @@ function saveTable(rowData) {
 		  "optional": true,
 		  "type": "String"
 	}
-    };
+    });
 
     Meteor.call("newTableFromSpreadsheet", 
        $("newTableName").val(), $("#studyForNewTable").val(), fields, rowData, 

@@ -424,7 +424,8 @@ exportChart = function() {
       user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
   }
   if (user == null)
-      throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+      // throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+      console.log("user should be logged in. Cookies=" + JSON.stringify(cookies));
 
   // Filename parameter
   var attachmentFilename = 'filename.txt';

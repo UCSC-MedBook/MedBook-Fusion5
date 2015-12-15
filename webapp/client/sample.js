@@ -481,6 +481,16 @@ Template.Controls.events({
 function initializeSpecialJQueryElements(document) {
      $("#samplelist").val(document.samplelist);
 
+      // init to default values
+      GeneLikeDataDomainsPrototype.map(function(gld) {
+	  $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
+      });
+
+      var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
+      if (prevGeneLikeDataDomains)
+	  prevGeneLikeDataDomains.map(function(gld) {
+	      $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
+	  });
 
      $('.studiesSelectedTable th').hide()
 
