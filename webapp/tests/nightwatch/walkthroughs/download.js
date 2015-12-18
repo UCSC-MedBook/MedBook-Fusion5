@@ -19,6 +19,8 @@ module.exports = {
       .signInDF(userA.email, userA.password)
       .pause(3000)
       .verify.elementPresent("#DownloadButton")
+      .click("#DownloadButton")
+      .pause(3000)
       .end();
   }
 };

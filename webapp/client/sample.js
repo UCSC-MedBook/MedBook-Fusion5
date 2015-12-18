@@ -638,6 +638,8 @@ renderChart = function() {
 
         templateContext = { 
             onRefresh: function(config) {
+		assertSaneFusion();
+
                 currentChart.pivotTableConfig = { 
                     cols: config.cols,
                     rows: config.rows,
@@ -727,3 +729,15 @@ Template.AllCharts.events({
    }
 });
 */
+
+// as per Robert December 17, 2015
+assertSaneFusion = function() {
+   if ($('.pvtUsed').children().length > 0) { // we have controls
+       var rend = $('.pvtRendererArea')
+       if (rend.length == 0 || rend.children().length == 0) {
+           console.log("currentChart", cc);
+	   console.log("rend area", rend);
+           debugger;
+       }
+   }
+}
