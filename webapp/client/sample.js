@@ -93,7 +93,7 @@ Template.Controls.helpers({
 
 
    mostImportantCorrelations : function() {
-       var d = Template.currentData();
+       var d = Session.get("TheChart");
        /*
        if (d == null) return null;
        if (cache_dipsc == d)
@@ -186,8 +186,7 @@ Template.Controls.helpers({
    genesets : function() {
        var html = '';
        var type = null;
-       var currentChart = Template.currentData();
-       var selectedGenesets = currentChart.genesets;
+       var selectedGenesets = CurrentChart("genesets");
 
        GeneSets.find({}, {sort: [["type", "asc"], ["name", "asc"]]})
         .forEach(function(vv) {
@@ -416,7 +415,7 @@ Template.Controls.events({
    },
 
    'click #TableBrowser': function(evt, tmpl) {
-	var currentChart = Template.currentData();
+	var currentChart = Session.get("TheChart");
 	/*
 	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
 	var data = currentChart.chartData.map( function(doc) {
@@ -573,7 +572,7 @@ console.log("onstartup");
 cc = null;
 
 CurrentChart = function(name) {
-    var x = Template.currentData();
+    var x = Session.get("TheChart");
     if (x == null) return null;
     cc = x;
     if (name)
@@ -583,7 +582,7 @@ CurrentChart = function(name) {
 }
 
 UpdateCurrentChart = function(name, value) {
-    var x = Template.currentData();
+    var x = Session.get("TheChart");
     x[name] = value;
     var u =  {};
     u[name] = value;
@@ -594,6 +593,7 @@ UpdateCurrentChart = function(name, value) {
 renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
+
     var currentChart = watch.fetch()[0];
     var element = this.find(".output");
 

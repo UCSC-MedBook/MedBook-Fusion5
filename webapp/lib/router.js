@@ -50,19 +50,20 @@ function data() {
         post: {$exists: 0},
         userId: Meteor.userId()
     };
-    var data = null;
+    var theChart = null;
     var id = this.params._id || this.params.query.id;
 
     if (this.params.query.id != null) {
-	data = Charts.findOne({_id: id});
+	theChart = Charts.findOne({_id: id});
     } else {
-	data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (data && id == null) {
+	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
+	if (theChart && id == null) {
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
-		updateUrl(url, data._id);
+		updateUrl(url, theChart._id);
 	}
     }
+    Session.set("TheChart", theChart);
     return data;
 }
 

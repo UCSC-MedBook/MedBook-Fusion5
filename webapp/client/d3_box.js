@@ -273,11 +273,8 @@ d3.box = function() {
           formula.forEach(function(sample,j) {
 
 	      var label = dataSet[1][j].Label;
-	      console.log(label)
 	      var x = 0;
-	      if (label == null)
-		  debugger;
-	      else
+	      if (label != null)
 		  x = JitterSeedless(label);
               sample.cx.baseVal.value += (x-0.5)*(width*.90); // Robert wants noise!
           });
