@@ -93,7 +93,7 @@ Template.Controls.helpers({
 
 
    mostImportantCorrelations : function() {
-       var d = Template.currentData();
+       var d = Session.get("TheChart");
        /*
        if (d == null) return null;
        if (cache_dipsc == d)
@@ -188,8 +188,7 @@ Template.Controls.helpers({
    genesets : function() {
        var html = '';
        var type = null;
-       var currentChart = Template.currentData();
-       var selectedGenesets = currentChart.genesets;
+       var selectedGenesets = CurrentChart("genesets");
 
        GeneSets.find({}, {sort: [["type", "asc"], ["name", "asc"]]})
         .forEach(function(vv) {
@@ -418,7 +417,7 @@ Template.Controls.events({
    },
 
    'click #TableBrowser': function(evt, tmpl) {
-	var currentChart = Template.currentData();
+	var currentChart = Session.get("TheChart");
 	/*
 	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
 	var data = currentChart.chartData.map( function(doc) {
@@ -493,6 +492,16 @@ function initializeSpecialJQueryElements(document) {
          });
      }
 
+      // init to default values
+      GeneLikeDataDomainsPrototype.map(function(gld) {
+	  $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
+      });
+
+      var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
+      if (prevGeneLikeDataDomains)
+	  prevGeneLikeDataDomains.map(function(gld) {
+	      $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
+	  });
 
      $('.studiesSelectedTable th').hide()
 
@@ -575,7 +584,7 @@ console.log("onstartup");
 cc = null;
 
 CurrentChart = function(name) {
-    var x = Template.currentData();
+    var x = Session.get("TheChart");
     if (x == null) return null;
     cc = x;
     if (name)
@@ -585,7 +594,7 @@ CurrentChart = function(name) {
 }
 
 UpdateCurrentChart = function(name, value) {
-    var x = Template.currentData();
+    var x = Session.get("TheChart");
     x[name] = value;
     var u =  {};
     u[name] = value;
@@ -596,6 +605,7 @@ UpdateCurrentChart = function(name, value) {
 renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
+
     var currentChart = watch.fetch()[0];
     var element = this.find(".output");
 
@@ -640,6 +650,8 @@ renderChart = function() {
 
         templateContext = { 
             onRefresh: function(config) {
+		assertSaneFusion();
+
                 currentChart.pivotTableConfig = { 
                     cols: config.cols,
                     rows: config.rows,
@@ -729,3 +741,15 @@ Template.AllCharts.events({
    }
 });
 */
+
+// as per Robert December 17, 2015
+assertSaneFusion = function() {
+   if ($('.pvtUsed').children().length > 0) { // we have controls
+       var rend = $('.pvtRendererArea')
+       if (rend.length == 0 || rend.children().length == 0) {
+           console.log("currentChart", cc);
+	   console.log("rend area", rend);
+           debugger;
+       }
+   }
+}

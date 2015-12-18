@@ -50,19 +50,20 @@ function data() {
         post: {$exists: 0},
         userId: Meteor.userId()
     };
-    var data = null;
+    var theChart = null;
     var id = this.params._id || this.params.query.id;
 
     if (this.params.query.id !== null) {
-	data = Charts.findOne({_id: id});
+	theChart = Charts.findOne({_id: id});
     } else {
-	data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0];
-	if (data && id === null) {
+	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
+	if (theChart && id === null) {
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
-		updateUrl(url, data._id);
+		updateUrl(url, theChart._id);
 	}
     }
+    Session.set("TheChart", theChart);
     return data;
 }
 
@@ -127,6 +128,23 @@ Router.map(function() {
        Session.set("BrowseStudies", null);
        Session.set("BrowseTable", null);
        this.next();
+    }
+  });
+});
+
+
+
+Router.map(function() {
+  this.route('fusionDownloadTable', {
+    path: '/fusion/downloadTable/',
+    template: null,
+    onBeforeAction : function(arg) {
+	var data = Session.get('ChartDataFinal');
+	var name = Session.get('CurrentChart').studies.join("_") + "_" + data.length + ".txt";
+	var keys = Session.get("ChartDataFinalKeys");
+
+	saveTextAs(ConvertToTSV(data, keys), name);
+        this.next();
     }
   });
 });
@@ -396,3 +414,49 @@ Router.map(function() {
     action: exportData,
   });
 });
+
+exportChart = function() {
+  // First Security Check, is the user logged in?
+  var cookies = parseCookies(this.request);
+  var mlt = cookies["meteor_login_token"];
+  var user = null;
+  if (mlt) {
+      var hash_mlt =  Accounts._hashLoginToken(mlt);
+      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+  }
+  if (user == null)
+      // throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+      console.log("user should be logged in. Cookies=" + JSON.stringify(cookies));
+
+  // Filename parameter
+  var attachmentFilename = 'filename.txt';
+  if (this.params && this.params.query && this.params.query.filename)
+      attachmentFilename = this.params.query.filename;
+
+  var response = this.response;
+  response.writeHead(200, {
+    // 'Content-Type': 'text/tab-separated-values',
+    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+  });
+
+  var chart = Charts.findOne({_id: this.params.query.id });
+  if (chart) {
+      var ptc = chart.pivotTableConfig;
+      var keys = ["Patient_ID", "Sample_ID"].concat(ptc.cols, ptc.rows);
+      response.write(keys.join("\t")+"\n");
+
+      chart.chartData.map(function(doc) {
+	  var values = keys.map(function (k) { return String(doc[k]); });
+          response.write(values.join("\t")+"\n");
+      });
+  }
+  response.end();
+};
+
+Router.map(function() {
+  this.route('exportChart', {
+    where: 'server',
+    action: exportChart,
+  });
+});
+

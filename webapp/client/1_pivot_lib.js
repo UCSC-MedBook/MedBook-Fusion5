@@ -1295,9 +1295,9 @@ Meteor.startup(function() {
           aggregator.append($("<option>").val(x).html(x));
         }
         $("<td>").addClass('pvtVals pvtControls').appendTo(tr1).append(aggregator).append($("<br>"));
-        $("<td>").addClass('pvtAxisContainer pvtControls pvtHorizList pvtCols pvtControls' ).appendTo(tr1);
+        $("<td>").addClass('pvtAxisContainer pvtControls pvtHorizList pvtCols pvtControls pvtUsed' ).appendTo(tr1);
         tr2 = $("<tr>").appendTo(uiTable);
-        tr2.append($("<td>").addClass('pvtAxisContainer pvtRows pvtControls').attr("valign", "top"));
+        tr2.append($("<td>").addClass('pvtAxisContainer pvtRows pvtControls pvtUsed').attr("valign", "top"));
         pivotTable = $("<td>").attr("valign", "top").addClass('pvtRendererArea').appendTo(tr2);
         if (opts.unusedAttrsVertical === true || unusedAttrsVerticalAutoOverride) {
           uiTable.find('tr:nth-child(1)').prepend(rendererControl);
@@ -1403,6 +1403,11 @@ Meteor.startup(function() {
             };
             if (preflight(input, subopts))
                 pivotTable.pivot(input, subopts, exclusions);
+
+	    Session.set("ChartDataFinal", input);
+	    var keys = subopts.cols.concat(subopts.rows);
+            Session.set("ChartDataFinalKeys", ["Patient_ID", "Sample_ID"].concat(keys));
+
 
             pivotUIOptions = $.extend(opts, {
               cols: subopts.cols,
