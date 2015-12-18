@@ -1165,7 +1165,7 @@ Meteor.startup(function() {
           }
           return _results;
         })();
-        unusedAttrsVerticalAutoOverride = false;
+        unusedAttrsVerticalAutoOverride = true;
         if (opts.unusedAttrsVertical === "auto") {
           attrLength = 0;
           for (_j = 0, _len1 = shownAttributes.length; _j < _len1; _j++) {
