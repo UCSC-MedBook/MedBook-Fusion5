@@ -53,11 +53,11 @@ function data() {
     var theChart = null;
     var id = this.params._id || this.params.query.id;
 
-    if (this.params.query.id !== null) {
+    if (this.params.query.id != null) { // needs to be !=
 	theChart = Charts.findOne({_id: id});
     } else {
 	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (theChart && id === null) {
+	if (theChart && id == null) {  // needs to be ==
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
 		updateUrl(url, theChart._id);
