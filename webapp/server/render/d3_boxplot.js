@@ -6,8 +6,9 @@ var plotWidth, width,height;
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
 
-function D3BoxPlot(pivotData, opts, exclusions) {
-    var chvk = BoxPlotChartData(pivotData, exclusions);
+D3BoxPlot = function(window, pivotData, opts, exclusions) {
+    debugger;
+    var chvk = BoxPlotCategorical(pivotData, exclusions);
     var n = 9;
 
     plotWidth = Math.max(150, ChartWidthMax/ n);
@@ -28,16 +29,9 @@ function D3BoxPlot(pivotData, opts, exclusions) {
 	console.log("strata", lab, strataSampleSets[lab], strata[lab])
     }
     */
-    
-	 $("<div class='d3boxplot'></div>");
-	var div = window.$div[0];
-	$div.ready(function() {
-	    displayBoxPlots(plotDataSets, h, v, div, plotWidth, rowCategoricalVariables);
-	});
-
-    var $pVals = $("<div class='d3boxplot'></div>").appendTo(window.$div);
-
-    return window.$div
+    var div = window.$("body").append("<div class='d3boxplot'></div>");
+    displayBoxPlots(window, plotDataSets, h, v, div[0], plotWidth, rowCategoricalVariables);
+    return div;
 }
 
 
@@ -71,7 +65,7 @@ selectContrast = function() {
   makeSelectableBoxPlot(d3.select(".backdrop"));
 }
 
-function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategoricalVariables) {
+function displayBoxPlots(window, plotDataSets, h, v, svgContainer, plotWidth, rowCategoricalVariables) {
 
     var min = Infinity,
         max = -Infinity,
@@ -91,10 +85,10 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
         });
     }); 
 
-    window.yRange = d3.scale.linear().range([0, height]).domain([max, min]);
+    var yRange = d3.scale.linear().range([0, height]).domain([max, min]);
 
 
-    var chart = d3.box()
+    var chart = d3.box(yRange)
         .whiskers(iqr(1.5))
         .width(width)
         .height(height);
@@ -177,6 +171,7 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
         }
       });
     }
+    debugger;
 
       var yy = nestedG.insert("text", "box")
                 .attr( 'x', width/2)
@@ -224,22 +219,22 @@ function displayBoxPlots(plotDataSets, h, v, svgContainer, plotWidth, rowCategor
       svgTop.attr("height", PlotHeight +margin.top + margin.bottom);
 
 
-      setTimeout(function() {
-          var legendText =  d3.selectAll("text.legendText");
-          if (legendText && legendText.length > 0)
-            legendText = legendText[0];
-          if (legendText && legendText.length > 0) {
-              var maxX = Math.max.apply(null, legendText.map(function(f) {return f.getComputedTextLength()}))
-              if (!isNaN(maxX) && isFinite(maxX)) {
-                  svgTop.attr("width", X + 100 + maxX); 
-              }
-              var maxY = Math.max(1024, PlotHeight, 100 + (legendText.length * 20));
-              if (!isNaN(maxY) && isFinite(maxY)) {
-                  svgTop.attr("height", maxY); 
-                  gLegend.attr("height", maxY); 
-              }
-          }
-      },200)
+      /*
+      var legendText =  d3.selectAll("text.legendText");
+      if (legendText && legendText.length > 0)
+	legendText = legendText[0];
+      if (legendText && legendText.length > 0) {
+	  var maxX = Math.max.apply(null, legendText.map(function(f) {return f.getComputedTextLength()}))
+	  if (!isNaN(maxX) && isFinite(maxX)) {
+	      svgTop.attr("width", X + 100 + maxX); 
+	  }
+	  var maxY = Math.max(1024, PlotHeight, 100 + (legendText.length * 20));
+	  if (!isNaN(maxY) && isFinite(maxY)) {
+	      svgTop.attr("height", maxY); 
+	      gLegend.attr("height", maxY); 
+	  }
+      }
+      */
 
 };
 

@@ -11,11 +11,51 @@ cartesianProductOf = function(array) {
 // Meteor.subscribe("QuickR")
 
 
-BoxPlotChartData = function(pivotData, exclusions) {
+function analyze(chartData, dataFieldNames) {
+     var analysis = {};
 
-    var h = pivotData.getRowKeys();
+     function and(a,b) { return a && b };
+     function or(a,b) { return a || b };
+     function xor(a,b) { return a || b };
+
+     function allNumbers(values) {
+         if (values.length == 0)
+            return [];
+         return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
+     }
+     function extract(key) {
+         var v = unique(_.pluck(chartData, key)); // .filter(function(v) { return v != "N/A" }));
+         return v;
+     }
+     function unique(values) {
+         var m = {};
+         for (var i = 0; i < values.length; i++)
+             m[values[i]] = true;
+         return Object.keys(m);
+     }
+     var analysis = {};
+     dataFieldNames.map(function (field) {
+	 var values = extract(field);
+     	 analysis[field] = {
+	     values : values,
+	     isNumbers: allNumbers(values),
+	 }
+     });
+     return analysis;
+}
+
+
+BoxPlotCategorical = function(pivotData, exclusions) {
+
     var value_color_scale = d3.scale.category10();
-    var rowCategoricalVariables = [];
+
+    var h = pivotData.pivotTableConfig.rows;
+    var v = pivotData.pivotTableConfig.cols;
+    var analysis = analyze(pivotData.chartData, h.concat(v));
+
+    var rowCategoricalVariables = h.filter(function(field) { return analysis[field].allNumbers == false });
+    var colCategoricalVariables = v.filter(function(field) { return analysis[field].allNumbers == false });
+
     var strata = {}
     var strataSampleSets = {}
     
@@ -25,8 +65,8 @@ BoxPlotChartData = function(pivotData, exclusions) {
         rowCategoricalVariables.push({ text: rowLabel, color: value_color_scale(i),
             deciders: 
                 k.map(function(kk) { 
+		       debugger;
                         var n = kk.lastIndexOf(":");
-
                         var label = kk.substr(0,n);
                         var value = kk.substr(n+1);
                         return function(elem) { return elem[label] == value; }
@@ -35,25 +75,30 @@ BoxPlotChartData = function(pivotData, exclusions) {
     });
     rowCategoricalVariables.sort();
 
-    var v = pivotData.colAttrs;
-    var boxPlot = pivotData.input.boxplot;
+
 
     var numberVariables = [], columnCategoricalVariables = [];
+
     v.map(function(label, nthColumn) {
-        if (boxPlot.colNumbers[nthColumn])
+        if (analysis[label].isNumbers)
             numberVariables.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
         else  {
             columnCategoricalVariables.push(
-                boxPlot.allColValues[nthColumn]
+                analysis[label].values
                 .filter(function(value) { 
                     return !(label in exclusions && exclusions[label].indexOf(value) >= 0); })
                 .map(
                   function (value) { 
-                      return ({ label: label+":"+value, decide: function(elem) { return elem[label] == value; } });
+                      return ({ label: label+":"+value, decide: function(elem) { 
+		          debugger;
+			  return elem[label] == value; } });
                 })
             );
         }
     });
+
+    // preflight(input, {rows: rows, cols: cols});
+
     var allColumnVars = _.clone( columnCategoricalVariables );
     allColumnVars.splice(0 ,0, numberVariables)
     var plots = cartesianProductOf(allColumnVars);
@@ -64,7 +109,7 @@ BoxPlotChartData = function(pivotData, exclusions) {
         var points = [];
         var plot = [labelForView, points];
 
-        pivotData.input.map(function(elem, e) {
+        pivotData.chartData.map(function(elem, e) {
             var good = true;
             for (var p = 0; good && p < plotPredicates.length; p++)
                 if (!plotPredicates[p].decide(elem))
