@@ -10,12 +10,13 @@ renderJSdom = function(ChartDocument) {
     jsdom.env(htmlStub, ["http://code.jquery.com/jquery.js"], {
 	    features : { QuerySelector : true },
 	    done : function(errors, window) {
-	    // this callback function pre-renders the dataviz inside the html document, then export result into a static file
 		var plot = D3BoxPlot(window, ChartDocument, null, []);
-
-		var res = serializeDocument(plot);
+		var html = serializeDocument(plot);
+		Fiber(function(){
+		  Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
+		}).run();
 	} // end jsDom done callback
     }) // end jsdom.env
     var stop = new Date();
-    console.log("stop - start", stop-start);
+    console.log(ChartDocument._id, "stop - start", stop-start);
 }

@@ -51,6 +51,11 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+
+   html: function() {
+       return CurrentChart("html");
+   },
+
    previousCharts : function() {
       var prev = Charts.find({}, {fields: {updatedAt:1}, sort: {updatedAt:-1}, limit: 30}).fetch();
       prev.map(function(p) {
