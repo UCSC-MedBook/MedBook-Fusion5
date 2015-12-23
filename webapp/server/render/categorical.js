@@ -11,7 +11,7 @@ cartesianProductOf = function(array) {
 // Meteor.subscribe("QuickR")
 
 
-function analyze(chartData, dataFieldNames) {
+analyze = function(chartData, dataFieldNames) {
      var analysis = {};
 
      function and(a,b) { return a && b };

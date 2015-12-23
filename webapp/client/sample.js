@@ -51,6 +51,9 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+   TheChart: function() {
+       return Session.get("TheChart")
+   },
 
    html: function() {
        return CurrentChart("html");
@@ -758,3 +761,17 @@ assertSaneFusion = function() {
        }
    }
 }
+coldfusion = function() {
+
+    $(".cold").find(".pvtAxisContainer").sortable({
+      update: function(e, ui) {
+	// if (ui.sender == null) { return refresh(); }
+      },
+      connectWith: $(".cold").find(".pvtAxisContainer"),
+      items: 'li',
+      placeholder: 'pvtPlaceholder'
+    });
+
+};
+
+$.ready(coldfusion);

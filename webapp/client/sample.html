@@ -126,11 +126,68 @@
         <div class="output" style="margin: 30px;"></div>
     </div>
 
-    <div class="panel panel-default">
-       <div style="height:400px;" class="panel-body" >
-            {{{html}}}
-       </div>
+
+  <div style="display: inline-block;" class="dataExplorerControlPanel">
+    <div class="output" style="margin: 30px;">
+      <table class="cold" cellpadding="5">
+	<tbody>
+	  <tr class="pvtControls">
+	    <td>
+	      <div class="dataExplorerControlPanel">
+		<div style="text-align:center;">
+		  <label>Chart Type</label><select class="pvtRenderer">
+		    <option value="Box Plot"> Box Plot </option>
+		    <option value="Scatter Chart"> Scatter Chart </option>
+		    <option value="Scatter Chart with Stats"> Scatter Chart with Stats </option>
+		    <option value="Table"> Table </option>
+		    <option value="Bar Chart"> Bar Chart </option>
+		    <option value="Stacked Bar Chart"> Stacked Bar Chart </option>
+		  </select>
+		</div><br />
+	      </div>
+	    </td>
+	    <td class="pvtVals pvtControls"><select class="pvtAggregator">
+	      <option value="Mean"> Mean </option>
+	      <option value="Count"> Count </option>
+	      <option value="Sum"> Sum </option>
+	    </select><br />
+
+	    <select class="pvtAttrDropdown">
+	      <option value="Age Bin"> Age Bin </option>
+	    </select></td>
+
+
+	    <td class= "pvtAxisContainer pvtControls pvtHorizList pvtCols pvtUsed ui-sortable">
+		{{#each TheChart.pivotTableConfig.cols}}
+		    {{>Field_Attribute}}
+		{{/each}}
+	    </td>
+	  </tr>
+
+		  <tr>
+
+			<td class="pvtAxisContainer pvtUnused pvtControls pvtVertList ui-sortable">
+			    {{#each TheChart.dataFieldNames}}
+				{{>Field_Attribute}}
+			    {{/each}}
+			</td>
+
+		    <td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
+			{{#each TheChart.pivotTableConfig.rows}}
+			    {{>Field_Attribute}}
+			{{/each}}
+		    </td>
+		    <td valign="top" class="pvtRendererArea" style="opacity: 1;">
+		      <div style="min-width:200px;text-align-center;">
+			{{{html}}}
+		      </div>
+		    </td>
+		  </tr>
+		</tbody>
+	      </table>
+	    </div>
     </div>
+
 <!--
     <div class="panel panel-default">
       <div class="panel-heading"  data-toggle="collapse" data-target="#pb">
@@ -212,3 +269,16 @@
   <div id="chart1" width="100%"></div>
 </template>
 
+<template name="Field_Attribute">
+      <ul>
+	<li class="axis_0 ui-sortable-handle"><span class="pvtAttr">{{this}}<span class="pvtTriangle">&#9662;</span></span></li>
+      </ul>
+      <!-- 
+	  <div class="pvtFilterBox" style="display: none;"></div>
+	  <h4>Age Bin (0)</h4>
+	  <p><button type="button">Select All</button><button type="button">Select
+	  None</button><input type="text" placeholder="Filter results" class= "pvtSearch" /></p>
+	  <div class="pvtCheckContainer"></div>
+	  <p><button type="button">OK</button></p>
+      -->
+</template>
