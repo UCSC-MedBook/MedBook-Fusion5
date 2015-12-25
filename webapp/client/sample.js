@@ -262,6 +262,11 @@ Template.Controls.helpers({
            html += '</optGroup>\n';
        });
        return html;
+   },
+   unusedDataFieldNames: function() {
+       var TheChart = Session.get("TheChart");
+       unused = _.difference(_.difference(TheChart.dataFieldNames, TheChart.pivotTableConfig.rows), TheChart.pivotTableConfig.cols);
+       return unused
    }
 })
 
@@ -684,7 +689,6 @@ coldfusion = function() {
 
 		 var cols = $(".pvtCols.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
 		 var rows = $(".pvtRows.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
-		 return
 		 Charts.update({_id: TheChart._id},
 		   {$set:
 		     { 
