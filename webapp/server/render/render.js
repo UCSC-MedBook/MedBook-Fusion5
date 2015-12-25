@@ -9,15 +9,16 @@ var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><scri
 ChartTypeMap = {
   "Box Plot" : D3BoxPlot,
   "Scatter Chart" : D3ScatterChart,
+  "Bar Chart" : C3BarChart,
    
 }
 
 
 renderJSdom = function(ChartDocument) {
     var start = new Date();
-    jsdom.env(htmlStub, ["http://code.jquery.com/jquery.js"], {
-	features : { QuerySelector : true },
+    jsdom.env(htmlStub,  {
 	done : function(errors, window) {
+	    jquery_bind(window);
 	    var plot = null ;
 
 	    var chartType = ChartDocument.pivotTableConfig.rendererName;

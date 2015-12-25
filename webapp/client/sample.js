@@ -8,11 +8,6 @@ function valueIn(field, value) {
         return "";
     }
 }
-var PivotTableInit = {
-    cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
-
-    rendererName: "Table",
-};
 id_text = function(array) {
     return array.map(function(e) { return { id: e, text: e} });
 }
@@ -21,16 +16,6 @@ id_text = function(array) {
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
     Meteor.subscribe("Biopsy_Research");
-
-    var derivers = $.pivotUtilities.derivers;
-    var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.gchart_renderers);
-
-    window.PivotCommonParams = {
-        renderers: renderers,
-        derivedAttributes: { "Age Bin": derivers.bin("age", 10), },
-        // hiddenAttributes: [ "_id", "Patient_ID", "Sample_ID"] 
-    };
-
 });
 
 function getCurrentDipsc() {
@@ -620,84 +605,6 @@ renderChart = function() {
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
 
-    RefreshChart = function(id, fields) {
-        // console.log("RefreshChart", id, fields);
-        // short circuit unnecessary updates
-        if (fields == null) return
-
-        var f = null;
-
-        if (fields != true) {
-
-
-            f = Object.keys(fields).sort();
-            if (f.length == 1 && f[0] == "updatedAt")
-                return;
-            if (f.length == 2 && _.isEqual(f, [ "svgHtml", "updatedAt"]))
-                return
-            if (f.length == 2 && _.isEqual(f, [ "pivotTableConfig", "updatedAt"])
-                && _.isEqual(currentChart.pivotTableConfig,  fields.pivotTableConfig))
-                return
-
-            $.extend(currentChart, fields); // VERY IMPORTNT
-
-            if (f.length == 2 && _.isEqual(f.sort(), [ "selectedFieldNames", "updatedAt"]))
-                return
-            if ("genesets" in fields) {
-              // debugger;  may need special handling.
-            }
-        }
-
-
-        Session.set("CurrentChart", currentChart);
-
-        if (f && f.length == 2 && _.isEqual(f.sort(), [ "contrast", "updatedAt"]))
-            return
-
-        initializeSpecialJQueryElements(currentChart)
-
-        templateContext = { 
-            onRefresh: function(config) {
-		assertSaneFusion();
-
-                currentChart.pivotTableConfig = { 
-                    cols: config.cols,
-                    rows: config.rows,
-                    aggregatorName: config.aggregatorName,
-                    rendererName: config.rendererName,
-                    exclusions: config.exclusions,
-                };
-		var doc = {pivotTableConfig: currentChart.pivotTableConfig};
-
-		/*
-		var $svg = $(".pvtRendererArea").children().children("svg");
-		if (currentChart.pivotTableConfig.rendererName== "Box Plot") {
-		    if ($svg.length === 1)
-			doc.svgHtml = $svg.html();
-		    else {
-			$svg = $(".pvtRendererArea").find("svg");
-			if ($svg.length === 1)
-			    doc.svgHtml = $svg.html();
-			else
-			    doc.svgHtml = asSvgHtml( config.cols, config.rows );
-		    }
-		} else
-		    doc.svgHtml = asSvgHtml( config.cols, config.rows );
-		*/
-
-                Charts.update(currentChart._id, { $set: doc});
-            }
-        }
-
-        var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
-        if (element) {
-	   var cd = currentChart.chartData;
-	   if (cd == null) cd = [];
-           $(element).pivotUI(cd, pivotConf, true, null, currentChart._id);
-           // $(element).pivotUI(currentChart.chartData ? currentChart.chartData : [], pivotConf, true, null, currentChart._id);
-        }
-
-    } // refreshChart
 
     /*
     if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
@@ -725,8 +632,12 @@ renderChart = function() {
 } // renderChart;
 
 
-Template.Controls.rendered = renderChart;
-Template.ChartDisplay.rendered = renderChart;
+Template.Controls.rendered = function(){
+
+   var TheChart = Session.get("TheChart");
+   initializeSpecialJQueryElements(TheChart);
+   coldfusion();
+};
 
 /*
 Template.AllCharts.helpers({
@@ -750,28 +661,45 @@ Template.AllCharts.events({
 });
 */
 
-// as per Robert December 17, 2015
-assertSaneFusion = function() {
-   if ($('.pvtUsed').children().length > 0) { // we have controls
-       var rend = $('.pvtRendererArea')
-       if (rend.length == 0 || rend.children().length == 0) {
-           console.log("currentChart", cc);
-	   console.log("rend area", rend);
-           debugger;
-       }
-   }
-}
 coldfusion = function() {
+   var wells = $(".cold").find(".pvtAxisContainer");
 
     $(".cold").find(".pvtAxisContainer").sortable({
       update: function(e, ui) {
-	// if (ui.sender == null) { return refresh(); }
+         var well = ui.item.parent();
+         var field = ui.item.data("field");
+	 var TheChart = Session.get("TheChart");
+
+	 if (well.hasClass("pvtUnused")) {
+	     Charts.update({_id: TheChart._id},
+	       {$pull:
+		 { 
+		  "pivotTableConfig.cols": field,
+		  "pivotTableConfig.rows": field
+		 }
+	       }
+	     );
+	 } else if (well.hasClass("pvtUsed")) {
+	     if (this === ui.item.parent()[0]) {// http://forum.jquery.com/topic/sortables-update-callback-and-connectwith
+
+		 var cols = $(".pvtCols.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
+		 var rows = $(".pvtRows.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
+		 return
+		 Charts.update({_id: TheChart._id},
+		   {$set:
+		     { 
+		      "pivotTableConfig.cols": cols,
+		      "pivotTableConfig.rows": rows
+		      }
+		   });
+
+	     }
+	 }
       },
-      connectWith: $(".cold").find(".pvtAxisContainer"),
+      connectWith: wells,
       items: 'li',
       placeholder: 'pvtPlaceholder'
     });
 
 };
 
-$.ready(coldfusion);

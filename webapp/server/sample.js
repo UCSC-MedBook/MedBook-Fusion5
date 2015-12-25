@@ -166,6 +166,7 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
 
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
+    console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
