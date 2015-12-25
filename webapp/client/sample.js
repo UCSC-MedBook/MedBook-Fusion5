@@ -474,10 +474,17 @@ Template.Controls.events({
        var $genelist = $("#genelist");
        $genelist.select2("data", [] );
        UpdateCurrentChart("genelist", []);
-   }
+   },
+   'change .pvtRenderer' : function(evt, tmpl) {
+       var renderer = $(".pvtRenderer").val();
+       UpdateCurrentChart("pivotTableConfig.rendererName", renderer);
+   },
 })
 
-function initializeSpecialJQueryElements(document) {
+function initializeHtmlElements(document) {
+
+    $('.pvtRenderer').val(document.pivotTableConfig.rendererName)
+
     if (document & document.samplelist)
          $("#samplelist").val(document.samplelist);
 
@@ -501,8 +508,10 @@ function initializeSpecialJQueryElements(document) {
 	      $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
 	  });
 
-     $('.studiesSelectedTable th').hide()
+     $('.studiesSelectedTable th').hide();
+}
 
+function initializeJQuerySelect2(document) {
      $("#additionalQueries").select2( {
        placeholder: "type in diease or study name",
        allowClear: true
@@ -640,8 +649,9 @@ renderChart = function() {
 Template.Controls.rendered = function(){
 
    var TheChart = Session.get("TheChart");
-   initializeSpecialJQueryElements(TheChart);
-   coldfusion();
+   initializeHtmlElements(TheChart);
+   initializeJQuerySelect2(TheChart);
+   initializeJQuerySortable(TheChart);
 };
 
 /*
@@ -666,7 +676,7 @@ Template.AllCharts.events({
 });
 */
 
-coldfusion = function() {
+initializeJQuerySortable = function() {
    var wells = $(".cold").find(".pvtAxisContainer");
 
     $(".cold").find(".pvtAxisContainer").sortable({

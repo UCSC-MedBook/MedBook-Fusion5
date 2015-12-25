@@ -120,7 +120,8 @@
 	    <td>
 	      <div class="dataExplorerControlPanel">
 		<div style="text-align:center;">
-		  <label>Chart Type</label><select class="pvtRenderer">
+		  <label>Chart Type</label>
+		  <select class="pvtRenderer">
 		    <option value="Box Plot"> Box Plot </option>
 		    <option value="Scatter Chart"> Scatter Chart </option>
 		    <option value="Scatter Chart with Stats"> Scatter Chart with Stats </option>
@@ -148,29 +149,27 @@
 		{{/each}}
 	    </td>
 	  </tr>
+	    <tr>
+	    <td class="pvtAxisContainer pvtUnused pvtControls pvtVertList ui-sortable">
+		{{#each unusedDataFieldNames}}
+		    {{>Field_Attribute}}
+		{{/each}}
+	    </td>
 
-		  <tr>
-
-			<td class="pvtAxisContainer pvtUnused pvtControls pvtVertList ui-sortable">
-			    {{#each unusedDataFieldNames}}
-				{{>Field_Attribute}}
-			    {{/each}}
-			</td>
-
-		    <td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
-			{{#each TheChart.pivotTableConfig.rows}}
-			    {{>Field_Attribute}}
-			{{/each}}
-		    </td>
-		    <td valign="top" class="pvtRendererArea" style="opacity: 1;">
-		      <div style="min-width:200px;text-align-center;">
-			{{{html}}}
-		      </div>
-		    </td>
-		  </tr>
-		</tbody>
-	      </table>
-	    </div>
+		<td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
+		    {{#each TheChart.pivotTableConfig.rows}}
+			{{>Field_Attribute}}
+		    {{/each}}
+		</td>
+		<td valign="top" class="pvtRendererArea" style="opacity: 1;">
+		  <div style="min-width:200px;text-align-center;">
+		    {{{html}}}
+		  </div>
+		</td>
+	      </tr>
+	    </tbody>
+	  </table>
+	</div>
     </div>
 
 <!--

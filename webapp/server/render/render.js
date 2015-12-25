@@ -22,6 +22,7 @@ renderJSdom = function(ChartDocument) {
 	    var plot = null ;
 
 	    var chartType = ChartDocument.pivotTableConfig.rendererName;
+	    debugger
 	    if (chartType in ChartTypeMap) 
 		plot = (ChartTypeMap[chartType])(window, ChartDocument, null, []);
 

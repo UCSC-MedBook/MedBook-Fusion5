@@ -31,7 +31,7 @@ analyze = function(chartData, dataFieldNames) {
          var m = {};
          for (var i = 0; i < values.length; i++)
              m[values[i]] = true;
-         return Object.keys(m);
+         return Object.keys(m).sort();
      }
      var analysis = {};
      dataFieldNames.map(function (field) {
@@ -49,37 +49,49 @@ BoxPlotCategorical = function(pivotData, exclusions) {
 
     var value_color_scale = d3.scale.category10();
 
-    var h = pivotData.pivotTableConfig.rows;
-    var v = pivotData.pivotTableConfig.cols;
-    var analysis = analyze(pivotData.chartData, h.concat(v));
+    var rows = pivotData.pivotTableConfig.rows;
+    var cols = pivotData.pivotTableConfig.cols;
+    var analysis = analyze(pivotData.chartData, rows.concat(cols));
 
-    var rowCategoricalVariables = h.filter(function(field) { return analysis[field].allNumbers == false });
-    var colCategoricalVariables = v.filter(function(field) { return analysis[field].allNumbers == false });
+    var rowCategoricalVariables = [];
+    var colCategoricalVariables = cols.filter(function(field) { return analysis[field].allNumbers == false });
 
     var strata = {}
     var strataSampleSets = {}
     
 
-    h.map(function(k, i) {
-        var rowLabel = k.join(",");
-        rowCategoricalVariables.push({ text: rowLabel, color: value_color_scale(i),
-            deciders: 
-                k.map(function(kk) { 
-		       debugger;
-                        var n = kk.lastIndexOf(":");
-                        var label = kk.substr(0,n);
-                        var value = kk.substr(n+1);
-                        return function(elem) { return elem[label] == value; }
-                    })
-        })
+    var rowValuePairs = [];
+    rows.map(function(rowLabel) {
+       if (!analysis[rowLabel].isNumbers)
+	   rowValuePairs.push(analysis[rowLabel].values.map(function(rowValue){
+	       return ({rowLabel: rowLabel, rowValue: rowValue});
+	   }));
     });
-    rowCategoricalVariables.sort();
 
+    var combos = cartesianProductOf(rowValuePairs);
+    debugger
+    combos.map(function(pairList, c) {
+        var text = pairList.map(function(pair) {return pair.rowLabel + ":" + pair.rowValue}).join(",");
+	console.log("c", c);
+	rowCategoricalVariables.push(
+	    { 
+		text: text,
+		color: value_color_scale(c),
+		deciders: [ 
+		    function(elem) { 
+		    	for (var i = 0; i < pairList.length; i++)
+			   if (elem[pairList[i].rowLabel] != pairList[i].rowValue)
+			   	return false;
+			return true;
+		    }
+		]
+	    })
+    }) // map
 
 
     var numberVariables = [], columnCategoricalVariables = [];
 
-    v.map(function(label, nthColumn) {
+    cols.map(function(label, nthColumn) {
         if (analysis[label].isNumbers)
             numberVariables.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
         else  {
@@ -90,7 +102,6 @@ BoxPlotCategorical = function(pivotData, exclusions) {
                 .map(
                   function (value) { 
                       return ({ label: label+":"+value, decide: function(elem) { 
-		          debugger;
 			  return elem[label] == value; } });
                 })
             );
@@ -165,8 +176,8 @@ BoxPlotCategorical = function(pivotData, exclusions) {
         });
         return plot;
     });
-    h = h.join(",");
-    v = v.join(",");
-    return [plotDataSets, h, v, rowCategoricalVariables, strata, strataSampleSets];
+    rows = rows.join(",");
+    cols = cols.join(",");
+    return [plotDataSets, rows, cols, rowCategoricalVariables, strata, strataSampleSets];
 }
 
