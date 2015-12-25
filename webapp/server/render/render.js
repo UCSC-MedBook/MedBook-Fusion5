@@ -28,7 +28,7 @@ renderJSdom = function(ChartDocument) {
 	    var html = plot ? serializeDocument(plot) : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 
 	    Fiber(function(){
-	      Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
+	      Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 	    }).run();
 	}
     }) // end jsdom.env
