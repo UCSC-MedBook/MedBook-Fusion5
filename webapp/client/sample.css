@@ -83,3 +83,6 @@ body {
     font-size:11px;
 }
 
+.dropHere {
+   min-width:50px;
+}

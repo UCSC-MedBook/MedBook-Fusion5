@@ -132,20 +132,27 @@
 		</div><br />
 	      </div>
 	    </td>
-	    <td class="pvtVals pvtControls"><select class="pvtAggregator">
-	      <option value="Mean"> Mean </option>
-	      <option value="Count"> Count </option>
-	      <option value="Sum"> Sum </option>
-	    </select><br />
 
-	    <select class="pvtAttrDropdown">
-	      <option value="Age Bin"> Age Bin </option>
-	    </select></td>
+	    <td class="pvtVals pvtControls">
+		<!--
+		    <select class="pvtAggregator">
+		      <option value="Mean"> Mean </option>
+		      <option value="Count"> Count </option>
+		      <option value="Sum"> Sum </option>
+		    </select><br />
+
+		    <select class="pvtAttrDropdown">
+		      <option value="Age Bin"> Age Bin </option>
+		    </select>
+		-->
+	    </td>
 
 
 	    <td class= "pvtAxisContainer pvtControls pvtHorizList pvtCols pvtUsed ui-sortable">
 		{{#each TheChart.pivotTableConfig.cols}}
 		    {{>Field_Attribute}}
+		{{else}}
+		     <div class="dropHere">Drag data fields from left to this box for columns</div>
 		{{/each}}
 	    </td>
 	  </tr>
@@ -159,6 +166,8 @@
 		<td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
 		    {{#each TheChart.pivotTableConfig.rows}}
 			{{>Field_Attribute}}
+		    {{else}}
+		        <div class="dropHere">Drag data fields from left to this box for rows</div>
 		    {{/each}}
 		</td>
 		<td valign="top" class="pvtRendererArea" style="opacity: 1;">
