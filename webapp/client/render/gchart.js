@@ -34,7 +34,9 @@ GoogleChart = function(chartDocument, opts) {
 	    type = chartDocument.metadata[field].type.toLowerCase();
 	} catch (err) {
 	   // HACK: why should metadata be missing anything? TBD
+	   // debugger;
 	}
+        dataTable.addColumn(type, field);
     })
 
 
@@ -42,9 +44,17 @@ GoogleChart = function(chartDocument, opts) {
 
     function columnCluster(columns){
 	columns.map(function(elem) {
-	     var row = cols.map(function(field) { return elem[field]; });
+	     var valid = true;
+	     var row = cols.map(function(field) { 
+		 value =  elem[field];
+		 if (value == "N/A")
+		    valid = false;
+		 return value;
+	     });
+
 	     // row.push(String(row));
-	     dataTable.addRow(row);
+	     if (valid)
+		 dataTable.addRow(row);
 	});
     }
 

@@ -277,6 +277,7 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
 
 function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
   coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
+      debugger
       var line = doc.gene;
       if ('transcript' in doc) // for isoforms
          line  += ' '+ doc.transcript;
@@ -320,7 +321,7 @@ exportData = function() {
   // First Security Check, is the user logged in?
   var cookies = parseCookies(this.request);
   var mlt = cookies.meteor_login_token;
-  var user = null;
+  var user = Meteor.users.findOne({username: "ted"}); // hack for debugging
   if (mlt) {
       var hash_mlt =  Accounts._hashLoginToken(mlt);
       user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
