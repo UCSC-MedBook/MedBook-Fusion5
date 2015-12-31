@@ -7,10 +7,10 @@ var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><scri
 
 
 ChartTypeMap = {
-  "Bar Chart" : "GoogleChart",
-  "Box Plot" : D3BoxPlot,
-  "Scatter Chart" : "makeD3Scatter",
-  "Table" : "makeHandsontable"
+  "Bar Chart" : "GoogleChart",        // client side render
+  "Box Plot" : D3BoxPlot,             // server side render
+  "Scatter Chart" : "makeD3Scatter",  // client side render
+  "Table" : "makeHandsontable"        // client side render
 }
 
 Meteor.startup(function() {

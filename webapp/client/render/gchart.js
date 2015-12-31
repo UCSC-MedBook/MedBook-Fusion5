@@ -6,12 +6,24 @@
 window.LEGEND_PROPORTION = 0.5;
 
 Meteor.startup(function() {
-    google.charts.load("43", { packages: ["bar"] });
+    // google.charts.load("43", { packages: ["bar"] });
 })
 
 GoogleChart = function(chartDocument, opts) {
-    var agg, colKey, defaults, groupByTitle, h, hAxisTitle, k, numCharsInHAxis, options, result, row, rowKey, title, v, vAxisTitle, wrapper, _i, _j, _len, _len1;
-    defaults = {
+    var cols = chartDocument.pivotTableConfig.cols;
+    var rows = chartDocument.pivotTableConfig.rows;
+    var aa = analyze(chartDocument.chartData, cols);
+
+    if (cols.length == 0 || !_.any(aa, function(elem) { return elem.isNumbers; }))
+	return "<div id='GoogleChartTarget' class='ChartWrapper'   style='  width: \'100%\' height: \'100%\'' >Need at least one numerical value for Bar Charts. <br> Drag data elements from the left to the box above. </div> "
+
+    if ( _.every(aa, function(elem) { return elem.isNumbers; })) {
+        cols.unshift("Sample_ID");
+    }
+
+
+    var vAxisTitle;
+    var defaults = {
 	localeStrings: {
 	    vs: "vs",
 	    by: "by"
@@ -25,9 +37,6 @@ GoogleChart = function(chartDocument, opts) {
 
     var dataTable = new google.visualization.DataTable();
 
-
-    var cols = chartDocument.pivotTableConfig.cols;
-    var rows = chartDocument.pivotTableConfig.rows;
 
 
 
@@ -82,13 +91,13 @@ GoogleChart = function(chartDocument, opts) {
     }
 
 
-    title = vAxisTitle = "";
-    hAxisTitle = chartDocument.pivotTableConfig.cols.join("-");
+    var title = vAxisTitle = "";
+    var hAxisTitle = chartDocument.pivotTableConfig.cols.join("-");
     if (hAxisTitle !== "") {
 	title += " " + opts.localeStrings.vs + " " + hAxisTitle;
     }
 
-    groupByTitle = chartDocument.pivotTableConfig.rows.join("-");
+    var groupByTitle = chartDocument.pivotTableConfig.rows.join("-");
     if (groupByTitle !== "") {
 	title += " " + opts.localeStrings.by + " " + groupByTitle;
     }
@@ -97,8 +106,9 @@ GoogleChart = function(chartDocument, opts) {
     var windowWidth = $(window).width() * 0.8;
     var chartWidth = windowWidth * window.LEGEND_PROPORTION;
     var legendWidth = windowWidth * (1.0 - window.LEGEND_PROPORTION);
+    var numCharsInHAxis = rows.reduce(function(n, e) { return n+e.length}, 0);
 
-    options = {
+    var options = {
 	// toolTip: { isHtml: true},
 	tooltip: {
 	    trigger: 'selection'
@@ -127,7 +137,8 @@ GoogleChart = function(chartDocument, opts) {
 
 
     setTimeout(function() {
-	var googleChart = new google.charts.Bar(document.getElementById('GoogleChartTarget'));
+	var googleChart = new google.visualization.ColumnChart(document.getElementById('GoogleChartTarget'));
+	debugger;
 	googleChart.draw(dataTable, options);
     }, 300);
 
