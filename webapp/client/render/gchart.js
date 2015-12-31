@@ -14,7 +14,7 @@ GoogleChart = function(chartDocument, opts) {
 	by: "by"
       },
       selectionMode: 'multiple',
-      tooltip: { trigger: 'selection' },
+      // tooltip: { trigger: 'selection' },
       aggregationTarget: 'auto',
 
     };
@@ -32,9 +32,11 @@ GoogleChart = function(chartDocument, opts) {
 	}
 	dataTable.addColumn(type, field);
     })
+    // dataTable.addColumn({type: 'string', role: 'tooltip'});
+
     chartDocument.chartData.map(function(elem) {
 	 var row = fields.map(function(field) { return elem[field]; });
-	 debugger;
+	 // row.push(String(row));
 	 dataTable.addRow(row);
     });
 
@@ -55,6 +57,7 @@ GoogleChart = function(chartDocument, opts) {
     var legendWidth = windowWidth * (1.0 - window.LEGEND_PROPORTION);
 
     options = {
+      // toolTip: { isHtml: true},
       width: chartWidth + legendWidth,
       height: $(window).height() / 1.4,
       chartArea: {
@@ -74,26 +77,29 @@ GoogleChart = function(chartDocument, opts) {
     };
 
 
-    result = $("<div class='ChartWrapper' >").css({
-      width: "100%",
-      height: "100%"
-    });
+
+ 
+
     wrapper = new google.visualization.ChartWrapper({
       dataTable: dataTable,
       chartType: "ColumnChart",
       options: options
     });
-    result[0].wrapper = wrapper;
 
-    wrapper.draw(result[0]);
+    // GoogleCharts must be rendered in place, not in an unbound HTML element.
+    // So return the target, and defer the rendering for a bit.
+    setTimeout(function() { wrapper.draw($('#GoogleChartTarget')[0]);}, 300);
+
+    return "<div id='GoogleChartTarget' class='ChartWrapper'   style='animation-duration: 3s; animation-name: slidein; animation-iteration-count: infinite;  width: \'100%\' height: \'100%\'' >Loading</div> "
 
     /*
+     
+     Out for the time being.
+
 
     google.visualization.events.addListener(wrapper, 'ready', onReady);
 
 
-
-    /*
     function editChart() {
       var editor;
       editor = new google.visualization.ChartEditor();
@@ -101,17 +107,16 @@ GoogleChart = function(chartDocument, opts) {
 	 $('.google-visualization-charteditor-dialog').width(1000).css({left:200})
       });
       google.visualization.events.addListener(editor, 'ok', function() {
-	return editor.getChartWrapper().draw(result[0]);
+	return editor.getChartWrapper().draw(target[0]);
       });
 
 
       return editor.openDialog(wrapper);
     };
-    var editChartBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Edit Chart</button>').appendTo(result);
+    var editChartBtn = $('<button type="button" style="margin:10px;" class="btn btn-default">Edit Chart</button>').appendTo(target);
     editChartBtn.click(editChart);
     */
 
-    return result.html();
 };
 
 naturalSort =  function(as, bs) {
