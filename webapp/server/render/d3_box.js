@@ -200,7 +200,8 @@ Meteor.startup(function() {
 	  }
 
 	  sample.enter().insert("circle", "text")
-	      .attr("class", function(d) { return d.ValueClass + " " + L(d); })
+	      .attr("class", function(d) { return d.ValueClass; })
+	      .attr("text", function(d) { return d.Label})
 	      .attr("cx", function(d) { 
 		  var x = JitterSeedless(d.Label);
 		  return d.cx + (x-0.5)*(width*.90); 

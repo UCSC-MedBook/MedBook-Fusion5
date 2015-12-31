@@ -46,12 +46,16 @@ Template.Controls.helpers({
    },
 
    html: function() {
-       var html = CurrentChart("html");
+       var TheChart = Session.get("TheChart");
+       var html = TheChart.html;
        if (html && html.length > 0 && html.length < 30)  {
           var func = eval(html)
 	  if (func) {
-	      html = func(Session.get("TheChart"), {});
+	      html = func(TheChart, {});
 	  }
+       } else {
+	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0)
+	      setTimeout(d3_tooltip_boxplot, 1000);
        }
        return html;
    },

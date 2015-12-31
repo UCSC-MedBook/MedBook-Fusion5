@@ -149,7 +149,7 @@ BoxPlotCategorical = function(pivotData, exclusions) {
                 var g = { 
                     Label: elem.Sample_ID ? elem.Sample_ID : elem.Gene, 
                     Study_ID: elem.Study_ID, 
-                    ValueClass: rowLabel,
+                    ValueClass: "BoxPlotToolTipHover " + rowLabel,
                     ValueColor: value_color,
                     Phenotype: rowLabel ? rowLabel+","+columnLabel : columnLabel,
                     Value: f,
