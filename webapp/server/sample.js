@@ -403,7 +403,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                }});
 
 
-    // Step 7. Render the visualization on the server (possible with D3, not clear how to do with Google Vis).
+    // Step 7. Render the visualization on the server if possible.
     renderJSdom(ChartDocument);
 
     // console.log("done", ret);

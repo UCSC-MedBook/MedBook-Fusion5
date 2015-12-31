@@ -70,6 +70,7 @@ function data() {
 function waitOn() {
     return [
       Meteor.subscribe('Chart', this.params._id || this.params.query.id),
+      Meteor.subscribe('FusionFeatures'),
       Meteor.subscribe('Metadata'),
       Meteor.subscribe('studies')
     ];
@@ -108,7 +109,7 @@ Router.map(function() {
     template: "AllCharts",
     path: '/fusion/all/',
     waitOn: function() {
-       return Meteor.subscribe("AllCharts");
+       return [ Meteor.subscribe("AllCharts"), Meteor.subscribe('FusionFeatures')]
     }
   });
 });
@@ -121,6 +122,7 @@ Router.map(function() {
     waitOn: function() {
       return [
 	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('FusionFeatures'),
 	  Meteor.subscribe('studies')
       ];
     },
@@ -158,6 +160,7 @@ Router.map(function() {
     waitOn: function() {
       return [
 	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('FusionFeatures'),
 	  Meteor.subscribe('studies')
       ];
     },
@@ -175,7 +178,7 @@ Router.map(function() {
     path: '/fusion/tables/:_study/:_table/',
     data: data,
     waitOn: function() {
-       return Meteor.subscribe("Metadata");
+       return [Meteor.subscribe("Metadata"), Meteor.subscribe('FusionFeatures')]
     },
     onBeforeAction : function(arg) {
        var study =  this.params._study;
@@ -206,6 +209,7 @@ Router.map(function() {
     waitOn: function() {
        return [
 	   Meteor.subscribe("Metadata"),
+	   Meteor.subscribe('FusionFeatures'),
 	   Meteor.subscribe('studies')
      ];
     }

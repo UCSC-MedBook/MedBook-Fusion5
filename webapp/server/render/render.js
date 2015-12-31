@@ -9,30 +9,34 @@ var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><scri
 ChartTypeMap = {
   "Box Plot" : D3BoxPlot,
   "Scatter Chart" : D3ScatterChart,
-  "Bar Chart" : C3BarChart,
-   
+  "R Bar Chart" : R_Bar_Chart,
+  "C3 Bar Chart" : C3_Bar_Chart,
+  "Google Bar Chart" : "GoogleChart",
 }
 
+Meteor.startup(function() {
+  // use FusionFeatures colleciton to communicate from server to client. Someday, we will make it so that users can add new ChartTypes on the fly.
+  Collections.FusionFeatures.upsert({name: "ChartTypes"}, {$set: {value: Object.keys(ChartTypeMap).sort()}});
+});
 
 renderJSdom = function(ChartDocument) {
-    var start = new Date();
-    jsdom.env(htmlStub,  {
-	done : function(errors, window) {
-	    jquery_bind(window);
-	    var plot = null ;
-
-	    var chartType = ChartDocument.pivotTableConfig.rendererName;
-	    debugger
-	    if (chartType in ChartTypeMap) 
-		plot = (ChartTypeMap[chartType])(window, ChartDocument, null, []);
-
-	    var html = plot ? serializeDocument(plot) : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
-
-	    Fiber(function(){
-	      Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
-	    }).run();
-	}
-    }) // end jsdom.env
-    var stop = new Date();
-    console.log(ChartDocument._id, "stop - start", stop-start);
+    var chartType = ChartDocument.pivotTableConfig.rendererName;
+    var qqq = ChartTypeMap[chartType];
+    if (typeof(qqq) == 'function') {
+	var start = new Date();
+	    jsdom.env(htmlStub,  {
+		done : function(errors, window) {
+		    jquery_bind(window);
+		    var plot = qqq(window, ChartDocument, null, []);
+		    var html = plot ? serializeDocument(plot) : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
+		    Fiber(function(){
+		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
+		    }).run();
+		}
+	    }) // end jsdom.env
+	var stop = new Date();
+	console.log(ChartDocument._id, "stop - start", stop-start);
+    } else {
+	Charts.direct.update({_id: ChartDocument._id}, {$set: {html: qqq}});
+    }
 }

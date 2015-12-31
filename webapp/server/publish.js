@@ -1,4 +1,10 @@
 
+Meteor.publish('FusionFeatures', function() {
+    var cursor = Collections.FusionFeatures.find();
+    console.log("FusionFeatures publish", cursor.count());
+    return cursor;
+});
+
 Meteor.publish('DIPSC', function(_id) {
     var cursor = DIPSC_coll.find({_id: _id});
     // console.log("DIPSC publish", _id, cursor.count());

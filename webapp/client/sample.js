@@ -36,12 +36,24 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+
+   chartTypes: function() {
+       return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
+   },
+
    TheChart: function() {
        return Session.get("TheChart")
    },
 
    html: function() {
-       return CurrentChart("html");
+       var html = CurrentChart("html");
+       if (html && html.length > 0 && html.length < 30)  {
+          var func = eval(html)
+	  if (func) {
+	      html = func(Session.get("TheChart"), {});
+	  }
+       }
+       return html;
    },
 
    previousCharts : function() {
@@ -192,8 +204,6 @@ Template.Controls.helpers({
                html += '<optGroup label="'+ type +'">';
            }
            selected = _.contains(vv._id, selectedGenesets) ? " selected " : "";
-           if (selected.length > 0)
-               debuggger
            html += '    <option value="'+ vv.name + '"' + selected + '>' + vv.name + '</option>';
        });
        html += '</optGroup>\n';

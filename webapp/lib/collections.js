@@ -2,6 +2,7 @@ Collections = {};
 Collections.studies = new Meteor.Collection('studies');
 Collections.Metadata = new Meteor.Collection("Metadata");
 Collections.CRFs = new Meteor.Collection("CRFs");
+Collections.FusionFeatures = new Meteor.Collection("FusionFeatures");
 
 DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
