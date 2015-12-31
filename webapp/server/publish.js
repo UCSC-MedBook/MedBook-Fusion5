@@ -27,13 +27,13 @@ Meteor.publish('Chart', function(_id) {
     } else
         return [];
 
-    var cursor = Charts.find(q);
+    var cursor = Charts.find(q,{limit:3});
     if (cursor.count() == 0) {
         Charts.insert({userId: this.userId, chartData: []}) ;
         cursor = Charts.find(q);
     }
 
-    // console.log("Chart", q, cursor.count());
+    console.log("Chart", q, cursor.count());
     return cursor;
 });
 
