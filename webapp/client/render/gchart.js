@@ -5,17 +5,20 @@
   */
 window.LEGEND_PROPORTION = 0.5;
 
+Meteor.startup(function() {
+    google.charts.load("43", { packages: ["bar"] });
+})
 
 GoogleChart = function(chartDocument, opts) {
     var agg, colKey, defaults, groupByTitle, h, hAxisTitle, k, numCharsInHAxis, options, result, row, rowKey, title, v, vAxisTitle, wrapper, _i, _j, _len, _len1;
     defaults = {
-      localeStrings: {
-	vs: "vs",
-	by: "by"
-      },
-      selectionMode: 'multiple',
-      // tooltip: { trigger: 'selection' },
-      aggregationTarget: 'auto',
+	localeStrings: {
+	    vs: "vs",
+	    by: "by"
+	},
+	selectionMode: 'multiple',
+	// tooltip: { trigger: 'selection' },
+	aggregationTarget: 'auto',
 
     };
     opts = $.extend({}, defaults, opts);
@@ -23,109 +26,110 @@ GoogleChart = function(chartDocument, opts) {
     var dataTable = new google.visualization.DataTable();
 
 
-    var cols = chartDocument.pivotTableConfig.cols ;
-    var rows = chartDocument.pivotTableConfig.rows ;
+    var cols = chartDocument.pivotTableConfig.cols;
+    var rows = chartDocument.pivotTableConfig.rows;
 
 
 
-    cols.map(function(field)  {
+    cols.map(function(field) {
 	var type = "string";
 	try {
 	    type = chartDocument.metadata[field].type.toLowerCase();
 	} catch (err) {
-	   // HACK: why should metadata be missing anything? TBD
-	   // debugger;
+	    // HACK: why should metadata be missing anything? TBD
+	    // debugger;
 	}
-        dataTable.addColumn(type, field);
+	dataTable.addColumn(type, field);
     })
 
 
-    // dataTable.addColumn({type: 'string', role: 'tooltip'});
+    dataTable.addColumn({type: 'string', role: 'tooltip'});
 
-    function columnCluster(columns){
+    function columnCluster(columns) {
 	columns.map(function(elem) {
-	     var valid = true;
-	     var row = cols.map(function(field) { 
-		 value =  elem[field];
-		 if (value == "N/A")
+	    var valid = true;
+	    var row = cols.map(function(field) {
+		value = elem[field];
+		if (value == "N/A")
 		    valid = false;
-		 return value;
-	     });
+		return value;
+	    });
 
-	     // row.push(String(row));
-	     if (valid)
-		 dataTable.addRow(row);
+	    row.push(String(row));
+	    if (valid)
+		dataTable.addRow(row);
 	});
     }
 
     if (rows == null || rows.length == 0)
 	columnCluster(chartDocument.chartData);
     else {
-        var clusters = {};
-	var blank = _.map(_.range(cols.length), function () { return undefined; });
+	var clusters = {};
+	var blank = _.map(_.range(cols.length), function() {
+	    return undefined;
+	});
 
 	chartDocument.chartData.map(function(elem) {
-	   var key = JSON.stringify(_.pluck(elem, rows)).replace(/[{}]/, "");
-	   if (!(key in clusters))  clusters[key] = [];
-	   clusters[key].push(elem);
+	    var key = JSON.stringify(_.pluck(elem, rows)).replace(/[{}]/, "");
+	    if (!(key in clusters)) clusters[key] = [];
+	    clusters[key].push(elem);
 	});
 	Object.keys(clusters).sort().map(function(key, i) {
 	    if (i > 0)
-		 dataTable.addRow(blank);
+		dataTable.addRow(blank);
 	    columnCluster(clusters[key]);
 	});
-   }
-    	
+    }
 
-    title = vAxisTitle = ""; 
+
+    title = vAxisTitle = "";
     hAxisTitle = chartDocument.pivotTableConfig.cols.join("-");
     if (hAxisTitle !== "") {
-      title += " " + opts.localeStrings.vs + " " + hAxisTitle;
+	title += " " + opts.localeStrings.vs + " " + hAxisTitle;
     }
 
     groupByTitle = chartDocument.pivotTableConfig.rows.join("-");
     if (groupByTitle !== "") {
-      title += " " + opts.localeStrings.by + " " + groupByTitle;
+	title += " " + opts.localeStrings.by + " " + groupByTitle;
     }
 
     document.title = title;
     var windowWidth = $(window).width() * 0.8;
-    var chartWidth  = windowWidth * window.LEGEND_PROPORTION;
+    var chartWidth = windowWidth * window.LEGEND_PROPORTION;
     var legendWidth = windowWidth * (1.0 - window.LEGEND_PROPORTION);
 
     options = {
-      // toolTip: { isHtml: true},
-      width: chartWidth + legendWidth,
-      height: $(window).height() / 1.4,
-      chartArea: {
-	left: 120,
-	width: chartWidth },
-      legend: {width: legendWidth },
+	// toolTip: { isHtml: true},
+	tooltip: {
+	    trigger: 'selection'
+	},
 
-      title: title,
-      
-      hAxis: {
-	title: hAxisTitle,
-	slantedText: numCharsInHAxis > 50
-      },
-      vAxis: {
-	title: vAxisTitle
-      }
+	width: chartWidth + legendWidth,
+	height: $(window).height() / 1.4,
+	chartArea: {
+	    left: 120,
+	    width: chartWidth
+	},
+	legend: {
+	    width: legendWidth
+	},
+
+	title: title,
+
+	hAxis: {
+	    title: hAxisTitle,
+	    slantedText: numCharsInHAxis > 50
+	},
+	vAxis: {
+	    title: vAxisTitle
+	}
     };
 
 
-
- 
-
-    wrapper = new google.visualization.ChartWrapper({
-      dataTable: dataTable,
-      chartType: "google.charts.Bar",
-      options: options
-    });
-
-    // GoogleCharts must be rendered in place, not in an unbound HTML element.
-    // So return the target, and defer the rendering for a bit.
-    setTimeout(function() { wrapper.draw($('#GoogleChartTarget')[0]);}, 300);
+    setTimeout(function() {
+	var googleChart = new google.charts.Bar(document.getElementById('GoogleChartTarget'));
+	googleChart.draw(dataTable, options);
+    }, 300);
 
     return "<div id='GoogleChartTarget' class='ChartWrapper'   style='animation-duration: 3s; animation-name: slidein; animation-iteration-count: infinite;  width: \'100%\' height: \'100%\'' >Loading</div> "
 
@@ -134,7 +138,6 @@ GoogleChart = function(chartDocument, opts) {
      Out for the time being.
 
 
-    google.visualization.events.addListener(wrapper, 'ready', onReady);
 
 
     function editChart() {
