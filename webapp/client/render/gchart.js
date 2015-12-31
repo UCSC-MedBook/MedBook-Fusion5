@@ -21,24 +21,51 @@ GoogleChart = function(chartDocument, opts) {
     opts = $.extend({}, defaults, opts);
 
     var dataTable = new google.visualization.DataTable();
-    var fields = chartDocument.pivotTableConfig.rows.concat( chartDocument.pivotTableConfig.cols );
 
-    fields.map(function(field)  {
+
+    var cols = chartDocument.pivotTableConfig.cols ;
+    var rows = chartDocument.pivotTableConfig.rows ;
+
+
+
+    cols.map(function(field)  {
 	var type = "string";
 	try {
 	    type = chartDocument.metadata[field].type.toLowerCase();
 	} catch (err) {
-	   // why should metadata be missing anything? TBD
+	   // HACK: why should metadata be missing anything? TBD
 	}
-	dataTable.addColumn(type, field);
     })
+
+
     // dataTable.addColumn({type: 'string', role: 'tooltip'});
 
-    chartDocument.chartData.map(function(elem) {
-	 var row = fields.map(function(field) { return elem[field]; });
-	 // row.push(String(row));
-	 dataTable.addRow(row);
-    });
+    function columnCluster(columns){
+	columns.map(function(elem) {
+	     var row = cols.map(function(field) { return elem[field]; });
+	     // row.push(String(row));
+	     dataTable.addRow(row);
+	});
+    }
+
+    if (rows == null || rows.length == 0)
+	columnCluster(chartDocument.chartData);
+    else {
+        var clusters = {};
+	var blank = _.map(_.range(cols.length), function () { return undefined; });
+
+	chartDocument.chartData.map(function(elem) {
+	   var key = JSON.stringify(_.pluck(elem, rows)).replace(/[{}]/, "");
+	   if (!(key in clusters))  clusters[key] = [];
+	   clusters[key].push(elem);
+	});
+	Object.keys(clusters).sort().map(function(key, i) {
+	    if (i > 0)
+		 dataTable.addRow(blank);
+	    columnCluster(clusters[key]);
+	});
+   }
+    	
 
     title = vAxisTitle = ""; 
     hAxisTitle = chartDocument.pivotTableConfig.cols.join("-");
@@ -82,7 +109,7 @@ GoogleChart = function(chartDocument, opts) {
 
     wrapper = new google.visualization.ChartWrapper({
       dataTable: dataTable,
-      chartType: "ColumnChart",
+      chartType: "google.charts.Bar",
       options: options
     });
 
