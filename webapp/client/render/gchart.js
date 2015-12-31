@@ -138,7 +138,6 @@ GoogleChart = function(chartDocument, opts) {
 
     setTimeout(function() {
 	var googleChart = new google.visualization.ColumnChart(document.getElementById('GoogleChartTarget'));
-	debugger;
 	googleChart.draw(dataTable, options);
     }, 300);
 

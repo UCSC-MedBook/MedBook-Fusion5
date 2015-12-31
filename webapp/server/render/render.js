@@ -21,6 +21,8 @@ Meteor.startup(function() {
 renderJSdom = function(ChartDocument) {
     var chartType = ChartDocument.pivotTableConfig.rendererName;
     var qqq = ChartTypeMap[chartType];
+    // console.log("rendering", chartType);
+    var qqq = ChartTypeMap[chartType];
     if (typeof(qqq) == 'function') {
 	var start = new Date();
 	    jsdom.env(htmlStub,  {
@@ -29,13 +31,15 @@ renderJSdom = function(ChartDocument) {
 		    var plot = qqq(window, ChartDocument, null, []);
 		    var html = plot ? serializeDocument(plot) : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 		    Fiber(function(){
+			// console.log("html", html);
 		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
 	    }) // end jsdom.env
 	var stop = new Date();
 	console.log(ChartDocument._id, "stop - start", stop-start);
+	return "";
     } else {
-	Charts.direct.update({_id: ChartDocument._id}, {$set: {html: qqq}});
+	return qqq;
     }
 }

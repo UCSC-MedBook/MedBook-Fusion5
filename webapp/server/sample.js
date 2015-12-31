@@ -222,7 +222,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             query[qf] = {$in: gl};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
+            // console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
 	    
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression
@@ -399,12 +399,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 dataFieldNames: dataFieldNames,
                 selectedFieldNames: selectedFieldNames,
 		metadata: metadata,
-                chartData: chartData
+                chartData: chartData,
+		html: renderJSdom(ChartDocument) // render may start a thread or a unix process  and update the document later
                }});
 
 
-    // Step 7. Render the visualization on the server if possible.
-    renderJSdom(ChartDocument);
 
     // console.log("done", ret);
 } 
@@ -412,7 +411,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 Meteor.startup(function() {
     Charts.after.update( function(userId, ChartDocument, fieldNames) {
-        console.log("Join", ChartDocument.Join)
+        // console.log("Join", ChartDocument.Join)
         if (ChartDocument.Join == null ||  ChartDocument.Join == "Sample_ID")
             SampleJoin(userId, ChartDocument, fieldNames);
         else if (ChartDocument.Join == "Gene")
