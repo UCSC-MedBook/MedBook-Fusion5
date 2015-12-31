@@ -20,8 +20,10 @@ function getTree() {
   var studies = Collections.studies.find({}, {sort: {"name":1}}).fetch();
 
   var tree = studies.map(function(study){ 
-      var p  = String(study.Patient_IDs.length);
-      var s  = String(study.Sample_IDs.length);
+      var p  = "";
+      var s  = "";
+      try {p = String(study.Sample_IDs.length); } catch(err) {};
+      try {s = String(study.Patient_IDs.length); } catch(err) {};
 
       var clin = getClinicalData(study);
       var gen = getGenomicData(study);
