@@ -1,0 +1,34 @@
+  function analyze(input) {
+     function and(a,b) { return a && b };
+     function or(a,b) { return a || b };
+
+     function allStrings(values) {
+         if (values.length == 0)
+            return [];
+         return values.map(function(v) { return v == "" || v == "N/A" || typeof(v) == "string"} ).reduce(and);
+     }
+     function allNumbers(values) {
+         if (values.length == 0)
+            return [];
+         return values.map(function(v) { return v == "" || v == "N/A" || !isNaN(v)} ).reduce(and);
+     }
+     function unique(values) {
+	 var seen = {};
+	 var dupes = {};
+	 for (var i = 0; i < values.length; i++) {
+	     if (values[i] in seen)
+		 dupes[values[i]] = true;
+	     else
+		 seen[values[i]] = true;
+	 }
+	 return  {
+	     uniqueValues: Object.keys(seen),
+	     dupeValues: Object.keys(dupes);
+	 }
+     }
+     return {
+	 numbersBoolVec: input.map(allNumbers)
+	 stringsBoolVec: input.map(allNumbers)
+	 uniqueValues: input.map(unique)
+      }
+  }

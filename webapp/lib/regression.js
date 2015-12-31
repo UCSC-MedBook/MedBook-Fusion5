@@ -68,8 +68,10 @@
                 var string = 'y = ' + Math.round(gradient*100) / 100 + 'x + ' + Math.round(intercept*100) / 100;
                 var r = jStat.corrcoeff(xx, yy);
                 var r_p_value = jStat.rtop(r,xx.length);
+		/*
                 if (Math.abs(r - correlation) > 0.0001)
                     alert("Warning: R is " +  r  + " Corr is" +  correlation + " may be a problem" );
+		*/
 
 
                 var stat = "R = " + r.toPrecision(3) + "  P-value = " + r_p_value.toPrecision(3) + " N = " + xx.length;

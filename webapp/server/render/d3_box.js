@@ -103,10 +103,8 @@ Meteor.startup(function() {
 		  .style("stroke-width", 3)
 		  .style("opacity", 1)
 		  .attr("y1", function(d) { 
-			  console.log("trans rect y1", d[0]);
 			  return x1(d[0]); })
 		  .attr("y2", function(d) { 
-			  console.log("trans rect y2", d[1]);
 			  return x1(d[1]); });
 
 
@@ -137,7 +135,6 @@ Meteor.startup(function() {
 		      .style("stroke-width", 2)
 	      .attr("x", 0)
 	      .attr("y", function(d) { 
-		      console.log("box d2",d[2]); 
 		      return x0(d[2]); })
 	      .attr("width", width)
 	      .attr("height", function(d) { return x0(d[0]) - x0(d[2]); })
