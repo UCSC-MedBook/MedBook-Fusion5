@@ -11,7 +11,7 @@ function valueIn(field, value) {
 var PivotTableInit = {
     cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
 
-    rendererName: "Bar Chart",
+    rendererName: "Table",
 };
 id_text = function(array) {
     return array.map(function(e) { return { id: e, text: e} });
@@ -93,7 +93,7 @@ Template.Controls.helpers({
 
 
    mostImportantCorrelations : function() {
-       var d = Template.currentData();
+       var d = Session.get("TheChart");
        /*
        if (d == null) return null;
        if (cache_dipsc == d)
@@ -130,14 +130,16 @@ Template.Controls.helpers({
    geneLikeDataDomains : function() {
       var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
       if (prevGeneLikeDataDomains)
-          GeneLikeDataDomainsPrototype.map(function(newDomain) {
-              prevGeneLikeDataDomains.map(function(prevDomain) {
+          GeneLikeDataDomainsPrototype.map(function(prevDomain) {
+              prevGeneLikeDataDomains.map(function(newDomain) {
                   if (prevDomain.collection == newDomain.collection  && prevDomain.field == newDomain.field ) {
                       newDomain.state = prevDomain.state;
                   }
               });
           });
-      return GeneLikeDataDomainsPrototype;
+      else
+          prevGeneLikeDataDomains = JSON.parse(JSON.stringify(GeneLikeDataDomainsPrototype));
+      return prevGeneLikeDataDomains;
    },
 
    studiesSelected: function() {
@@ -186,8 +188,7 @@ Template.Controls.helpers({
    genesets : function() {
        var html = '';
        var type = null;
-       var currentChart = Template.currentData();
-       var selectedGenesets = currentChart.genesets;
+       var selectedGenesets = CurrentChart("genesets");
 
        GeneSets.find({}, {sort: [["type", "asc"], ["name", "asc"]]})
         .forEach(function(vv) {
@@ -416,7 +417,7 @@ Template.Controls.events({
    },
 
    'click #TableBrowser': function(evt, tmpl) {
-	var currentChart = Template.currentData();
+	var currentChart = Session.get("TheChart");
 	/*
 	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
 	var data = currentChart.chartData.map( function(doc) {
@@ -466,7 +467,6 @@ Template.Controls.events({
        var genesets = [];
        $(evt.target.selectedOptions).each(function(i, opt) {
            var _id = $(opt).val();
-	   debugger;
            genesets.push(_id);
        });
        UpdateCurrentChart("genesets", genesets); 
@@ -480,8 +480,28 @@ Template.Controls.events({
 })
 
 function initializeSpecialJQueryElements(document) {
-     $("#samplelist").val(document.samplelist);
+    if (document & document.samplelist)
+         $("#samplelist").val(document.samplelist);
 
+     GeneLikeDataDomainsPrototype.map(function(domain) {
+          $("input[name='" + domain.checkBoxName + "']").prop("checked", domain.state);
+     });
+     if (document && document.geneLikeDataDomain) {
+         document.geneLikeDataDomain.map(function(domain) {
+             $("input[name='" + domain.checkBoxName + "']").prop("checked", domain.state);
+         });
+     }
+
+      // init to default values
+      GeneLikeDataDomainsPrototype.map(function(gld) {
+	  $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
+      });
+
+      var prevGeneLikeDataDomains = CurrentChart("geneLikeDataDomain");
+      if (prevGeneLikeDataDomains)
+	  prevGeneLikeDataDomains.map(function(gld) {
+	      $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
+	  });
 
      $('.studiesSelectedTable th').hide()
 
@@ -521,7 +541,6 @@ function initializeSpecialJQueryElements(document) {
 
 
 	  tokenizer: function(input, selection, callback) {
-	  debugger;
 	    var parts = input.split(/[ ;,\t]/)
 		.filter(function(s) { return s && s.length > 1})
 		.filter(function(s) { return s.match(/^[a-z0-9]+$/i)});
@@ -565,9 +584,8 @@ console.log("onstartup");
 cc = null;
 
 CurrentChart = function(name) {
-    var x = Template.currentData();
-    if (x == null)
-       debugger;
+    var x = Session.get("TheChart");
+    if (x == null) return null;
     cc = x;
     if (name)
         return x[name];
@@ -576,7 +594,7 @@ CurrentChart = function(name) {
 }
 
 UpdateCurrentChart = function(name, value) {
-    var x = Template.currentData();
+    var x = Session.get("TheChart");
     x[name] = value;
     var u =  {};
     u[name] = value;
@@ -587,6 +605,7 @@ UpdateCurrentChart = function(name, value) {
 renderChart = function() {
     var _id = CurrentChart("_id");
     var watch = Charts.find({_id: _id});
+
     var currentChart = watch.fetch()[0];
     var element = this.find(".output");
 
@@ -594,7 +613,7 @@ renderChart = function() {
     Meteor.subscribe("DIPSC", dipsc_id);
 
     RefreshChart = function(id, fields) {
-        console.log("RefreshChart", id, fields);
+        // console.log("RefreshChart", id, fields);
         // short circuit unnecessary updates
         if (fields == null) return
 
@@ -631,6 +650,8 @@ renderChart = function() {
 
         templateContext = { 
             onRefresh: function(config) {
+		assertSaneFusion();
+
                 currentChart.pivotTableConfig = { 
                     cols: config.cols,
                     rows: config.rows,
@@ -685,7 +706,6 @@ renderChart = function() {
     // AR TP53
     /*
     $('body').on('paste', '.select2-input', function () {
-	    debugger;
 	    var that = this;
 	    setTimeout(function () {
 		var tokens = that.value.split(/[\,\s]+/);$(that).blur();
@@ -721,3 +741,15 @@ Template.AllCharts.events({
    }
 });
 */
+
+// as per Robert December 17, 2015
+assertSaneFusion = function() {
+   if ($('.pvtUsed').children().length > 0) { // we have controls
+       var rend = $('.pvtRendererArea')
+       if (rend.length == 0 || rend.children().length == 0) {
+           console.log("currentChart", cc);
+	   console.log("rend area", rend);
+           debugger;
+       }
+   }
+}

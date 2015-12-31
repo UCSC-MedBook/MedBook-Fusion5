@@ -193,7 +193,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.map(function(cd) {  
        delete cd["CRF"];
     })
-    console.log(q, "chartData length", chartData.length);
+    // console.log(q, "chartData length", chartData.length);
 
 
     // Step 2. Build Map and other bookkeeping 
@@ -221,7 +221,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             query[qf] = {$in: gl};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("GeneLikeDomain", domain.label, domain.collection, query, cursor.count());
+            console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
 	    
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression

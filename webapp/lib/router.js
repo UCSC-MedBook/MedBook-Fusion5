@@ -42,7 +42,7 @@ if (Meteor.isClient)
                 url += '?id=' +id;
         }
 	window.history.replaceState(null, null, url);
-    }
+  };
 
 
 function data() {
@@ -50,19 +50,20 @@ function data() {
         post: {$exists: 0},
         userId: Meteor.userId()
     };
-    var data = null;
+    var theChart = null;
     var id = this.params._id || this.params.query.id;
 
-    if (this.params.query.id != null) {
-	data = Charts.findOne({_id: id});
+    if (this.params.query.id != null) { // needs to be !=
+	theChart = Charts.findOne({_id: id});
     } else {
-	data = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (data && id == null) {
+	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
+	if (theChart && id == null) {  // needs to be ==
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
-		updateUrl(url, data._id);
+		updateUrl(url, theChart._id);
 	}
     }
+    Session.set("TheChart", theChart);
     return data;
 }
 
@@ -71,25 +72,25 @@ function waitOn() {
       Meteor.subscribe('Chart', this.params._id || this.params.query.id),
       Meteor.subscribe('Metadata'),
       Meteor.subscribe('studies')
-    ]
+    ];
 }
 
 Router.map(function() {
   this.route('home', {
     template: "SampleFusion",
     path: '/fusion/',
-    waitOn: waitOn, 
-    data: data, 
+    waitOn: waitOn,
+    data: data,
   });
 });
 
 Router.map(function() {
   this.route('display', {
     template: "SampleFusion",
-    onBeforeAction: function() { this.state.set("NoControls", true); this.next()},
+    onBeforeAction: function() { this.state.set("NoControls", true); this.next();},
     path: '/fusion/display/:_id',
     data: data,
-    waitOn: waitOn, 
+    waitOn: waitOn,
   });
 });
 
@@ -98,7 +99,7 @@ Router.map(function() {
     template: "SampleFusion",
     path: '/fusion/edit',
     data: data,
-    waitOn: waitOn, 
+    waitOn: waitOn,
   });
 });
 
@@ -127,6 +128,23 @@ Router.map(function() {
        Session.set("BrowseStudies", null);
        Session.set("BrowseTable", null);
        this.next();
+    }
+  });
+});
+
+
+
+Router.map(function() {
+  this.route('fusionDownloadTable', {
+    path: '/fusion/downloadTable/',
+    template: null,
+    onBeforeAction : function(arg) {
+	var data = Session.get('ChartDataFinal');
+	var name = Session.get('CurrentChart').studies.join("_") + "_" + data.length + ".txt";
+	var keys = Session.get("ChartDataFinalKeys");
+
+	saveTextAs(ConvertToTSV(data, keys), name);
+        this.next();
     }
   });
 });
@@ -161,10 +179,10 @@ Router.map(function() {
     },
     onBeforeAction : function(arg) {
        var study =  this.params._study;
-       var table = this.params._table; 
+       var table = this.params._table;
        var user = Meteor.user();
 
-       if (study == null) {
+       if (study === null) {
 	   var last = user && user.profile && user.profile.lastCRFroute;
 	   if (last) {
 	       var a = last.split("/");
@@ -189,7 +207,7 @@ Router.map(function() {
        return [
 	   Meteor.subscribe("Metadata"),
 	   Meteor.subscribe('studies')
-       ]
+     ];
     }
   });
 });
@@ -200,7 +218,7 @@ Router.map(function() {
   this.route('import', {
     template: "DataImport",
     path: '/fusion/import',
-    waitOn: waitOn, 
+    waitOn: waitOn,
   });
 });
 
@@ -221,10 +239,10 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
 
   var cursor = coll.find(
       {
-	  Study_ID: {$in: studiesFiltered}, 
+	  Study_ID: {$in: studiesFiltered},
 	  sample: {$in: samplesAllowed},
 	  "MA_FImpact": {$in: ["medium", "high"]},
-      }, 
+      },
       {sort:{Hugo_Symbol:1, sample:1}});
 
 
@@ -293,17 +311,28 @@ function clinical(coll, samplesAllowed, studiesFiltered, response)  {
   });
 }
 
+Meteor.startup(function() {
+    var keys = Object.keys(DomainCollections);
+    keys.map(function(key) {
+        console.log("Ensuring index ", key);
+        if (key == "ExpressionIsoform")
+            DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 , "transcript" : 1})
+        else
+            DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 })
+    })
+});
+
 
 exportData = function() {
   // First Security Check, is the user logged in?
   var cookies = parseCookies(this.request);
-  var mlt = cookies["meteor_login_token"];
+  var mlt = cookies.meteor_login_token;
   var user = null;
   if (mlt) {
       var hash_mlt =  Accounts._hashLoginToken(mlt);
       user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
   }
-  if (user == null)
+  if (user === null)
       throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
 
   // Kind parameter
@@ -341,18 +370,18 @@ exportData = function() {
   Collections.studies.find( {
         id: {$in: studiesRequested},
         collaborations: {$in: ["public"].concat(user.profile.collaborations)}
-      }, 
+      },
       {fields: {id:1, Sample_IDs: 1}}
   ).forEach( function(doc) {
-      studiesFiltered.push(doc.id)
+      studiesFiltered.push(doc.id);
       samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
   });
 
   // Last Security check
-  if (studiesFiltered.length == 0 || samplesAllowed.length == 0)
+  if (studiesFiltered.length === 0 || samplesAllowed.length === 0)
       throw new Error("must specify studies that your collaborations are allowed to use");
 
-  
+
   var response = this.response;
   response.writeHead(200, {
     // 'Content-Type': 'text/tab-separated-values',
@@ -375,7 +404,7 @@ exportData = function() {
 	  genomicDataSamples(coll, samplesAllowed, studiesFiltered, response);
 
   } else if (kind == "clinical") {
-      var meta = Collections.Metadata.findOne({name: table})
+      var meta = Collections.Metadata.findOne({name: table});
       var data = Collections.CRFs.find({CRF: table, Study_ID: {$in: studiesFiltered}}, {sort: {Sample_ID:1}}).fetch();
       data.map(function(row,i) {
 	  Object.keys(row).map(function(key) {
@@ -396,3 +425,49 @@ Router.map(function() {
     action: exportData,
   });
 });
+
+exportChart = function() {
+  // First Security Check, is the user logged in?
+  var cookies = parseCookies(this.request);
+  var mlt = cookies["meteor_login_token"];
+  var user = null;
+  if (mlt) {
+      var hash_mlt =  Accounts._hashLoginToken(mlt);
+      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+  }
+  if (user == null)
+      // throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+      console.log("user should be logged in. Cookies=" + JSON.stringify(cookies));
+
+  // Filename parameter
+  var attachmentFilename = 'filename.txt';
+  if (this.params && this.params.query && this.params.query.filename)
+      attachmentFilename = this.params.query.filename;
+
+  var response = this.response;
+  response.writeHead(200, {
+    // 'Content-Type': 'text/tab-separated-values',
+    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+  });
+
+  var chart = Charts.findOne({_id: this.params.query.id });
+  if (chart) {
+      var ptc = chart.pivotTableConfig;
+      var keys = ["Patient_ID", "Sample_ID"].concat(ptc.cols, ptc.rows);
+      response.write(keys.join("\t")+"\n");
+
+      chart.chartData.map(function(doc) {
+	  var values = keys.map(function (k) { return String(doc[k]); });
+          response.write(values.join("\t")+"\n");
+      });
+  }
+  response.end();
+};
+
+Router.map(function() {
+  this.route('exportChart', {
+    where: 'server',
+    action: exportChart,
+  });
+});
+
