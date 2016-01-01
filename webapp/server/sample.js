@@ -166,6 +166,7 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
 
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
+
     console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
     // Step 0 alidate params
     var b = new Date();
@@ -395,11 +396,12 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
     var keys = Object.keys(exclusions);
     chartData =  chartData.filter(function(elem) {
-        keys.map(function(key) {
+        for (var i = 0; i < keys.length; i++) {
+	   var key = keys[i];
 	   if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
 	       return false;
 	   return true;
-	})
+	}
     });
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.

@@ -1,0 +1,25 @@
+
+<template name="Element">
+ <div class="Element">
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3>{{this.field}} choose data based on values</h3> </div>
+      <div id="p1" class="panel-body ">
+	    <div class="col-lg-7">
+		 <!-- 
+	         <button type="button">Select All</button>
+	         <button type="button">Select None</button>
+	         <input type="text" placeholder="Filter results" class= "pvtSearch" />
+		 -->
+	         {{#each this.values}}
+		     <div style="margin:15px;">
+			 {{this}}
+			 <input data-field="{{this}}" type="checkbox" checked={{checked}} />
+		     </div>
+		 {{/each}}
+		 <p><button class="OK" type="button">OK</button></p>
+	    </div>
+       </div>
+    </div>
+ </div>
+</template>
+

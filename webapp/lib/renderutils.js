@@ -20,7 +20,7 @@ analyze = function(chartData, dataFieldNames) {
 
      function allNumbers(values) {
          if (values.length == 0)
-            return [];
+            return false;
          return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
      }
      function extract(key) {

@@ -297,10 +297,14 @@ Template.Controls.events({
        var TheChart = Session.get("TheChart");
        var analysis = analyze(TheChart.chartData, [field])[field];
        var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
-       if (analysis.isNumbers)
-           values = ["N/A"];
-       else
-           values = analysis.values;
+       var values = ["N/A"];
+       try {
+	   var md = TheChart.metadata[field];
+	   if (md.type == "String" && md.allowedValues)
+	       values = TheChart.metadata[field].allowedValues;
+       } catch (err) {
+           debugger;
+       }
        Overlay("Element", { theChart: TheChart, field: field, values: values, exclusions: exclusions });
   }, 
   'change #previousCharts' : function(e) {
