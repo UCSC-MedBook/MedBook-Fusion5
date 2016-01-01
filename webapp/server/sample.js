@@ -166,8 +166,7 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
 
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
-
-    console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
+    // console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
@@ -392,16 +391,40 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              });
         });
 
-    // Step 6. Remove the exclusions and any other spot criteria.
+    // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
-    var keys = Object.keys(exclusions);
-    chartData =  chartData.filter(function(elem) {
-        for (var i = 0; i < keys.length; i++) {
-	   var key = keys[i];
-	   if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
-	       return false;
-	   return true;
-	}
+    var excludedKeys = _.intersection(Object.keys(exclusions), selectedFieldNames); // only those names that are engaged.
+    if (excludedKeys.length > 0)
+	chartData =  chartData.filter(function(elem) {
+	    for (var i = 0; i < excludedKeys.length; i++) {
+	       var key = excludedKeys[i];
+	       if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
+		   return false;
+	       return true;
+	    }
+	});
+    chartData = chartData.sort(function(a,b) { 
+        var something = 0;
+        for (var i = 0; i < selectedFieldNames.length; i++) {
+	   var key = selectedFieldNames[i];
+	   if (key in a && key in b) {
+	       return naturalSort(a[key], b[key]);
+	   /*
+	       if (a[key] < b[key])
+		   return -1;
+	       if (a[key] > b[key])
+		   return 1;
+	   */
+	   } else {
+	       if (key in a)
+		   something = 1;
+	       else if (key in b)
+		   something = -1;
+	       else 
+		   something = 0;
+	   }
+       }
+       return something;
     });
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.

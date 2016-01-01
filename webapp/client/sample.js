@@ -1,4 +1,4 @@
-
+TheChartID = null;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -42,11 +42,12 @@ Template.Controls.helpers({
    },
 
    TheChart: function() {
-       return Session.get("TheChart")
+       return CurrentChart()
    },
 
    html: function() {
-       var TheChart = Session.get("TheChart");
+       var TheChart = CurrentChart();
+       TheChart = Charts.findOne({_id: TheChart._id});
        var html = TheChart.html;
        if (html && html.length > 0 && html.length < 30)  {
           var func = eval(html)
@@ -102,7 +103,7 @@ Template.Controls.helpers({
 
 
    mostImportantCorrelations : function() {
-       var d = Session.get("TheChart");
+       var d = CurrentChart();
        /*
        if (d == null) return null;
        if (cache_dipsc == d)
@@ -278,7 +279,7 @@ Template.Controls.helpers({
        return html;
    },
    unusedDataFieldNames: function() {
-       var TheChart = Session.get("TheChart");
+       var TheChart = CurrentChart();
        unused = _.difference(_.difference(TheChart.dataFieldNames, TheChart.pivotTableConfig.rows), TheChart.pivotTableConfig.cols);
        return unused
    }
@@ -294,7 +295,7 @@ Template.checkBox.helpers({
 Template.Controls.events({
   'click .element' : function(e) {
        var field =  $(e.target).data("field");
-       var TheChart = Session.get("TheChart");
+       var TheChart = CurrentChart();
        var analysis = analyze(TheChart.chartData, [field])[field];
        var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
        var values = ["N/A"];
@@ -444,7 +445,7 @@ Template.Controls.events({
    },
 
    'click #TableBrowser': function(evt, tmpl) {
-	var currentChart = Session.get("TheChart");
+	var currentChart = CurrentChart();
 	/*
 	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
 	var data = currentChart.chartData.map( function(doc) {
@@ -620,7 +621,7 @@ console.log("onstartup");
 cc = null;
 
 CurrentChart = function(name) {
-    var x = Session.get("TheChart");
+    var x = Charts.findOne({_id: TheChartID});
     if (x == null) return null;
     cc = x;
     if (name)
@@ -630,12 +631,11 @@ CurrentChart = function(name) {
 }
 
 UpdateCurrentChart = function(name, value) {
-    var x = Session.get("TheChart");
+    var x = Charts.find({_id: TheChartID});
     x[name] = value;
     var u =  {};
     u[name] = value;
-    Charts.update({_id: x._id}, {$set: u});
-    Session.set("TheChart", x);
+    Charts.update({_id: TheChartID}, {$set: u});
 }
 
 
@@ -677,8 +677,9 @@ renderChart = function() {
 
 
 Template.Controls.rendered = function(){
+   debugger
 
-   var TheChart = Session.get("TheChart");
+   var TheChart = CurrentChart();
    initializeHtmlElements(TheChart);
    initializeJQuerySelect2(TheChart);
    initializeJQuerySortable(TheChart);
@@ -713,7 +714,7 @@ initializeJQuerySortable = function() {
       update: function(e, ui) {
          var well = ui.item.parent();
          var field = ui.item.data("field");
-	 var TheChart = Session.get("TheChart");
+	 var TheChart = CurrentChart();
 
 	 if (well.hasClass("pvtUnused")) {
 	     Charts.update({_id: TheChart._id},

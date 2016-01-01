@@ -53,18 +53,19 @@ function data() {
     var theChart = null;
     var id = this.params._id || this.params.query.id;
 
-    if (this.params.query.id != null) { // needs to be !=
+    if (this.params.query.id != null) { // needs to be !=  never !==
 	theChart = Charts.findOne({_id: id});
     } else {
 	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (theChart && id == null) {  // needs to be ==
+	if (theChart && id == null) {  // needs to be == never ===
 	    var url = Router.current().url;
 	    if (url && url.length > 0 && url.indexOf('id=') < 0)
 		updateUrl(url, theChart._id);
 	}
     }
-    Session.set("TheChart", theChart);
-    return data;
+    if (theChart)
+	TheChartID = theChart._id;
+    return theChart;
 }
 
 function waitOn() {
@@ -277,7 +278,6 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
 
 function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
   coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
-      debugger
       var line = doc.gene;
       if ('transcript' in doc) // for isoforms
          line  += ' '+ doc.transcript;
