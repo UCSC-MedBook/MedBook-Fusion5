@@ -1,10 +1,14 @@
 /*****************************************************************************/
 /* MasterLayout: Event Handlers and Helpersss .js*/
 /*****************************************************************************/
+
+OverlayClose = function() {
+    $('#overlayContent').children().remove()
+    $('.overlay').addClass("hidden");
+};
+
 Template.MasterLayout.events({
     'click #overlayClose' : function() {
-        $('#overlayContent').children().remove()
-        $('.overlay').addClass("hidden");
      },
 
     'change #study' : function(event, template) {
@@ -88,5 +92,5 @@ Overlay = function(templateName, params) {
     $overlay.removeClass("hidden");
     $overlay.show();
     var $overlayContent = $( '#overlayContent' );
-    UI.insert( UI.renderWithData( Template[templateName], params), $overlayContent.get(0) );
+    Blaze.renderWithData( Template[templateName], params, $overlayContent.get(0) );
 }

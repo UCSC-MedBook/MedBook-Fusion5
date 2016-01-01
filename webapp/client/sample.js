@@ -292,6 +292,17 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'click .element' : function(e) {
+       var field =  $(e.target).data("field");
+       var TheChart = Session.get("TheChart");
+       var analysis = analyze(TheChart.chartData, [field])[field];
+       var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
+       if (analysis.isNumbers)
+           values = ["N/A"];
+       else
+           values = analysis.values;
+       Overlay("Element", { theChart: TheChart, field: field, values: values, exclusions: exclusions });
+  }, 
   'change #previousCharts' : function(e) {
 	var _id = $(e.target).val();
 	Router.go("/fusion/?id=" +_id);
@@ -620,6 +631,7 @@ UpdateCurrentChart = function(name, value) {
     var u =  {};
     u[name] = value;
     Charts.update({_id: x._id}, {$set: u});
+    Session.set("TheChart", x);
 }
 
 

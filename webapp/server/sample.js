@@ -391,9 +391,20 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              });
         });
 
-    // Step 6. We are done. Store the result back in the database and let the client take it from here.
-      // console.log("renderChartData", chartData.length);
-      var ret = Charts.direct.update({ _id : ChartDocument._id }, 
+    // Step 6. Remove the exclusions and any other spot criteria.
+    var exclusions = ChartDocument.pivotTableConfig.exclusions;
+    var keys = Object.keys(exclusions);
+    chartData =  chartData.filter(function(elem) {
+        keys.map(function(key) {
+	   if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
+	       return false;
+	   return true;
+	})
+    });
+
+    // Step Final. We are done. Store the result back in the database and let the client take it from here.
+    // console.log("renderChartData", chartData.length);
+    var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
                 dataFieldNames: dataFieldNames,
