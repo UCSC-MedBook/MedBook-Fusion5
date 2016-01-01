@@ -9,6 +9,12 @@ OverlayClose = function() {
 
 Template.MasterLayout.events({
     'click #overlayClose' : function() {
+	OverlayClose();
+     },
+     
+    'click .overlay' : function(evt, tmpl) {
+	if (evt.target.className == "overlay")
+	    OverlayClose();
      },
 
     'change #study' : function(event, template) {
