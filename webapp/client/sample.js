@@ -677,8 +677,6 @@ renderChart = function() {
 
 
 Template.Controls.rendered = function(){
-   debugger
-
    var TheChart = CurrentChart();
    initializeHtmlElements(TheChart);
    initializeJQuerySelect2(TheChart);
