@@ -393,6 +393,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
+    if (exclusions == null) exclusions = [];
     var excludedKeys = _.intersection(Object.keys(exclusions), selectedFieldNames); // only those names that are engaged.
     if (excludedKeys.length > 0)
 	chartData =  chartData.filter(function(elem) {
@@ -447,6 +448,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 Meteor.startup(function() {
     Charts.after.update( function(userId, ChartDocument, fieldNames) {
+        ensureMinimalChart(ChartDocument);
+  
         // console.log("Join", ChartDocument.Join)
         if (ChartDocument.Join == null ||  ChartDocument.Join == "Sample_ID")
             SampleJoin(userId, ChartDocument, fieldNames);

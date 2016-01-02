@@ -61,3 +61,28 @@ body {
     cursor: pointer;
 }
 
+.selectable {
+    -webkit-touch-callout: text;
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+    cursor: text;
+}
+
+.loading {
+  opacity:0.85;
+  -moz-opacity:0.85;
+  filter:alpha(opacity=85);
+  width: 400px;
+  height: 400px;
+  display: block;
+  background-attachment: fixed;
+  background-image: url(/fusion/loading.gif);
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+
+

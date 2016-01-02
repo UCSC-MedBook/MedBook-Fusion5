@@ -1,7 +1,19 @@
 #!/usr/bin/rscript
 args <- commandArgs(trailingOnly = TRUE);
-cat("Histogram", args);
-svg("plot.svg", width=8, height=6);
-input = read.table("input",header=TRUE, sep="\t")
-qqplot(input[2], input[3])
-dev.off();
+
+chartDocument_id = args[0];
+flags            = args[1];
+infilename       = args[2];
+outputviz        = args[3];
+outputdata       = args[4];
+
+svg(outputviz);
+
+input = read.delim(infilename, header=TRUE, sep="\t", row.names=1, na.strings="N/A", stringsAsFactors=TRUE);
+input = na.omit(input)
+data = unlist(input[1]);
+
+qqnorm(data)
+qqline(data)
+
+ignore = dev.off();

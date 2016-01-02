@@ -19,6 +19,28 @@ DomainCollections = {
   'SignatureScores' : SignatureScores
 };
 
+MinimalChart = {
+   pivotTableConfig: {
+       rows: [],
+       cols: [],
+       rendererName: "table",
+   },
+   exclusions: [],
+   chartData: []
+};
+
+ensureMinimalChart = function(doc) {
+    if (doc)
+	Object.keys(MinimalChart).map(function(key) {
+	    if (!(key in doc))
+	       doc[key] = MinimalChart[key];
+	});
+}
+
+Charts.after.findOne( function (userId, selector, options, doc) {
+    ensureMinimalChart(doc);
+});
+
 Charts.before.insert( function ChartsUpdate(userId, doc) {
   doc.updatedAt = Date.now();
   doc.userId = userId;

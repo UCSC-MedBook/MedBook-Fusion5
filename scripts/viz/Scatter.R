@@ -12,11 +12,12 @@ svg(outputviz);
 input = read.delim(infilename, header=TRUE, sep="\t", row.names=1, na.strings="N/A", stringsAsFactors=TRUE);
 input = na.omit(input)
 data = unlist(input[1]);
-xlab = colnames(input)
-xlab = xlab[1]
-cat(xlab)
+data2 = unlist(input[2]);
+cn = colnames(input)
+xlab = cn[1]
+ylab = cn[2]
 
-hist(data, xlab=xlab)
+plot(data, data2, xlab=xlab, ylab=ylab)
 
 ignore = dev.off();
 

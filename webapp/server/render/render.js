@@ -13,25 +13,28 @@ ChartTypeMap = {
   "Table" : "makeHandsontable"        // client side render
 }
 
-Meteor.startup(function() {
-  // use FusionFeatures colleciton to communicate from server to client. Someday, we will make it so that users can add new ChartTypes on the fly.
-  Collections.FusionFeatures.upsert({name: "ChartTypes"}, {$set: {value: Object.keys(ChartTypeMap).sort()}});
-});
+// use FusionFeatures collection to communicate from server to client
+SyncChartTypesWithFusionFeaturesDB = function() {
+  Collections.FusionFeatures.upsert({name: "ChartTypes"}, {$set: {value:  Object.keys(ChartTypeMap).sort()}});
+}
+
+Meteor.startup(SyncChartTypesWithFusionFeaturesDB);
 
 renderJSdom = function(ChartDocument) {
     var chartType = ChartDocument.pivotTableConfig.rendererName;
-    var qqq = ChartTypeMap[chartType];
-    // console.log("rendering", chartType);
     var qqq = ChartTypeMap[chartType];
     if (typeof(qqq) == 'function') {
 	var start = new Date();
 	    jsdom.env(htmlStub,  {
 		done : function(errors, window) {
 		    jquery_bind(window);
-		    var plot = qqq(window, ChartDocument, null, []);
-		    var html = plot ? serializeDocument(plot) : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
+		    var html = qqq(window, ChartDocument, null, []);
+		    html = html ? 
+		    	(typeof(html) == "string" 
+			    ? html
+			    : serializeDocument(html))
+			: "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 		    Fiber(function(){
-			// console.log("html", html);
 		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
