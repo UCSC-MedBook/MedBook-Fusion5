@@ -55,7 +55,6 @@ GoogleChart = function(chartDocument, opts) {
     dataTable.addColumn({type: 'string', role: 'tooltip'});
 
     function columnCluster(columns, col) {
-        debugger;
 	columns.map(function(elem) {
 	    var valid = true;
 	    var row = cols.map(function(field) {
@@ -143,7 +142,7 @@ GoogleChart = function(chartDocument, opts) {
     setTimeout(function() {
 	var googleChart = new google.visualization.ColumnChart(document.getElementById('GoogleChartTarget'));
 	googleChart.draw(dataTable, options);
-    }, 300);
+    }, 1000);
 
     return "<div id='GoogleChartTarget' class='ChartWrapper'   style='animation-duration: 3s; animation-name: slidein; animation-iteration-count: infinite;  width: \'100%\' height: \'100%\'' >Loading</div> "
 

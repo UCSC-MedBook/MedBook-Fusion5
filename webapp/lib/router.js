@@ -2,8 +2,8 @@
 /*
 Meteor.startup(function() {
   if (Meteor.isServer) {
-     Expression.ensureIndex( {gene:1, studies:1});
-     Expression_Isoform.ensureIndex( {gene:1, studies:1});
+     Expression._ensureIndex( {gene:1, studies:1});
+     Expression_Isoform._ensureIndex( {gene:1, studies:1});
   }
 });
 */
@@ -59,6 +59,7 @@ function data() {
 	theChart = Charts.find(defaultQ, {sort: {updatedAt: -1}, limit:1}).fetch()[0]
 	debugger
 	if (theChart) {  // needs to be == never ===
+	    Meteor.subscribe("TheChart", theChart._id);
 	    var url = Router.current().url;
 	    updateUrl(url, theChart._id);
 	}
