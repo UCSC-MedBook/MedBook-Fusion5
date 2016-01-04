@@ -27,6 +27,7 @@ renderJSdom = function(ChartDocument) {
 	var start = new Date();
 	    jsdom.env(htmlStub,  {
 		done : function(errors, window) {
+		    debugger
 		    jquery_bind(window);
 		    var html = qqq(window, ChartDocument, null, []);
 		    html = html ? 

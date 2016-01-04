@@ -1,4 +1,5 @@
 
+
 Meteor.publish('FusionFeatures', function() {
     var cursor = Collections.FusionFeatures.find();
     console.log("FusionFeatures publish", cursor.count());
@@ -10,39 +11,6 @@ Meteor.publish('DIPSC', function(_id) {
     // console.log("DIPSC publish", _id, cursor.count());
     return cursor;
 });
-
-Meteor.publish('Chart', function(_id) {
-    var q;
-    if (_id != null) {
-        q = { $or: 
-            [
-                {
-                    _id: _id
-                },
-                {
-                    userId: this.userId,
-                    post: {$exists: 0}
-                }
-            ]
-        };
-    } else if (this.userId != null) {
-        q = {
-                userId: this.userId,
-                post: {$exists: 0}
-            };
-    } else
-        return [];
-
-    var cursor = Charts.find(q);
-    if (cursor.count() == 0) {
-        Charts.insert({userId: this.userId, chartData: []}) ;
-        cursor = Charts.find(q);
-    }
-
-    // console.log("Chart", q, cursor.count());
-    return cursor;
-});
-
 
 Charts.allow({
   insert: function (userId, doc) { return true; }, 
@@ -191,3 +159,50 @@ Meteor.publish('QuickR', function(_id) {
     }
     return null;
 });
+
+Meteor.publish('MyCharts', function(_id) {
+    var q;
+    if (_id != null) {
+        q = { $or: 
+            [
+                {
+                    _id: _id
+                },
+                {
+                    userId: this.userId,
+                    post: {$exists: 0}
+                }
+            ]
+        };
+    } else if (this.userId != null) {
+        q = {
+                userId: this.userId,
+                post: {$exists: 0}
+            };
+    } else
+        return [];
+
+    var cursor = Charts.find(q, {
+	    fields: {_id:1, updatedAt:1, post: 1, userId: 1},
+	    
+	    sort:{lastupdated:  -1}
+    });
+
+    if (cursor.count() == 0) {
+        Charts.insert({userId: this.userId, chartData: []}) ;
+        cursor = Charts.find(q);
+    }
+
+    // console.log("MyCharts", q, cursor.count());
+    return cursor;
+});
+
+Meteor.publish('TheChart', function(_id) {
+    var cursor = Charts.find({_id: _id});
+    console.log("TheChart", _id, cursor.count());
+    return cursor;
+});
+
+
+
+

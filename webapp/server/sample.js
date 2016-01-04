@@ -456,4 +456,11 @@ Meteor.startup(function() {
         else if (ChartDocument.Join == "Gene")
             GeneJoin(userId, ChartDocument, fieldNames);
     });// chart.after.update
+
+    Charts.find({html: {$exists:0}}).forEach(function(doc) {
+	console.log("render", doc._id);
+        ensureMinimalChart(doc);
+	doc.html = renderJSdom(doc);
+	Charts.direct.update({ _id : doc._id }, {$set: doc});
+    });
 });

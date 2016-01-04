@@ -56,11 +56,11 @@ function data() {
     if (this.params.query.id != null) { // needs to be !=  never !==
 	theChart = Charts.findOne({_id: id});
     } else {
-	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (theChart && id == null) {  // needs to be == never ===
+	theChart = Charts.find(defaultQ, {sort: {updatedAt: -1}, limit:1}).fetch()[0]
+	debugger
+	if (theChart) {  // needs to be == never ===
 	    var url = Router.current().url;
-	    if (url && url.length > 0 && url.indexOf('id=') < 0)
-		updateUrl(url, theChart._id);
+	    updateUrl(url, theChart._id);
 	}
     }
     if (theChart)
@@ -70,7 +70,8 @@ function data() {
 
 function waitOn() {
     return [
-      Meteor.subscribe('Chart', this.params._id || this.params.query.id),
+      Meteor.subscribe('MyCharts'),
+      Meteor.subscribe('TheChart', this.params._id || this.params.query.id),
       Meteor.subscribe('FusionFeatures'),
       Meteor.subscribe('Metadata'),
       Meteor.subscribe('studies')
