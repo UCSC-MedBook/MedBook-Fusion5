@@ -36,15 +36,8 @@ function getTree() {
   var mlt = cookies.meteor_login_token;
 
   var tree = studies.map(function(study){ 
-<<<<<<< HEAD
-      var p  = "";
-      var s  = "";
-      try {p = String(study.Sample_IDs.length); } catch(err) {};
-      try {s = String(study.Patient_IDs.length); } catch(err) {};
-=======
       var p  = l(study.Patient_IDs);
       var s  = l(study.Sample_IDs);
->>>>>>> server-render
 
       var clin = getClinicalData(study,mlt);
       var gen = getGenomicData(study,mlt);
