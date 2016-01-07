@@ -1,15 +1,4 @@
 
-<!--
-<template name="AllCharts">
- {{#each allCharts}}
-    <div data-_id="{{this._id}}" style="display: inline-block;width:300px;height:200px;" class="aChart dataExplorerControlPanel noControls">
-      <svg preserveAspectRatio="none" viewBox="0 0 300 200">
-        {{{this.svgHtml}}}
-      </svg>
-    </div>
- {{/each }}
-</template>
--->
 
 <template name="ChartDisplay">
     <div style="display: inline-block;" class="dataExplorerControlPanel noControls">
@@ -109,7 +98,12 @@
           <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Filter to these Patients or Samples (optional)</h3>
        </div>
        <div id="p4" class="panel-body collapse">
+	      <!--
               <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
+	      -->
+
+	      <div id="builder"></div>
+
         </div>
     </div>
 
@@ -122,19 +116,81 @@
         </div>
     </div>
 
-    <div style="display: inline-block;" class="dataExplorerControlPanel">
-        <div class="output" style="margin: 30px;"></div>
+
+  <div style="display: inline-block;" class="dataExplorerControlPanel">
+    <div class="output" style="margin: 30px;">
+      <table class="cold" cellpadding="5">
+	<tbody>
+	  <tr class="pvtControls">
+	    <td>
+	      <div class="dataExplorerControlPanel">
+		<div style="text-align:center;">
+		  <label>Chart Type</label>
+		  <select class="pvtRenderer">
+		    {{#each chartTypes }}
+		      <option value="{{this}}"> {{this}} </option>
+		    {{/each}}
+		  </select>
+		</div><br />
+	      </div>
+	    </td>
+
+	    <td class="pvtVals pvtControls">
+		<!--
+		    <select class="pvtAggregator">
+		      <option value="Mean"> Mean </option>
+		      <option value="Count"> Count </option>
+		      <option value="Sum"> Sum </option>
+		    </select><br />
+
+		    <select class="pvtAttrDropdown">
+		      <option value="Age Bin"> Age Bin </option>
+		    </select>
+		-->
+	    </td>
+
+
+	    <td class= "pvtAxisContainer pvtControls pvtHorizList pvtCols pvtUsed ui-sortable">
+		{{#each TheChart.pivotTableConfig.cols}}
+		    {{>Field_Attribute}}
+		{{else}}
+		     <div class="dropHere">Drag data fields from left to this box for columns</div>
+		{{/each}}
+	    </td>
+	  </tr>
+	    <tr>
+	    <td class="pvtAxisContainer pvtUnused pvtControls pvtVertList ui-sortable">
+		{{#each unusedDataFieldNames}}
+		    {{>Field_Attribute}}
+		{{/each}}
+	    </td>
+
+		<td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
+		    {{#each TheChart.pivotTableConfig.rows}}
+			{{>Field_Attribute}}
+		    {{else}}
+		        <div style="min-width:50px" class="dropHere">Drag data fields from left to this box for rows</div>
+		    {{/each}}
+		</td>
+		<td valign="top" class="pvtRendererArea" style="opacity: 1;">
+		  <div style="min-width:200px;text-align-center;">
+		    {{{html}}}
+		  </div>
+		  <div style="margin:30px">
+		      <span>
+			  <button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>
+			  <a target="_blank" id="DownloadButton" href="/fusion/exportChart/?id={{this._id}}" style="margin:10px;" class="btn btn-default">Download</a>
+			  <button type="button" id="TableBrowser" style="margin:10px;" class="btn btn-default">New Table</button>
+		      </span>
+		  </div>
+		</td>
+	      </tr>
+	    </tbody>
+	  </table>
+	</div>
     </div>
 
 <!--
-    <div class="panel panel-default">
-      <div class="panel-heading"  >
-          <h3 class="panel-title">Preview</h3>
-       </div>
-       <div style="height:400px;" class="panel-body collapse">
-            {{{svgHtml}}}
-       </div>
-    </div>
     <div class="panel panel-default">
       <div class="panel-heading"  data-toggle="collapse" data-target="#pb">
           <h3 class="panel-title">Box Plot Contrast</h3>
@@ -215,3 +271,7 @@
   <div id="chart1" width="100%"></div>
 </template>
 
+<template name="Field_Attribute">
+	<li data-field="{{this}}" class="axis_0 ui-sortable-handle"><span class="pvtAttr">{{this}}<span class="pvtTriangle">
+	<a href="#" data-field="{{this}}" class="element">&#9662;</a></span></span></li>
+</template>

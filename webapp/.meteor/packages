@@ -7,7 +7,6 @@
 meteor-platform
 mrt:jquery-ui
 jquery
-rafaelhdr:google-charts
 iron:router
 accounts-password
 accounts-ui
@@ -32,3 +31,4 @@ mrt:datatables-bootstrap3
 raix:handlebar-helpers
 http
 kaso:bootstrap-treeview
+rafaelhdr:google-charts

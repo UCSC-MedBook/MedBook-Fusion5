@@ -1,9 +1,9 @@
 
 
-function TableData(pivotData, exclusions) {
+function TableData(theChart, exclusions) {
 
     var xk = Object.keys(exclusions);
-    var data = pivotData.input.filter(function(elem) {
+    var data = theChart.chartData.filter(function(elem) {
         for (var i = 0; i < xk.length; i++) {
             var k = xk[i];
             var v = exclusions[k];
@@ -14,7 +14,7 @@ function TableData(pivotData, exclusions) {
     });
     Session.set("ChartDataFinal", data);
 
-    var keys = pivotData.colAttrs.concat(pivotData.rowAttrs);
+    var keys = theChart.pivotTableConfig.cols.concat(theChart.pivotTableConfig.rows);
 
     return data.map(function(elem) { 
         var s =  { } ;
@@ -27,18 +27,39 @@ function TableData(pivotData, exclusions) {
 }
 
 
-window.makeReactiveTable = function(chartType, extraOptions) {
-      return function(pivotData, opts, exclusions) {
+window.makeReactiveTable = function(theChart, extraOptions) {
 
-        var result = $("<div class='ChartWrapper' >").css({
-          "min-width": "800px",
-          "min-height": "600px"
-        });
+    var result = $("<div class='ChartWrapper' >").css({
+      "min-width": "800px",
+      "min-height": "600px"
+    });
 
-        var data =  TableData(pivotData, exclusions);
-        var html = Blaze.renderWithData(Template.Inspector, { data: data }, result[0]);
-        addMedBookButtons(result, null);
+    var data =  TableData(theChart, {});
+    var html = Blaze.renderWithData(Template.Inspector, { data: data }, result[0]);
+    // addMedBookButtons(result, null);
 
-        return result;
-      }
+    return result.html();
+}
+
+var hot;
+
+window.makeHandsontable = function(theChart, extraOptions) {
+
+    setTimeout(function() {
+        var fields = theChart.pivotTableConfig.rows.concat(theChart.pivotTableConfig.cols);
+	var columns = fields.map(function(field, i) { return {data: field}});
+	if (hot)
+	    hot.destroy();
+	hot = new Handsontable(document.getElementById('ChartWrapper'), { 
+	     minSpareRows: 1,
+	     rowHeaders: true,
+	     colHeaders: true,
+	     contextMenu: true,
+	     colHeaders: fields,
+	     columns: columns,
+	     data: theChart.chartData
+
+	});
+    }, 250);
+    return "<div id='ChartWrapper' style='min-width:800px;min-height:600px;'></div>"
 }

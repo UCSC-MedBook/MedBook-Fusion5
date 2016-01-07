@@ -1,0 +1,19 @@
+div.tooltip {   
+    position: absolute;           
+    text-align: center;           
+    width: 220px;                  
+    min-height: 68px;                 
+    margin: 10px;
+    height: auto;
+    padding: 2px;             
+    font: 18px sans-serif;        
+    background: lightsteelblue;   
+    border: 0px;      
+    border-radius: 8px;           
+}
+
+.highlight {
+   border: 5px;
+   stroke: red;
+   stroke-width: 5px;
+}

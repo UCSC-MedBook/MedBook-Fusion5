@@ -1,4 +1,4 @@
-
+TheChartID = null;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -8,11 +8,6 @@ function valueIn(field, value) {
         return "";
     }
 }
-var PivotTableInit = {
-    cols: ["treatment_prior_to_biopsy"], rows: ["biopsy_site"],
-
-    rendererName: "Table",
-};
 id_text = function(array) {
     return array.map(function(e) { return { id: e, text: e} });
 }
@@ -21,16 +16,6 @@ id_text = function(array) {
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
     Meteor.subscribe("Biopsy_Research");
-
-    var derivers = $.pivotUtilities.derivers;
-    var renderers = $.extend($.pivotUtilities.renderers, $.pivotUtilities.gchart_renderers);
-
-    window.PivotCommonParams = {
-        renderers: renderers,
-        derivedAttributes: { "Age Bin": derivers.bin("age", 10), },
-        // hiddenAttributes: [ "_id", "Patient_ID", "Sample_ID"] 
-    };
-
 });
 
 function getCurrentDipsc() {
@@ -51,6 +36,31 @@ function formatFloat(f) {
 };
 
 Template.Controls.helpers({
+
+   chartTypes: function() {
+       return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
+   },
+
+   TheChart: function() {
+       return CurrentChart()
+   },
+
+   html: function() {
+       var TheChart = CurrentChart();
+       TheChart = Charts.findOne({_id: TheChart._id});
+       var html = TheChart.html;
+       if (html && html.length > 0 && html.length < 30)  {
+          var func = eval(html)
+	  if (func) {
+	      html = func(TheChart, {});
+	  }
+       } else {
+	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0)
+	      setTimeout(d3_tooltip_boxplot, 1000);
+       }
+       return html;
+   },
+
    previousCharts : function() {
       var prev = Charts.find({}, {fields: {updatedAt:1}, sort: {updatedAt:-1}, limit: 30}).fetch();
       prev.map(function(p) {
@@ -93,7 +103,7 @@ Template.Controls.helpers({
 
 
    mostImportantCorrelations : function() {
-       var d = Session.get("TheChart");
+       var d = CurrentChart();
        /*
        if (d == null) return null;
        if (cache_dipsc == d)
@@ -199,8 +209,6 @@ Template.Controls.helpers({
                html += '<optGroup label="'+ type +'">';
            }
            selected = _.contains(vv._id, selectedGenesets) ? " selected " : "";
-           if (selected.length > 0)
-               debuggger
            html += '    <option value="'+ vv.name + '"' + selected + '>' + vv.name + '</option>';
        });
        html += '</optGroup>\n';
@@ -269,6 +277,11 @@ Template.Controls.helpers({
            html += '</optGroup>\n';
        });
        return html;
+   },
+   unusedDataFieldNames: function() {
+       var TheChart = CurrentChart();
+       unused = _.difference(_.difference(TheChart.dataFieldNames, TheChart.pivotTableConfig.rows), TheChart.pivotTableConfig.cols);
+       return unused
    }
 })
 
@@ -280,6 +293,21 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'click .element' : function(e) {
+       var field =  $(e.target).data("field");
+       var TheChart = CurrentChart();
+       var analysis = analyze(TheChart.chartData, [field])[field];
+       var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
+       var values = ["N/A"];
+       try {
+	   var md = TheChart.metadata[field];
+	   if (md.type == "String" && md.allowedValues)
+	       values = TheChart.metadata[field].allowedValues;
+       } catch (err) {
+           debugger;
+       }
+       Overlay("Element", { theChart: TheChart, field: field, values: values, exclusions: exclusions });
+  }, 
   'change #previousCharts' : function(e) {
 	var _id = $(e.target).val();
 	Router.go("/fusion/?id=" +_id);
@@ -417,7 +445,7 @@ Template.Controls.events({
    },
 
    'click #TableBrowser': function(evt, tmpl) {
-	var currentChart = Session.get("TheChart");
+	var currentChart = CurrentChart();
 	/*
 	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
 	var data = currentChart.chartData.map( function(doc) {
@@ -476,10 +504,17 @@ Template.Controls.events({
        var $genelist = $("#genelist");
        $genelist.select2("data", [] );
        UpdateCurrentChart("genelist", []);
-   }
+   },
+   'change .pvtRenderer' : function(evt, tmpl) {
+       var renderer = $(".pvtRenderer").val();
+       UpdateCurrentChart("pivotTableConfig.rendererName", renderer);
+   },
 })
 
-function initializeSpecialJQueryElements(document) {
+function initializeHtmlElements(document) {
+
+    $('.pvtRenderer').val(document.pivotTableConfig.rendererName)
+
     if (document & document.samplelist)
          $("#samplelist").val(document.samplelist);
 
@@ -503,8 +538,10 @@ function initializeSpecialJQueryElements(document) {
 	      $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
 	  });
 
-     $('.studiesSelectedTable th').hide()
+     $('.studiesSelectedTable th').hide();
+}
 
+function initializeJQuerySelect2(document) {
      $("#additionalQueries").select2( {
        placeholder: "type in diease or study name",
        allowClear: true
@@ -584,7 +621,7 @@ console.log("onstartup");
 cc = null;
 
 CurrentChart = function(name) {
-    var x = Session.get("TheChart");
+    var x = Charts.findOne({_id: TheChartID});
     if (x == null) return null;
     cc = x;
     if (name)
@@ -594,11 +631,11 @@ CurrentChart = function(name) {
 }
 
 UpdateCurrentChart = function(name, value) {
-    var x = Session.get("TheChart");
+    var x = Charts.find({_id: TheChartID});
     x[name] = value;
     var u =  {};
     u[name] = value;
-    Charts.update({_id: x._id}, {$set: u});
+    Charts.update({_id: TheChartID}, {$set: u});
 }
 
 
@@ -612,84 +649,6 @@ renderChart = function() {
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
 
-    RefreshChart = function(id, fields) {
-        // console.log("RefreshChart", id, fields);
-        // short circuit unnecessary updates
-        if (fields == null) return
-
-        var f = null;
-
-        if (fields != true) {
-
-
-            f = Object.keys(fields).sort();
-            if (f.length == 1 && f[0] == "updatedAt")
-                return;
-            if (f.length == 2 && _.isEqual(f, [ "svgHtml", "updatedAt"]))
-                return
-            if (f.length == 2 && _.isEqual(f, [ "pivotTableConfig", "updatedAt"])
-                && _.isEqual(currentChart.pivotTableConfig,  fields.pivotTableConfig))
-                return
-
-            $.extend(currentChart, fields); // VERY IMPORTNT
-
-            if (f.length == 2 && _.isEqual(f.sort(), [ "selectedFieldNames", "updatedAt"]))
-                return
-            if ("genesets" in fields) {
-              // debugger;  may need special handling.
-            }
-        }
-
-
-        Session.set("CurrentChart", currentChart);
-
-        if (f && f.length == 2 && _.isEqual(f.sort(), [ "contrast", "updatedAt"]))
-            return
-
-        initializeSpecialJQueryElements(currentChart)
-
-        templateContext = { 
-            onRefresh: function(config) {
-		assertSaneFusion();
-
-                currentChart.pivotTableConfig = { 
-                    cols: config.cols,
-                    rows: config.rows,
-                    aggregatorName: config.aggregatorName,
-                    rendererName: config.rendererName,
-                    exclusions: config.exclusions,
-                };
-		var doc = {pivotTableConfig: currentChart.pivotTableConfig};
-
-		/*
-		var $svg = $(".pvtRendererArea").children().children("svg");
-		if (currentChart.pivotTableConfig.rendererName== "Box Plot") {
-		    if ($svg.length === 1)
-			doc.svgHtml = $svg.html();
-		    else {
-			$svg = $(".pvtRendererArea").find("svg");
-			if ($svg.length === 1)
-			    doc.svgHtml = $svg.html();
-			else
-			    doc.svgHtml = asSvgHtml( config.cols, config.rows );
-		    }
-		} else
-		    doc.svgHtml = asSvgHtml( config.cols, config.rows );
-		*/
-
-                Charts.update(currentChart._id, { $set: doc});
-            }
-        }
-
-        var pivotConf =  $.extend({}, PivotCommonParams, templateContext,  currentChart.pivotTableConfig || PivotTableInit);
-        if (element) {
-	   var cd = currentChart.chartData;
-	   if (cd == null) cd = [];
-           $(element).pivotUI(cd, pivotConf, true, null, currentChart._id);
-           // $(element).pivotUI(currentChart.chartData ? currentChart.chartData : [], pivotConf, true, null, currentChart._id);
-        }
-
-    } // refreshChart
 
     /*
     if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
@@ -717,8 +676,12 @@ renderChart = function() {
 } // renderChart;
 
 
-Template.Controls.rendered = renderChart;
-Template.ChartDisplay.rendered = renderChart;
+Template.Controls.rendered = function(){
+   var TheChart = CurrentChart();
+   initializeHtmlElements(TheChart);
+   initializeJQuerySelect2(TheChart);
+   initializeJQuerySortable(TheChart);
+};
 
 /*
 Template.AllCharts.helpers({
@@ -742,14 +705,44 @@ Template.AllCharts.events({
 });
 */
 
-// as per Robert December 17, 2015
-assertSaneFusion = function() {
-   if ($('.pvtUsed').children().length > 0) { // we have controls
-       var rend = $('.pvtRendererArea')
-       if (rend.length == 0 || rend.children().length == 0) {
-           console.log("currentChart", cc);
-	   console.log("rend area", rend);
-           debugger;
-       }
-   }
-}
+initializeJQuerySortable = function() {
+   var wells = $(".cold").find(".pvtAxisContainer");
+
+    $(".cold").find(".pvtAxisContainer").sortable({
+      update: function(e, ui) {
+         var well = ui.item.parent();
+         var field = ui.item.data("field");
+	 var TheChart = CurrentChart();
+
+	 if (well.hasClass("pvtUnused")) {
+	     Charts.update({_id: TheChart._id},
+	       {$pull:
+		 { 
+		  "pivotTableConfig.cols": field,
+		  "pivotTableConfig.rows": field
+		 }
+	       }
+	     );
+	 } else if (well.hasClass("pvtUsed")) {
+	     if (this === ui.item.parent()[0]) {// http://forum.jquery.com/topic/sortables-update-callback-and-connectwith
+
+		 var cols = $(".pvtCols.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
+		 var rows = $(".pvtRows.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
+		 Charts.update({_id: TheChart._id},
+		   {$set:
+		     { 
+		      "pivotTableConfig.cols": cols,
+		      "pivotTableConfig.rows": rows
+		      }
+		   });
+
+	     }
+	 }
+      },
+      connectWith: wells,
+      items: 'li',
+      placeholder: 'pvtPlaceholder'
+    });
+
+};
+

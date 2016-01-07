@@ -2,6 +2,7 @@ Collections = {};
 Collections.studies = new Meteor.Collection('studies');
 Collections.Metadata = new Meteor.Collection("Metadata");
 Collections.CRFs = new Meteor.Collection("CRFs");
+Collections.FusionFeatures = new Meteor.Collection("FusionFeatures");
 
 DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
@@ -17,6 +18,29 @@ DomainCollections = {
   'Mutations' : Mutations,
   'SignatureScores' : SignatureScores
 };
+
+MinimalChart = {
+   pivotTableConfig: {
+       rows: [],
+       cols: [],
+       rendererName: "table",
+   },
+   exclusions: [],
+   chartData: []
+};
+
+ensureMinimalChart = function(doc) {
+    if (doc) {
+	Object.keys(MinimalChart).map(function(key) {
+	    if (!(key in doc))
+	       doc[key] = MinimalChart[key];
+	});
+    }
+}
+
+Charts.after.findOne( function (userId, selector, options, doc) {
+    ensureMinimalChart(doc);
+});
 
 Charts.before.insert( function ChartsUpdate(userId, doc) {
   doc.updatedAt = Date.now();

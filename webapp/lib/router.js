@@ -2,8 +2,8 @@
 /*
 Meteor.startup(function() {
   if (Meteor.isServer) {
-     Expression.ensureIndex( {gene:1, studies:1});
-     Expression_Isoform.ensureIndex( {gene:1, studies:1});
+     Expression._ensureIndex( {gene:1, studies:1});
+     Expression_Isoform._ensureIndex( {gene:1, studies:1});
   }
 });
 */
@@ -53,23 +53,27 @@ function data() {
     var theChart = null;
     var id = this.params._id || this.params.query.id;
 
-    if (this.params.query.id != null) { // needs to be !=
+    if (this.params.query.id != null) { // needs to be !=  never !==
 	theChart = Charts.findOne({_id: id});
     } else {
-	theChart = Charts.find(defaultQ, {sort: {modifiedAt: -1}, limit:1}).fetch()[0]
-	if (theChart && id == null) {  // needs to be ==
+	theChart = Charts.find(defaultQ, {sort: {updatedAt: -1}, limit:1}).fetch()[0]
+	debugger
+	if (theChart) {  // needs to be == never ===
+	    Meteor.subscribe("TheChart", theChart._id);
 	    var url = Router.current().url;
-	    if (url && url.length > 0 && url.indexOf('id=') < 0)
-		updateUrl(url, theChart._id);
+	    updateUrl(url, theChart._id);
 	}
     }
-    Session.set("TheChart", theChart);
-    return data;
+    if (theChart)
+	TheChartID = theChart._id;
+    return theChart;
 }
 
 function waitOn() {
     return [
-      Meteor.subscribe('Chart', this.params._id || this.params.query.id),
+      Meteor.subscribe('MyCharts'),
+      Meteor.subscribe('TheChart', this.params._id || this.params.query.id),
+      Meteor.subscribe('FusionFeatures'),
       Meteor.subscribe('Metadata'),
       Meteor.subscribe('studies')
     ];
@@ -108,7 +112,7 @@ Router.map(function() {
     template: "AllCharts",
     path: '/fusion/all/',
     waitOn: function() {
-       return Meteor.subscribe("AllCharts");
+       return [ Meteor.subscribe("AllCharts"), Meteor.subscribe('FusionFeatures')]
     }
   });
 });
@@ -121,6 +125,7 @@ Router.map(function() {
     waitOn: function() {
       return [
 	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('FusionFeatures'),
 	  Meteor.subscribe('studies')
       ];
     },
@@ -158,6 +163,7 @@ Router.map(function() {
     waitOn: function() {
       return [
 	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('FusionFeatures'),
 	  Meteor.subscribe('studies')
       ];
     },
@@ -175,7 +181,7 @@ Router.map(function() {
     path: '/fusion/tables/:_study/:_table/',
     data: data,
     waitOn: function() {
-       return Meteor.subscribe("Metadata");
+       return [Meteor.subscribe("Metadata"), Meteor.subscribe('FusionFeatures')]
     },
     onBeforeAction : function(arg) {
        var study =  this.params._study;
@@ -206,6 +212,7 @@ Router.map(function() {
     waitOn: function() {
        return [
 	   Meteor.subscribe("Metadata"),
+	   Meteor.subscribe('FusionFeatures'),
 	   Meteor.subscribe('studies')
      ];
     }
@@ -327,7 +334,7 @@ exportData = function() {
   // First Security Check, is the user logged in?
   var cookies = parseCookies(this.request);
   var mlt = cookies.meteor_login_token;
-  var user = null;
+  var user = Meteor.users.findOne({username: "ted"}); // hack for debugging
   if (mlt) {
       var hash_mlt =  Accounts._hashLoginToken(mlt);
       user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});

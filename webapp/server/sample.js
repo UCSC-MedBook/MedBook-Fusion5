@@ -166,6 +166,7 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
 
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
+    // console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
@@ -221,7 +222,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             query[qf] = {$in: gl};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
+            // console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
 	    
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression
@@ -390,28 +391,76 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              });
         });
 
-    // Step 6. We are done. Store the result back in the database and let the client take it from here.
-      // console.log("renderChartData", chartData.length);
-      var ret = Charts.direct.update({ _id : ChartDocument._id }, 
+    // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
+    var exclusions = ChartDocument.pivotTableConfig.exclusions;
+    if (exclusions == null) exclusions = [];
+    var excludedKeys = _.intersection(Object.keys(exclusions), selectedFieldNames); // only those names that are engaged.
+    if (excludedKeys.length > 0)
+	chartData =  chartData.filter(function(elem) {
+	    for (var i = 0; i < excludedKeys.length; i++) {
+	       var key = excludedKeys[i];
+	       if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
+		   return false;
+	       return true;
+	    }
+	});
+    chartData = chartData.sort(function(a,b) { 
+        var something = 0;
+        for (var i = 0; i < selectedFieldNames.length; i++) {
+	   var key = selectedFieldNames[i];
+	   if (key in a && key in b) {
+	       return naturalSort(a[key], b[key]);
+	   /*
+	       if (a[key] < b[key])
+		   return -1;
+	       if (a[key] > b[key])
+		   return 1;
+	   */
+	   } else {
+	       if (key in a)
+		   something = 1;
+	       else if (key in b)
+		   something = -1;
+	       else 
+		   something = 0;
+	   }
+       }
+       return something;
+    });
+
+    // Step Final. We are done. Store the result back in the database and let the client take it from here.
+    // console.log("renderChartData", chartData.length);
+    var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
                 dataFieldNames: dataFieldNames,
                 selectedFieldNames: selectedFieldNames,
 		metadata: metadata,
-                chartData: chartData
+                chartData: chartData,
+		html: renderJSdom(ChartDocument) // render may start a thread or a unix process  and update the document later
                }});
 
-   // Possible Step 7. Render the visualization on the server (possible with D3, not clear how to do with Google Vis).
-      // console.log("done", ret);
+
+
+    // console.log("done", ret);
 } 
 
 
 Meteor.startup(function() {
     Charts.after.update( function(userId, ChartDocument, fieldNames) {
-        console.log("Join", ChartDocument.Join)
+        ensureMinimalChart(ChartDocument);
+  
+        // console.log("Join", ChartDocument.Join)
         if (ChartDocument.Join == null ||  ChartDocument.Join == "Sample_ID")
             SampleJoin(userId, ChartDocument, fieldNames);
         else if (ChartDocument.Join == "Gene")
             GeneJoin(userId, ChartDocument, fieldNames);
     });// chart.after.update
+
+    Charts.find({html: {$exists:0}}).forEach(function(doc) {
+	console.log("render", doc._id);
+        ensureMinimalChart(doc);
+	doc.html = renderJSdom(doc);
+	Charts.direct.update({ _id : doc._id }, {$set: doc});
+    });
 });
