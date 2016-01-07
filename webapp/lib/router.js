@@ -326,8 +326,7 @@ exportData = function() {
       var hash_mlt =  Accounts._hashLoginToken(mlt);
       user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
   }
-  if (user === null)
-      throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+  // if (user === null) throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
 
   // Kind parameter
   var kind = 'genomic';

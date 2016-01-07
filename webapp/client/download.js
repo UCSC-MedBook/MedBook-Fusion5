@@ -9,19 +9,25 @@ function getClinicalData(study) {
 }
 
 function getGenomicData(study) {
-  return GeneLikeDataDomainsPrototype.sort(function(a,b) { return a.label.localeCompare(b.label)}).map(function(gld) {
+  return GeneLikeDataDomainsPrototype.sort(function(a,b) { return a.label.localeCompare(b.label)})
+      .filter(function(gld) { return gld && gld.label && gld.collection;})
+      .map(function(gld) {
       return {text: 'Download ' + gld.label, 
       	href: '/fusion/export?study=' + study.id + "&table=" + gld.collection + "&kind=genomic"
       };
   });
+}
+function l(a) {
+    if (a) return String(a.length);
+    return "0"
 }
 
 function getTree() {
   var studies = Collections.studies.find({}, {sort: {"name":1}}).fetch();
 
   var tree = studies.map(function(study){ 
-      var p  = String(study.Patient_IDs.length);
-      var s  = String(study.Sample_IDs.length);
+      var p  = l(study.Patient_IDs);
+      var s  = l(study.Sample_IDs);
 
       var clin = getClinicalData(study);
       var gen = getGenomicData(study);
@@ -44,6 +50,14 @@ function getTree() {
   return tree;
 }
 
+/*
+Template.Download.events({
+     'click a': function(evt, tpl) {
+         debugger;
+     }
+});
+*/
+
 
 
 Template.Download.rendered = function() {
@@ -55,6 +69,7 @@ Template.Download.rendered = function() {
 	    enableLinks: true,
 
 	    onNodeSelected: function(event, data) {
+              $('#tree').treeview('toggleNodeExpanded', data.nodeId, { silent: true } );
 	      var table = data.collection;
 	      var studies = [ data.Study_ID];
 	    } // onNodeSelected 
