@@ -30,11 +30,12 @@ MinimalChart = {
 };
 
 ensureMinimalChart = function(doc) {
-    if (doc)
+    if (doc) {
 	Object.keys(MinimalChart).map(function(key) {
 	    if (!(key in doc))
 	       doc[key] = MinimalChart[key];
 	});
+    }
 }
 
 Charts.after.findOne( function (userId, selector, options, doc) {

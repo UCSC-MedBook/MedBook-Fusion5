@@ -46,7 +46,6 @@ GoogleChart = function(chartDocument, opts) {
 	    type = chartDocument.metadata[field].type.toLowerCase();
 	} catch (err) {
 	    // HACK: why should metadata be missing anything? TBD
-	    // debugger;
 	}
 	dataTable.addColumn(type, field);
     })
@@ -54,7 +53,7 @@ GoogleChart = function(chartDocument, opts) {
 
     dataTable.addColumn({type: 'string', role: 'tooltip'});
 
-    function columnCluster(columns) {
+    function columnCluster(columns, col) {
 	columns.map(function(elem) {
 	    var valid = true;
 	    var row = cols.map(function(field) {
@@ -64,29 +63,32 @@ GoogleChart = function(chartDocument, opts) {
 		return value;
 	    });
 
-	    row.push(String(row));
+	    var tooltip = String(row) + col;
+	    tooltip = tooltip.replace(/"/g, "")
+	    tooltip = tooltip.replace(/,/g, " ")
+	    row.push(tooltip);
 	    if (valid)
 		dataTable.addRow(row);
 	});
     }
 
     if (rows == null || rows.length == 0)
-	columnCluster(chartDocument.chartData);
+	columnCluster(chartDocument.chartData, "");
     else {
 	var clusters = {};
-	var blank = _.map(_.range(cols.length), function() {
+	var blank = _.map(_.range(cols.length +1), function() {
 	    return undefined;
 	});
 
 	chartDocument.chartData.map(function(elem) {
-	    var key = JSON.stringify(_.pluck(elem, rows)).replace(/[{}]/, "");
+	    var key = JSON.stringify(_.pick(elem, rows)).replace(/[{}]/, "");
 	    if (!(key in clusters)) clusters[key] = [];
 	    clusters[key].push(elem);
 	});
 	Object.keys(clusters).sort().map(function(key, i) {
 	    if (i > 0)
 		dataTable.addRow(blank);
-	    columnCluster(clusters[key]);
+	    columnCluster(clusters[key], ','+key);
 	});
     }
 
@@ -139,7 +141,7 @@ GoogleChart = function(chartDocument, opts) {
     setTimeout(function() {
 	var googleChart = new google.visualization.ColumnChart(document.getElementById('GoogleChartTarget'));
 	googleChart.draw(dataTable, options);
-    }, 300);
+    }, 1000);
 
     return "<div id='GoogleChartTarget' class='ChartWrapper'   style='animation-duration: 3s; animation-name: slidein; animation-iteration-count: infinite;  width: \'100%\' height: \'100%\'' >Loading</div> "
 

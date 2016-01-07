@@ -153,7 +153,6 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                         Mean: e.mean.rsem_quan_log2
                       }
                    });
-    // console.log("big",big.length);
 
      Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
@@ -166,11 +165,9 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
 
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
-    // console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
-      // console.log("No studies selected");
       return { dataFieldNames: [], chartData: []};
     }
 
@@ -182,7 +179,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     q.CRF = "Clinical_Info";
 
     var chartData = Collections.CRFs.find(q).fetch();
-    // console.log("chartData CRFs length", q, chartData.length);
 
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
@@ -194,7 +190,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.map(function(cd) {  
        delete cd["CRF"];
     })
-    // console.log(q, "chartData length", chartData.length);
 
 
     // Step 2. Build Map and other bookkeeping 
@@ -222,7 +217,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             query[qf] = {$in: gl};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            // console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
 	    
             cursor.forEach(function(geneData) {
                 // Mutations are organized differently than Expression
@@ -448,6 +442,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 Meteor.startup(function() {
     Charts.after.update( function(userId, ChartDocument, fieldNames) {
+	if (_.difference(fieldNames,["html","updatedAt"]).length == 0)
+	     return; // prevent infinite loops
+
         ensureMinimalChart(ChartDocument);
   
         // console.log("Join", ChartDocument.Join)
@@ -456,4 +453,11 @@ Meteor.startup(function() {
         else if (ChartDocument.Join == "Gene")
             GeneJoin(userId, ChartDocument, fieldNames);
     });// chart.after.update
+
+    Charts.find({html: {$exists:0}}).forEach(function(doc) {
+	console.log("render", doc._id);
+        ensureMinimalChart(doc);
+	doc.html = renderJSdom(doc);
+	Charts.direct.update({ _id : doc._id }, {$set: doc});
+    });
 });

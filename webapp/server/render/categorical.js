@@ -23,10 +23,9 @@ BoxPlotCategorical = function(pivotData, exclusions) {
     });
 
     var combos = cartesianProductOf(rowValuePairs);
-    debugger
     combos.map(function(pairList, c) {
         var text = pairList.map(function(pair) {return pair.rowLabel + ":" + pair.rowValue}).join(",");
-	console.log("c", c);
+	// console.log("c", c);
 	rowCategoricalVariables.push(
 	    { 
 		text: text,

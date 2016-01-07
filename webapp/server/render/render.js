@@ -37,12 +37,13 @@ renderJSdom = function(ChartDocument) {
 			    : serializeDocument(html))
 			: "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 		    Fiber(function(){
-		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
+			// console.log("updating html", html);
+		        Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
 	    }) // end jsdom.env
 	var stop = new Date();
-	console.log(ChartDocument._id, "stop - start", stop-start);
+	//console.log(ChartDocument._id, "stop - start", stop-start);
 	return "";
     } else {
 	return qqq;

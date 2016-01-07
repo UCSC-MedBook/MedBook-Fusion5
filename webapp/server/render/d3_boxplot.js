@@ -7,7 +7,6 @@ var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
 
 D3BoxPlot = function(window, pivotData, opts, exclusions) {
-    debugger;
     var chvk = BoxPlotCategorical(pivotData, exclusions);
     var n = 9;
 
@@ -171,8 +170,6 @@ function displayBoxPlots(window, plotDataSets, h, v, svgContainer, plotWidth, ro
         }
       });
     }
-    debugger;
-
       var yy = nestedG.insert("text", "box")
                 .attr( 'x', width/2)
                 .attr( 'y', -20)

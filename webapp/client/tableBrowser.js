@@ -36,8 +36,8 @@ function fn(value, obj) {
 	} else if (typeof value == 'string' || value instanceof String) {
 	    value = value.replace(/-/g, "&#8209;")
 	    return new Spacebars.SafeString("<span sort='"+ value +"'>" + value + "</span>");
-	} else if (typeof value == 'object')
-	    debugger;
+	} // else if (typeof value == 'object')
+	  //debugger;
 	return value;
     } catch (reason) {
 	console.log( reason);

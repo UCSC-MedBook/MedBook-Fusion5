@@ -616,7 +616,6 @@ Template.Transforms.helpers({
 
 st = new Date();
 
-console.log("onstartup");
 
 cc = null;
 
