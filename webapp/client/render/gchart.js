@@ -46,7 +46,6 @@ GoogleChart = function(chartDocument, opts) {
 	    type = chartDocument.metadata[field].type.toLowerCase();
 	} catch (err) {
 	    // HACK: why should metadata be missing anything? TBD
-	    // debugger;
 	}
 	dataTable.addColumn(type, field);
     })

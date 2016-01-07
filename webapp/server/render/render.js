@@ -1,7 +1,9 @@
+var jsdom, serializeDocument;
 
-var jsdom = Meteor.npmRequire("node-jsdom");
-var serializeDocument = jsdom.serializeDocument;
-
+Meteor.startup(function() {
+    jsdom = Meteor.npmRequire("node-jsdom");
+    serializeDocument = jsdom.serializeDocument;
+});
 // var d3 = Meteor.npmRequire("d3");
 var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>';
 
@@ -27,7 +29,6 @@ renderJSdom = function(ChartDocument) {
 	var start = new Date();
 	    jsdom.env(htmlStub,  {
 		done : function(errors, window) {
-		    debugger
 		    jquery_bind(window);
 		    var html = qqq(window, ChartDocument, null, []);
 		    html = html ? 
@@ -36,12 +37,13 @@ renderJSdom = function(ChartDocument) {
 			    : serializeDocument(html))
 			: "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 		    Fiber(function(){
-		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
+			// console.log("updating html", html);
+		        Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
 	    }) // end jsdom.env
 	var stop = new Date();
-	console.log(ChartDocument._id, "stop - start", stop-start);
+	//console.log(ChartDocument._id, "stop - start", stop-start);
 	return "";
     } else {
 	return qqq;

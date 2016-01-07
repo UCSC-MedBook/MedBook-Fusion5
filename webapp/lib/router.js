@@ -57,7 +57,6 @@ function data() {
 	theChart = Charts.findOne({_id: id});
     } else {
 	theChart = Charts.find(defaultQ, {sort: {updatedAt: -1}, limit:1}).fetch()[0]
-	debugger
 	if (theChart) {  // needs to be == never ===
 	    Meteor.subscribe("TheChart", theChart._id);
 	    var url = Router.current().url;
@@ -330,17 +329,28 @@ Meteor.startup(function() {
 });
 
 
-exportData = function() {
+function loginMLT(request, params) {
   // First Security Check, is the user logged in?
-  var cookies = parseCookies(this.request);
+  var cookies = parseCookies(request);
   var mlt = cookies.meteor_login_token;
-  var user = Meteor.users.findOne({username: "ted"}); // hack for debugging
+  if (mlt == null) {
+      mlt = params.query.mlt
+      console.log("params mlt", mlt);
+  } else
+      console.log("cookies mlt", mlt);
+  var user = null;
   if (mlt) {
       var hash_mlt =  Accounts._hashLoginToken(mlt);
-      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+      user =  Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
   }
-  if (user === null)
-      throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+  if (user === null) throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+  return user;
+}
+
+
+exportData = function() {
+  var user = loginMLT(this.request, this.params);
+
 
   // Kind parameter
   var kind = 'genomic';
@@ -435,16 +445,7 @@ Router.map(function() {
 
 exportChart = function() {
   // First Security Check, is the user logged in?
-  var cookies = parseCookies(this.request);
-  var mlt = cookies["meteor_login_token"];
-  var user = null;
-  if (mlt) {
-      var hash_mlt =  Accounts._hashLoginToken(mlt);
-      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
-  }
-  if (user == null)
-      // throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
-      console.log("user should be logged in. Cookies=" + JSON.stringify(cookies));
+  var user = loginMLT(this.request, this.params);
 
   // Filename parameter
   var attachmentFilename = 'filename.txt';

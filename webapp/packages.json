@@ -1,10 +1,10 @@
 {
+     "fs-extra" : "0.26.3",
+     "node.extend" : "1.0.1",
+     "node-jsdom" : "3.1.5",
      "random-js" : "1.0.4",
      "toml-js"   : "0.0.8",
      "mime"      : "1.2.11",
      "temp"      : "0.8.1",
-     "ttest"     : "0.3.1",
-     "node.extend" : "1.0.1",
-     "fs-extra" : "0.26.3",
-     "node-jsdom" : "3.1.5"
+     "ttest"     : "0.3.1"
 }
