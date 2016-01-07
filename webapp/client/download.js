@@ -9,6 +9,7 @@ function getClinicalData(study, mlt) {
   });
 }
 
+
 function getGenomicData(study, mlt) {
   return GeneLikeDataDomainsPrototype.sort(function(a,b) { return a.label.localeCompare(b.label)})
       .filter(function(gld) { return gld && gld.label && gld.collection;})
