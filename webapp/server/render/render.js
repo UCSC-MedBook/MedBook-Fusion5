@@ -1,7 +1,9 @@
+var jsdom, serializeDocument;
 
-var jsdom = Meteor.npmRequire("node-jsdom");
-var serializeDocument = jsdom.serializeDocument;
-
+Meteor.startup(function() {
+    jsdom = Meteor.npmRequire("node-jsdom");
+    serializeDocument = jsdom.serializeDocument;
+});
 // var d3 = Meteor.npmRequire("d3");
 var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>';
 
