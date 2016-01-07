@@ -5,10 +5,7 @@ var Count = 0;
 
 d3_tooltip_boxplot = function () {
 
-    var toolTip = d3.select("body").append("div")   
-      .attr("class", "tooltip")               
-      .style("opacity", 0);
-
+    d3.select(".tooltip").remove();
 
     var toolTip = d3.select("body").append("div")   
           .attr("class", "tooltip")               
@@ -29,9 +26,6 @@ d3_tooltip_boxplot = function () {
 	d3.selectAll(".highlight").classed("highlight", false);
       }
     };
-
-    function L(d) {
-    }
 
     $(".BoxPlotToolTipHover")
     .on("mouseover", function(event) {

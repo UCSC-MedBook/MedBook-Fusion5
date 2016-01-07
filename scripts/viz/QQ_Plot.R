@@ -1,4 +1,4 @@
-#!/usr/bin/rscript
+#!/usr/bin/Rscript
 args <- commandArgs(trailingOnly = TRUE);
 
 chartDocument_id = args[0];

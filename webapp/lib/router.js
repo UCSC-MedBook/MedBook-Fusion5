@@ -57,7 +57,6 @@ function data() {
 	theChart = Charts.findOne({_id: id});
     } else {
 	theChart = Charts.find(defaultQ, {sort: {updatedAt: -1}, limit:1}).fetch()[0]
-	debugger
 	if (theChart) {  // needs to be == never ===
 	    Meteor.subscribe("TheChart", theChart._id);
 	    var url = Router.current().url;
