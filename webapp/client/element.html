@@ -10,7 +10,11 @@
 	         <button type="button">Select None</button>
 	         <input type="text" placeholder="Filter results" class= "pvtSearch" />
 		 -->
-	         {{#each this.values}}
+		    Bin It:
+		    {{#if true}}
+		    <input style="width:40px;" value="{{this.bin}}" name="{{this.field}}" data-op="bin" data-precedence=1 data-field={{this.field}} class="transform" type="number">
+		    {{/if}}
+	         {{#each values}}
 		     <div style="margin:15px;">
 			 {{this}}
 			 <input data-field="{{this}}" type="checkbox" checked={{checked}} />

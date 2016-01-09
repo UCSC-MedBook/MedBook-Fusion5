@@ -370,6 +370,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              transforms.map(function(transform) {
                  if (transform.field in datum) {
                     if (transform.op == "bin") {
+		         debugger
                          var dataValue = parseFloat(datum[transform.field]);
                          var binValue = parseFloat(transform.value);
                          if (!isNaN(dataValue) && !isNaN(binValue)) {
