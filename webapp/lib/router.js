@@ -317,16 +317,18 @@ function clinical(coll, samplesAllowed, studiesFiltered, response)  {
   });
 }
 
-Meteor.startup(function() {
-    var keys = Object.keys(DomainCollections);
-    keys.map(function(key) {
-        console.log("Ensuring index ", key);
-        if (key == "ExpressionIsoform")
-            DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 , "transcript" : 1})
-        else
-            DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 })
-    })
-});
+if (Meteor.isServer) {
+    Meteor.startup(function() {
+	var keys = Object.keys(DomainCollections);
+	keys.map(function(key) {
+	    console.log("Ensuring index ", key);
+	    if (key == "ExpressionIsoform")
+		DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 , "transcript" : 1})
+	    else
+		DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 })
+	})
+    });
+};
 
 
 function loginMLT(request, params) {
