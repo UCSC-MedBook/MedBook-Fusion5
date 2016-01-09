@@ -370,7 +370,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              transforms.map(function(transform) {
                  if (transform.field in datum) {
                     if (transform.op == "bin") {
-		         debugger
                          var dataValue = parseFloat(datum[transform.field]);
                          var binValue = parseFloat(transform.value);
                          if (!isNaN(dataValue) && !isNaN(binValue)) {
@@ -394,7 +393,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	chartData =  chartData.filter(function(elem) {
 	    for (var i = 0; i < excludedKeys.length; i++) {
 	       var key = excludedKeys[i];
-	       if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
+	       if (key in elem && exclusions[key].indexOf(String(elem[key])) >= 0)
 		   return false;
 	       return true;
 	    }
