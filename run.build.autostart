@@ -10,4 +10,4 @@ export ROOT_URL=https://su2c.ucsc.edu/fusion/
 echo $MONGO_URL $ROOT_URL 
 # export PORT=20011
 
-node main.js --port $PORT
+node main.js --port $PORT >& "../../logs/log.fusion.$$"
