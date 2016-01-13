@@ -16,11 +16,13 @@ Template.Element.helpers({
        var values = ["N/A"];
        try {
 	   var md = TheChart.metadata[this.field];
-	   type = md.type;
+
 	   if (md.type == "String" && md.allowedValues)
-	       values = TheChart.metadata[field].allowedValues;
-	   else
-	       values = _.uniq(_.pluck(TheChart.chartData, this.field)).sort();
+	       values = TheChart.metadata[this.field].allowedValues;
+	   else {
+	       var excludedValues = this.field in TheChart.pivotTableConfig ? TheChart.pivotTableConfig.exclusions[this.field]  : [];
+	       values = _.uniq(_.union(excludedValues, _.pluck(TheChart.chartData, this.field))).sort();
+	   }
        } catch (err) {
            debugger;
        }

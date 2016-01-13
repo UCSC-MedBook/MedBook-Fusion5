@@ -298,7 +298,8 @@ Template.Controls.events({
        var TheChart = CurrentChart();
        var analysis = analyze(TheChart.chartData, [field])[field];
        var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
-       var type = "String";
+       var type = TheChart.metadata[field].type;
+
        var bin = null;
        var binTransform = _.find(TheChart.transforms, function(obj) { return obj.op == "bin" && obj.field == field; });
        if (binTransform) bin = binTransform.value;
@@ -562,7 +563,8 @@ function initializeJQuerySelect2(document) {
           initSelection : function (element, callback) {
             var prev = document;
             if (prev && prev.genelist)
-                callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
+                callback( prev.genelist.map(function(g) { 
+		    return { id: g, text: g }}) );
           },
           multiple: true,
           ajax: {
