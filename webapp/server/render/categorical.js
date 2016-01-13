@@ -5,6 +5,8 @@ BoxPlotCategorical = function(pivotData, exclusions) {
 
     var rows = pivotData.pivotTableConfig.rows;
     var cols = pivotData.pivotTableConfig.cols;
+    if (rows == null) rows = [];
+    if (cols == null) cols = [];
     var analysis = analyze(pivotData.chartData, rows.concat(cols));
 
     var rowCategoricalVariables = [];
