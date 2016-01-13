@@ -557,6 +557,7 @@ function initializeJQuerySelect2(document) {
      } );
 
      var $genelist = $("#genelist");
+     $genelist.val(document.genelist.join(" "));
      var httpGenesUrl = "/fusion/genes";
      var httpGeneListPreciseUrl = "/fusion/geneListPrecise";
      $genelist.select2({

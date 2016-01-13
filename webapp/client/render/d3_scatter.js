@@ -9,16 +9,19 @@ window.makeD3Scatter = function(theChart, opts) {
 	var h = _.clone(theChart.pivotTableConfig.cols);
 	var v = _.clone(theChart.pivotTableConfig.rows);
 
-	var xk = Object.keys(theChart.pivotTableConfig.exclusions);
-	var data = theChart.chartData.filter(function(elem) {
-	    for (var i = 0; i < xk.length; i++) {
-		var k = xk[i];
-		var v = theChart.pivotTableConfig.exclusions[k];
-		if (v.indexOf(String(elem[k])) >= 0)
-		    return false;
-	    }
-	    return true;
-	});
+	var data = theChart.chartData;
+	if (theChart.pivotTableConfig.exclusions) {
+	    var xk = Object.keys(theChart.pivotTableConfig.exclusions);
+	    data = data.filter(function(elem) {
+		for (var i = 0; i < xk.length; i++) {
+		    var k = xk[i];
+		    var v = theChart.pivotTableConfig.exclusions[k];
+		    if (v.indexOf(String(elem[k])) >= 0)
+			return false;
+		}
+		return true;
+	    });
+	}
 	Session.set("ChartDataFinal", data);
 
 	var x = h.shift();
