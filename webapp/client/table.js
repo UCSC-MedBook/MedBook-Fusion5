@@ -49,7 +49,8 @@ window.makeHandsontable = function(theChart, extraOptions) {
         var fields = theChart.pivotTableConfig.rows.concat(theChart.pivotTableConfig.cols);
 	var columns = fields.map(function(field, i) { return {data: field}});
 	if (hot)
-	    hot.destroy();
+	   try { hot.destroy(); } catch (err) {};
+
 	hot = new Handsontable(document.getElementById('ChartWrapper'), { 
 	     minSpareRows: 1,
 	     rowHeaders: true,

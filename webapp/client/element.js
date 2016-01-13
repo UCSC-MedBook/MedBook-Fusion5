@@ -5,7 +5,7 @@ Template.Element.helpers({
 	var TheChart = Template.parentData().theChart;
 	var exclusions = Template.parentData().exclusions;
 
-	if ( field in exclusions ) {
+	if ( exclusions && field in exclusions ) {
 	    var values = exclusions[field];
 	    return !_.contains(values, value);
 	} 
@@ -35,13 +35,24 @@ Template.Element.events({
        var TheChart = Template.currentData().theChart;
        var transforms = TheChart.transforms;
        var value = evt.target.value;
+       debugger;
 
-       transforms.map(function(e, i) {
-            if ( e.op == $(evt.target).data("op") && e.field == $(evt.target).data("field"))
-               e.value = value;
-        });
-       // BUG the sort changes this into an object which can't be stored in Mongo
-       // transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
+       var found = false;
+       if (transforms)
+	   transforms.map(function(e, i) {
+		if ( e.op == $(evt.target).data("op") && e.field == $(evt.target).data("field")) {
+		   e.value = value;
+		   found = true;
+	       }
+	   });
+       if (!found)
+	    var found = false;
+	    if (transforms == null) transforms = [];
+	    transforms.push( {
+		op: $(evt.target).data("op"),
+		field: $(evt.target).data("field"),
+		value: value
+	    });
        var val = Charts.update(TheChart._id, {$set: { "transforms":  transforms}});
    },
     'click input': function(evt, tpl) {
@@ -50,19 +61,21 @@ Template.Element.events({
 	var TheChart = Template.currentData().theChart;
 	var exclusions = Template.currentData().exclusions;
 
-	if (!evt.target.checked) {
-	    if ( !(field in exclusions))
-	        exclusions[field] = [];
-	    if (!(_.contains(exclusions[field], value)))
-		exclusions[field].push(value);
-	} else {
-	    if (field in exclusions) {
-		var index = exclusions[field].indexOf(value);
-		exclusions[field].splice(index, 1);
-		if (exclusions[field].length == 0)
-		    delete exclusions[field];
+	if (exclusions) {
+	    if (!evt.target.checked) {
+		if ( !(field in exclusions))
+		    exclusions[field] = [];
+		if (!(_.contains(exclusions[field], value)))
+		    exclusions[field].push(value);
+	    } else {
+		if (field in exclusions) {
+		    var index = exclusions[field].indexOf(value);
+		    exclusions[field].splice(index, 1);
+		    if (exclusions[field].length == 0)
+			delete exclusions[field];
+		}
 	    }
-	}
+    	}
     },
     'click .OK' : function() {
 	var exclusions = Template.currentData().exclusions;
