@@ -1,9 +1,11 @@
 
 window.makeD3Scatter = function(theChart, opts) {
 
-    var wrapper = "<div id='wrapper' style='width 800px;height:600px;'><div id='viz' style='margin-top:20p;width:800px;height:600px;'><div id='stat' class='stat' title='two-tail P-value' style='width:100%;height:50;'></div></div>";
-
+    var wrapper = "<div id='wrapper' style='width 800px;height:600px;'><div id='viz' style='margin-top:20p;width:800px;height:600px;'></div><div id='stat' class='stat' title='two-tail P-value' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
     setTimeout(function() {
+        $('#viz').empty();
+        $('#stat').empty();
+        $('#legend').empty();
 
 	var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
 	var h = _.clone(theChart.pivotTableConfig.cols);
@@ -35,7 +37,7 @@ window.makeD3Scatter = function(theChart, opts) {
 
 	var predicates = cartesianProductOf(h.concat(v).map(unique));
 
-	var legend = $('<div class="legend" style="float:left;margin:50px;">').appendTo('#wrapper');
+	var legend = $('#legend');
 	predicates.map(function(p, i) {
 	    var line = $("<div>").appendTo(legend);
 	    $("<div style='display:inline-block;'>").css({
@@ -104,6 +106,7 @@ window.makeD3Scatter = function(theChart, opts) {
 
 
 	addViz(rows, x, y, legend, Math.floor(minX), Math.floor(minY), Math.ceil(maxX), Math.ceil(maxY));
+
 	// addMedBookButtons(wrapper, null);
     }, 250);
     return wrapper;
