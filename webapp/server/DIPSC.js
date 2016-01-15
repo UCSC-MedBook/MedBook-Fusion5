@@ -1,4 +1,19 @@
 
+Meteor.startup(function() {
+    Expression._ensureIndex({variance:-1});
+});
+
+Meteor.methods({
+    expressionVariance: function(study) {
+	var data = Expression.find({Study_ID: study}, {
+	   fields: {gene:1, variance:1},
+	   sort: {variance: -1},
+	}).fetch();
+	console.log("expressionVariance", study, data.length);
+	return data;
+    }
+});
+
 HTTP.methods({
  hello: function(data){
     var response = "hello world\n";

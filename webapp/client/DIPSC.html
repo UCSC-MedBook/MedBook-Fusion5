@@ -1,0 +1,39 @@
+<template name="DIPSC">
+    {{> DIPSCcontrols }}
+    {{> DIPSCgeneList }}
+</template>
+
+<template name="DIPSCcontrols">
+  <div class="panel panel-default">
+      <div class="panel-heading" >
+         <h1 >DIPSC Tool</h1>
+          Differential Pathway Signature Correlation
+      </div>
+
+      <div style="display: inline-block;" class="dataExplorerControlPanel">
+        <div class="genedisplay" style="margin: 30px;"></div>
+      </div>
+  </div>
+</template>
+
+<template name="DIPSCgeneList">
+  <div class="panel panel-default">
+      <div class="panel-heading" >
+         <h1 >Gene List</h1>
+      </div>
+
+      <div style="display: inline-block;" class="dataExplorerControlPanel">
+        <div class="genedisplay" style="margin: 30px;">
+	   {{$.Session.get "DIPSCgeneListLength"}}
+	</div>
+      </div>
+      <div style="display: inline-block;" class="dataExplorerControlPanel">
+        <div class="genedisplay" style="margin: 30px;">
+	   <textarea style="width:300px;height:100px">
+	      {{$.Session.get "DIPSCgeneList"}}
+	   </textarea>
+	</div>
+      </div>
+  </div>
+</template>
+

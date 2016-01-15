@@ -204,9 +204,9 @@ Router.map(function() {
 });
 
 Router.map(function() {
-  this.route('GeneFusion', {
-    template: "GeneFusion",
-    path: '/fusion/gene/',
+  this.route('DIPSC', {
+    template: "DIPSC",
+    path: '/fusion/DIPSC/',
     data: data,
     waitOn: function() {
        return [
