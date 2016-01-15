@@ -1,4 +1,15 @@
+
 Template.Element.helpers({
+    dichot: function(arg) {
+	var val = "none";
+	var transforms = Template.currentData().theChart.transforms;
+	if (transforms) {
+	    var t = _.find(transforms, function(t){ return t.op == "dichot" && t.field == this.field; });
+	    if (t) val = t.value;
+	}
+	return val == arg ? "active" : "";
+    }, 
+
     checked: function() {
 	var value = String(this);
 	var field = Template.parentData().field;
@@ -35,7 +46,6 @@ Template.Element.events({
        var TheChart = Template.currentData().theChart;
        var transforms = TheChart.transforms;
        var value = evt.target.value;
-       debugger;
 
        var found = false;
        if (transforms)
