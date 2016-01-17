@@ -1,6 +1,11 @@
+fss = Npm.require('fs-extra');
 
 Meteor.startup(function() {
     Expression._ensureIndex({variance:-1});
+});
+
+Meteor.startup(function() {
+    GeneExpression._ensureIndex({gene_label:1, sample_label: 1});
 });
 
 Meteor.methods({
@@ -11,6 +16,65 @@ Meteor.methods({
 	}).fetch();
 	console.log("expressionVariance", study, data.length);
 	return data;
+    },
+
+    prepareDIPSC: function(study, genelist) {
+
+        var directory = process.env.MEDBOOK_WORKSPACE + "bridge/" + "DIPSC" + "/";
+	fss.mkdirsSync(directory);
+	var filename = directory + 'data.txt';
+	var stream = fs.createWriteStream(filename, { flags : 'w' });
+
+	var headerline;
+	var dataline = "";
+	var gene = null;
+	var line = [];
+	var firstline = true;
+
+	var before = Date.now();
+
+	function flush() {
+	   if (firstline) {
+	       firstline = false;
+	       stream.write(study);
+	       line.map(function(elem) {
+		   stream.write("\t");
+		   stream.write(String(elem.sample_label));
+	       });
+	       stream.write("\n");
+	       headerline = line;
+	   }
+	   stream.write(line[0].gene_label);
+	   console.log(line[0].gene_label, Date.now() - before);
+	   line.map(function(elem, i) {
+	       if (elem.sample_label != line[i].sample_label)
+	          throw new Error("Unaligned samples: " + elem.sample_label + " != " + line[i].sample_label);
+	       stream.write("\t");
+	       stream.write(String(elem.values.quantile_counts_log));
+	   });
+	   stream.write("\n");
+	   line = [];
+	}
+
+	var cursor = GeneExpression.find({study_label: study, gene_label: {$in: genelist}  }, {
+	   fields: {gene_label:1, sample_label:1, "values.quantile_counts_log": 1},
+	   sort: {gene_label:1, sample_label: 1},
+	});
+
+	console.log("total genelist", genelist.length, "cursor",  cursor.count());
+	cursor.forEach(function(doc) {
+	   if (gene == null)
+	       gene = doc.gene_label;
+	   if (gene != doc.gene_label)  {
+	       gene = doc.gene_label;
+	       flush();
+	   }
+	   line.push(doc);
+	});
+
+        flush();
+	stream.end();
+	return filename;
     }
 });
 
