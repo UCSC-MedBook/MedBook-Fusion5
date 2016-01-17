@@ -1,5 +1,3 @@
-
-
 Meteor.publish('FusionFeatures', function() {
     var cursor = Collections.FusionFeatures.find();
     console.log("FusionFeatures publish", cursor.count());

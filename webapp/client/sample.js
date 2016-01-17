@@ -298,15 +298,19 @@ Template.Controls.events({
        var TheChart = CurrentChart();
        var analysis = analyze(TheChart.chartData, [field])[field];
        var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
-       var values = ["N/A"];
-       try {
-	   var md = TheChart.metadata[field];
-	   if (md.type == "String" && md.allowedValues)
-	       values = TheChart.metadata[field].allowedValues;
-       } catch (err) {
-           debugger;
-       }
-       Overlay("Element", { theChart: TheChart, field: field, values: values, exclusions: exclusions });
+       var type = TheChart.metadata[field].type;
+
+       var bin = null;
+       var binTransform = _.find(TheChart.transforms, function(obj) { return obj.op == "bin" && obj.field == field; });
+       if (binTransform) bin = binTransform.value;
+
+       Overlay("Element", { 
+	   theChart: TheChart,
+	   field: field, 
+	   type: type,
+	   exclusions: exclusions,
+	   bin: bin
+       });
   }, 
   'change #previousCharts' : function(e) {
 	var _id = $(e.target).val();
@@ -346,7 +350,7 @@ Template.Controls.events({
         });
        // BUG the sort changes this into an object:
        // transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
-       UpdateCurrentChart("Transforms", transforms);
+       UpdateCurrentChart("transforms", transforms);
    },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)
@@ -553,13 +557,19 @@ function initializeJQuerySelect2(document) {
      } );
 
      var $genelist = $("#genelist");
+     if (document.genelist)
+	 $genelist.val(document.genelist.join(" "));
+     else
+	 $genelist.val("");
+
      var httpGenesUrl = "/fusion/genes";
      var httpGeneListPreciseUrl = "/fusion/geneListPrecise";
      $genelist.select2({
           initSelection : function (element, callback) {
             var prev = document;
             if (prev && prev.genelist)
-                callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
+                callback( prev.genelist.map(function(g) { 
+		    return { id: g, text: g }}) );
           },
           multiple: true,
           ajax: {

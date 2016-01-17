@@ -356,12 +356,19 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
     var dataFieldNames =  Object.keys(keyUnion);
+    var cols = [];
+    var rows = [];
+    if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)
+	cols = _.without(ChartDocument.pivotTableConfig.cols, null);
+    if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
+	rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
-    var selectedFieldNames = 
-    ChartDocument.pivotTableConfig ?
-      _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null)     : [];
+    cols = _.intersection(cols, dataFieldNames);
+    rows = _.intersection(rows, dataFieldNames);
 
+    var selectedFieldNames = _.union(rows, cols);
 
+    // normalize records
     chartData = chartData.map(Transform_Clinical_Info, keyUnion);
 
     var transforms = ChartDocument.transforms;
@@ -393,7 +400,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	chartData =  chartData.filter(function(elem) {
 	    for (var i = 0; i < excludedKeys.length; i++) {
 	       var key = excludedKeys[i];
-	       if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
+	       if (key in elem && exclusions[key].indexOf(String(elem[key])) >= 0)
 		   return false;
 	       return true;
 	    }
@@ -431,7 +438,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 selectedFieldNames: selectedFieldNames,
 		metadata: metadata,
                 chartData: chartData,
-		html: renderJSdom(ChartDocument) // render may start a thread or a unix process  and update the document later
+		html: renderJSdom(ChartDocument), // render may start a thread or a unix process 
+		"pivotTableConfig.rows": rows, 
+		"pivotTableConfig.cols": cols, 
                }});
 
 
