@@ -204,31 +204,37 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
-    var gl  = ChartDocument.genelist;
-    var gld = ChartDocument.geneLikeDataDomain;
 
-    if (gld && gl && gld.length > 0 && gl.length > 0)  {
+    if (ChartDocument.geneLikeDataDomain && ChartDocument.genelist && ChartDocument.geneLikeDataDomain.length > 0 && ChartDocument.genelist.length > 0)  {
 
-        gld
+        ChartDocument.geneLikeDataDomain
           .filter(function(domain) {return domain.state})
           .map(function(domain) {
-            var query = {Study_ID:{$in: ChartDocument.studies}};
-            var qf = domain.label == "Mutations" ? "Hugo_Symbol" : "gene";
-            query[qf] = {$in: gl};
+            var query = {};
+            if (domain.study_label_name)
+                query[domain.study_label_name] = {$in: ChartDocument.studies};
+
+            if (domain.regex_genenames)
+                query[domain.gene_label_name]  = {$in: ChartDocument.genelist.map(function(d) { return new RegExp("^" + d + "_.*", "i");})}
+            else
+                query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
+            console.log("find", domain.collection, query, cursor.count(), domain);
 	    
             cursor.forEach(function(geneData) {
-                // Mutations are organized differently than Expression
-                if (geneData.Hugo_Symbol) { 
-                    var geneName = geneData.Hugo_Symbol;
-                    var label = geneName + ' ' + domain.labelItem;
+                var sampleID = geneData[domain.sample_label_name];
+                var geneName = geneData[domain.gene_label_name];
+                var label = geneName + ' ' + domain.labelItem;
 
-                    var sampleID = geneData.sample;
-
+                if (domain.type == 3) {  // signature scores
                     if (sampleID in chartDataMap) {
-                        chartDataMap[sampleID][label] = geneData.Variant_Type;
+                        var obj = geneData;
+                        var fields = domain.field.split('.');
+                        fields.map(function(field){ obj = obj[field]; });
 
+                        // console.log("found", label, geneName, sampleID, obj, fields, geneData);
+                        chartDataMap[sampleID][label] = obj;
 			if (metadata[label] == null)
 			    metadata[label] = { 
 				collection: domain.collection,
@@ -238,9 +244,25 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				type: "String"
 			    };
                     }
-                } else if (geneData.gene) {
 
-                    var geneName = geneData.gene;
+                } else if (domain.type == 2) {  // sample names are stored as attributes
+                    if (sampleID in chartDataMap) {
+                        var obj = geneData;
+                        var fields = domain.field.split('.');
+                        fields.map(function(field){ obj = obj[field]; });
+
+                        // console.log("found", label, geneName, sampleID, obj);
+                        chartDataMap[sampleID][label] = obj;
+			if (metadata[label] == null)
+			    metadata[label] = { 
+				collection: domain.collection,
+				crf: null, 
+				label: label,
+				max: 200,
+				type: "String"
+			    };
+                    }
+                } else if (domain.type == 1) {  // sample names are stored as labels
                     var label = ('transcript' in geneData) 
                         ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                         : geneName + ' ' + domain.labelItem
@@ -251,7 +273,12 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
                     samplelist.map(function (sampleID) {
-                        var f = parseFloat(geneData.samples[sampleID][domain.field]);
+                        var fields = domain.field.split('.');
+
+                        var obj = geneData.samples[sampleID];
+                        fields.map(function(field){ obj = obj[field]; });
+
+                        var f = parseFloat(obj);
                         if (!isNaN(f)) {
                             if (sampleID in chartDataMap) {
                                 chartDataMap[sampleID][label] = f;
@@ -271,7 +298,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
             //  Samples without mutations need to have a wt
             if (domain.label == "Mutations") {
-                var labels  = gl.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
+                var labels  = ChartDocument.genelist.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
                 ChartDocument.samplelist.map(function (sampleID) {
                     var datum = chartDataMap[sampleID];
                     labels.map(function(label) {
@@ -281,7 +308,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 });
             }
           }); // .map 
-    } // if gld 
+    } // if ChartDocument.geneLikeDataDomain 
 
     var mapPatient_ID_to_Sample_ID = {};
     chartData.map(function(cd) {

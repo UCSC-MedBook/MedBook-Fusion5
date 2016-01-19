@@ -9,14 +9,16 @@ Charts = new Meteor.Collection("Charts");
 Expression = new Meteor.Collection('expression2');
 ExpressionIsoform = new Meteor.Collection('expression_isoform');
 Mutations = new Meteor.Collection('mutations');
-SignatureScores = new Meteor.Collection('signature_score2');
+SignatureScores = new Meteor.Collection('signature_scores');
 GeneSets = new Meteor.Collection('gene_sets');
+GeneExpression = new Meteor.Collection("gene_expression");
 
 DomainCollections = {
   'Expression' : Expression,
   'ExpressionIsoform' : ExpressionIsoform,
   'Mutations' : Mutations,
-  'SignatureScores' : SignatureScores
+  'SignatureScores' : SignatureScores,
+  'GeneExpression' : GeneExpression
 };
 
 MinimalChart = {
