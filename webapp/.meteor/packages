@@ -19,7 +19,6 @@ matb33:collection-hooks
 mizzao:jquery-ui
 
 
-meteorhacks:aggregate
 
 
 npm-container
@@ -31,3 +30,4 @@ raix:handlebar-helpers
 http
 kaso:bootstrap-treeview
 rafaelhdr:google-charts
+monbro:mongodb-mapreduce-aggregation

@@ -6,7 +6,7 @@
 // eventually assigning `simple-statistics` to `ss` in browsers or the
 // `exports` object for node.js
 (function() {
-    var ss = {};
+    ss = {};
 
     if (typeof module !== 'undefined') {
         // Assign the `ss` object to exports, so that you can require

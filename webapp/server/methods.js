@@ -79,8 +79,89 @@ summarizeVariances = function(collName) {
     });
 };
 
+Meteor.startup(function() {
+    GeneStatistics._ensureIndex({ study_label: 1, gene_label:1}); 
+});
+
+/*
+migrateExpressionToGeneExpression = function() {
+    Expression.find({Study_ID: "prad_tcga"}).forEach(function(doc) {
+        console.log(doc.gene);
+        Object.keys(doc.samples).map(function(sample_label) {
+            GeneExpression.upsert(
+            {
+                collaborations: doc.collaborations,
+                study_label: doc.Study_ID,
+                gene_label: doc.gene,
+                sample_label: sample_label
+            },
+            {
+                collaborations: doc.collaborations,
+                study_label: doc.Study_ID,
+                gene_label: doc.gene,
+                sample_label: sample_label
+            }
+            );
+        });
+    });
+    console.log("done");
+}
+Meteor.startup(function() {
+    migrateExpressionToGeneExpression();
+});
+*/
+
+makeStats = function(args) {
+    var start = new Date();
+    var collections = [ GeneExpression ];
+    var genes = GeneExpression.distinct("gene_label");
+    var studies = Collections.studies.find().fetch();
+
+    console.log("makeStats");
+    studies.map(function(study) {
+        if (study.Sample_IDs == null || study.Sample_IDs.length == 0)
+            return;
+
+        if (args != null && study.id != args[0])
+            return;
+
+
+        // hack
+        if (study.id == "prad_wcdt")
+            study.Sample_IDs = study.Sample_IDs.filter(function(sampleName) { return sampleName.match(/^DTB/); });
+
+        var countGenes = 0;
+        var countValues = 0;
+        genes.map(function(gene_label) {
+            var geneData = GeneExpression.find({study_label: study.id, gene_label: gene_label, sample_label: {$in: study.Sample_IDs }}).fetch();
+            var data = geneData.map(function(geneDatum) { return geneDatum.values.quantile_counts_log;});
+
+            console.log("makeStats", study.id,  gene_label, geneData.length);
+
+            var variance = ss.variance(data);
+            var mean = ss.mean(data);
+
+            countGenes++;
+            countValues += data.length;
+
+            GeneStatistics.upsert(
+                {
+                    study_label: study.id,
+                    gene_label: gene_label,
+                }, 
+                {$set: {
+                    mean: { rsem_quan_log2: mean},
+                    variance: { rsem_quan_log2: variance},
+                    updated: start
+            }});
+
+        });
+        console.log("makeStats", study.id,  "time", new Date() - start, "countGenes",countGenes, "countValues", countValues);;
+    });
+}
 
 Meteor.methods({
+   makeStats: makeStats,
 
    topMutatedGenes: topMutatedGenes,
 
