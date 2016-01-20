@@ -9,12 +9,18 @@ Meteor.startup(function() {
 });
 
 Meteor.methods({
-    expressionVariance: function(study) {
-	var data = Expression.find({Study_ID: study}, {
-	   fields: {gene:1, variance:1},
-	   sort: {variance: -1},
-	}).fetch();
-	console.log("expressionVariance", study, data.length);
+    expressionVariance: function(study_label) {
+    
+	var data = GeneStatistics.aggregate([
+            { $match: { study_label: study_label}},
+            { $sort: {variance: -1}},
+            { $project:
+                { _id: 0,
+                 gene_label: "$gene_label",
+                 value: "$variance.rsem_quan_log2",
+                }
+            }]);
+	console.log("expressionVariance", study_label, data.length);
 	return data;
     },
 
@@ -23,7 +29,7 @@ Meteor.methods({
         var directory = process.env.MEDBOOK_WORKSPACE + "bridge/" + "DIPSC" + "/";
 	fss.mkdirsSync(directory);
 	var filename = directory + 'data.txt';
-	var stream = fs.createWriteStream(filename, { flags : 'w' });
+	var fd = fss.openSync(filename, 'w' );
 
 	var headerline;
 	var dataline = "";
@@ -36,23 +42,28 @@ Meteor.methods({
 	function flush() {
 	   if (firstline) {
 	       firstline = false;
-	       stream.write(study);
+	       var buf =  study;
 	       line.map(function(elem) {
-		   stream.write("\t");
-		   stream.write(String(elem.sample_label));
+		   buf += "\t";
+		   buf +=  String(elem.sample_label);
 	       });
-	       stream.write("\n");
+               buf += '\n';
+	       fss.writeSync(fd, buf);
 	       headerline = line;
 	   }
-	   stream.write(line[0].gene_label);
-	   console.log(line[0].gene_label, Date.now() - before);
+           var buf = line[0].gene_label;
 	   line.map(function(elem, i) {
+	       buf += "\t";
+
 	       if (elem.sample_label != line[i].sample_label)
 	          throw new Error("Unaligned samples: " + elem.sample_label + " != " + line[i].sample_label);
-	       stream.write("\t");
-	       stream.write(String(elem.values.quantile_counts_log));
+	       if (typeof elem.values.quantile_counts_log != "number")
+	          throw new Error("Not a number: " + elem.sample_label + " " +  elem.gene_label);
+
+	       buf +=  String(elem.values.quantile_counts_log);
 	   });
-	   stream.write("\n");
+           buf += '\n';
+	   fss.writeSync(fd, buf);
 	   line = [];
 	}
 
@@ -73,7 +84,7 @@ Meteor.methods({
 	});
 
         flush();
-	stream.end();
+	fss.closeSync(fd)
 	return filename;
     }
 });
@@ -376,39 +387,39 @@ SAM_adapter = function(chart_id, phenotype, phenotypeMap, sampleList, geneList,e
 
        var dir = process.env.MEDBOOK_WORKSPACE + "SAM/";
        try {
-           var m = fs.mkdirSync(dir);
+           var m = fss.mkdirSync(dir);
        } catch (err) {};
 
        dir +=  dipsc_id + "/";
-       var m = fs.mkdirSync(dir);
+       var m = fss.mkdirSync(dir);
        var samInputFileName = dir + "sam.input";
        var samOutputFileName = dir + "sam.output";
        var samErrorFileName = dir + "sam.error";
 
-       var fd = fs.openSync(samInputFileName, "w");
+       var fd = fss.openSync(samInputFileName, "w");
        var positiveN = 0;
        var negativeN = 0;
        sampleList.map(function(sample) {
            if (phenotypeMap[sample]) {
-               fs.writeSync(fd, "\t1");
+               fss.writeSync(fd, "\t1");
                positiveN++;
            } else {
-               fs.writeSync(fd, "\t0");
+               fss.writeSync(fd, "\t0");
                negativeN++;
            }
        });
        // console.log("positiveN", positiveN, "negativeN", negativeN);
 
 
-       fs.writeSync(fd, "\n");
+       fss.writeSync(fd, "\n");
        expressionData.map(function(expr) {
-           fs.writeSync(fd, expr.gene);
+           fss.writeSync(fd, expr.gene);
            sampleList.map(function(sample) {
-               fs.writeSync(fd, "\t"+expr[sample]);
+               fss.writeSync(fd, "\t"+expr[sample]);
            });
-           fs.writeSync(fd, "\n");
+           fss.writeSync(fd, "\n");
        });
-       fs.close(fd);
+       fss.close(fd);
 
 
        var  argArray = [process.env.MEDBOOK_SCRIPTS + "fileSAM.R", samInputFileName ];
@@ -419,8 +430,8 @@ SAM_adapter = function(chart_id, phenotype, phenotypeMap, sampleList, geneList,e
        var shlurp = spawn("/bin/env", argArray, {
           stdio: [
               0, // use parents stdin for child
-              fs.openSync(samOutputFileName, "w"),
-              fs.openSync(samErrorFileName, "w")
+              fss.openSync(samOutputFileName, "w"),
+              fss.openSync(samErrorFileName, "w")
        ]});
 
 

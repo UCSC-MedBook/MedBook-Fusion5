@@ -6,7 +6,7 @@ function trans() {
 	d3_area(data, "Expression Variance", 
 	    function(mark){
 		var revised = data.slice(0, mark.index);
-		var geneList = revised.map(function(r) { return r.gene; });
+		var geneList = revised.map(function(r) { return r.gene_label; });
 		Session.set("DIPSCgeneList", geneList );
 		Session.set("DIPSCgeneListLength", geneList.length);
 		Meteor.call("prepareDIPSC", "prad_wcdt", geneList);

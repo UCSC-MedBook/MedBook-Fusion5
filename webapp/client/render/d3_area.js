@@ -23,7 +23,7 @@ d3_area = function(data, yAxisLabel, reviserCB) {
     var area = d3.svg.area()
 	.x(function(d) { return x(d.index); })
 	.y0(height)
-	.y1(function(d) { return y(d.variance.rsem_quan_log2) });
+	.y1(function(d) { return y(d.value) });
 
     var svg = d3.select(".genedisplay").append("svg")
 	.attr("width", width + margin.left + margin.right)
@@ -35,7 +35,7 @@ d3_area = function(data, yAxisLabel, reviserCB) {
        data[i].index = i;
 
     x.domain(d3.extent(data, function(d) { return d.index; }));
-    y.domain([0, d3.max(data, function(d) { return d.variance.rsem_quan_log2; })]);
+    y.domain([0, d3.max(data, function(d) { return d.value; })]);
 
     svg.append("path")
 	.datum(data)
@@ -80,7 +80,7 @@ d3_area = function(data, yAxisLabel, reviserCB) {
    // Define the line
    var valueline = d3.svg.line()
       .x(function(d) { return x(d.index); })
-      .y(function(d) { return y(d.variance.rsem_quan_log2); });
+      .y(function(d) { return y(d.value); });
 	    
 
 
@@ -186,44 +186,44 @@ d3_area = function(data, yAxisLabel, reviserCB) {
 	focus.select("circle.y")
 	    .attr("transform",
 		  "translate(" + x(d.index) + "," +
-				 y(d.variance.rsem_quan_log2) + ")");
+				 y(d.value) + ")");
 
 	/*
 	focus.select("text.y1")
 	    .attr("transform",
 		  "translate(" + x(d.index) + "," +
-				 y(d.variance.rsem_quan_log2) + ")")
-	    .text(d.variance.rsem_quan_log2);
+				 y(d.value) + ")")
+	    .text(d.value);
 
 	focus.select("text.y2")
 	    .attr("transform",
 		  "translate(" + x(d.index) + "," +
-				 y(d.variance.rsem_quan_log2) + ")")
-	    .text(d.variance.rsem_quan_log2);
+				 y(d.value) + ")")
+	    .text(d.value);
 
 	focus.select("text.y3")
 	    .attr("transform",
 		  "translate(" + x(d.index) + "," +
-				 y(d.variance.rsem_quan_log2) + ")")
-	    .text(d.index + ":" + d.gene + " " + d.variance.rsem_quan_log2);
+				 y(d.value) + ")")
+	    .text(d.index + ":" + d.gene_label + " " + d.value);
 	*/
 
 	focus.select("text.y4")
 	    .attr("transform",
 		  "translate(" + x(d.index) + "," +
-				 y(d.variance.rsem_quan_log2) + ")")
-	    .text(d.index + ":" + d.gene + " " + d.variance.rsem_quan_log2);
+				 y(d.value) + ")")
+	    .text(d.index + ":" + d.gene_label + " " + d.value);
 
 	focus.select(".x")
 	    .attr("transform",
 		  "translate(" + x(d.index) + "," +
-				 y(d.variance.rsem_quan_log2) + ")")
-		       .attr("y2", height - y(d.variance.rsem_quan_log2));
+				 y(d.value) + ")")
+		       .attr("y2", height - y(d.value));
 
 	focus.select(".y")
 	    .attr("transform",
 		  "translate(" + width * -1 + "," +
-				 y(d.variance.rsem_quan_log2) + ")")
+				 y(d.value) + ")")
 		       .attr("x2", width + width);
     }
 
