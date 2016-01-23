@@ -1,6 +1,6 @@
 
 window.postButton = function () { 
-    var copy = Charts.find({_id: TheChartID})
+    var copy = Charts.findOne({_id: TheChartID});
     delete copy["_id"];
     delete copy["userId"];
     copy.posted = true;
