@@ -19,4 +19,6 @@ WORKDIR /build/bundle/programs/server
 RUN npm install
 WORKDIR /build/bundle
 
+ADD ./scripts /scripts
+
 CMD ["node", "main.js"]
