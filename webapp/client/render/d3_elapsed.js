@@ -102,6 +102,8 @@ window.makeD3Elapsed = function(theChart, opts) {
 	 patients.map(function(patient) {
 	    var patientG = d3.select("." + patient.Patient_ID);
 	    patient.events.map(function(event, i) {
+	        if (event.on == null || event.off == null || event.on < -2000)
+		   return;
 		patientG
 		    .append("rect")
 		    .attr("class", "event")
