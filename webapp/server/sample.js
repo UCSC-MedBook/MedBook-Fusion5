@@ -36,8 +36,8 @@ function Transform_Clinical_Info(f) {
     delete f["_id"];
     // delete f["Sample_ID"];
     // delete f["Patient_ID"];
-    delete f["On_Study_Date"];
-    delete f["Off_Study_Date"];
+    // delete f["On_Study_Date"];
+    // delete f["Off_Study_Date"];
 
     /*
     var on = f["On_Study_Date"];
@@ -458,14 +458,23 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.
     // console.log("renderChartData", chartData.length);
+
+    ChartDocument.chartData = chartData;
+    ChartDocument.dataFieldsNames = dataFieldNames;
+    ChartDocument.selectedFieldNames = selectedFieldNames;
+    ChartDocument.metadata = metadata;
+
+    var html = renderJSdom(ChartDocument);
+
     var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
-                dataFieldNames: dataFieldNames,
-                selectedFieldNames: selectedFieldNames,
-		metadata: metadata,
-                chartData: chartData,
-		html: renderJSdom(ChartDocument), // render may start a thread or a unix process 
+                dataFieldNames: ChartDocument.dataFieldNames,
+                selectedFieldNames: ChartDocument.selectedFieldNames,
+                elapsed: ChartDocument.elapsed,
+		metadata: ChartDocument.metadata,
+                chartData: ChartDocument.chartData,
+		html: html,
 		"pivotTableConfig.rows": rows, 
 		"pivotTableConfig.cols": cols, 
                }});

@@ -7,12 +7,18 @@ Meteor.startup(function() {
 // var d3 = Meteor.npmRequire("d3");
 var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>';
 
+/*
+Type 1: client side render, just return the string
+Type 2: call the function and return the value
+Type 3: call the function with asynchronously using jsdom 
+*/
 
 ChartTypeMap = {
-  "Bar Chart" : "GoogleChart",        // client side render
-  "Box Plot" : D3BoxPlot,             // server side render
-  "Scatter Chart" : "makeD3Scatter",  // client side render
-  "Table" : "makeHandsontable"        // client side render
+  "Bar Chart" :      { type: 1, client: "GoogleChart"},
+  "Elapsed" :        { type: 2, func: makeD3Elapsed},
+  "Box Plot" :       { type: 3, func: D3BoxPlot },
+  "Scatter Chart" :  { type: 1, client: "makeD3Scatter"},
+  "Table" :          { type: 1, client:"makeHandsontable"}
 }
 
 // use FusionFeatures collection to communicate from server to client
@@ -20,17 +26,22 @@ SyncChartTypesWithFusionFeaturesDB = function() {
   Collections.FusionFeatures.upsert({name: "ChartTypes"}, {$set: {value:  Object.keys(ChartTypeMap).sort()}});
 }
 
+
 Meteor.startup(SyncChartTypesWithFusionFeaturesDB);
 
 renderJSdom = function(ChartDocument) {
     var chartType = ChartDocument.pivotTableConfig.rendererName;
-    var qqq = ChartTypeMap[chartType];
-    if (typeof(qqq) == 'function') {
-	var start = new Date();
-	    jsdom.env(htmlStub,  {
+    var ct = ChartTypeMap[chartType];
+    switch (ct.type) {
+
+    case 1: return ct.client;
+
+    case 2: return ct.func(null, ChartDocument, null, []);
+
+    case 3: jsdom.env(htmlStub,  {
 		done : function(errors, window) {
 		    jquery_bind(window);
-		    var html = qqq(window, ChartDocument, null, []);
+		    var html = ct.func(window, ChartDocument, null, []);
 		    html = html ? 
 		    	(typeof(html) == "string" 
 			    ? html
@@ -42,10 +53,6 @@ renderJSdom = function(ChartDocument) {
 		    }).run();
 		}
 	    }) // end jsdom.env
-	var stop = new Date();
-	//console.log(ChartDocument._id, "stop - start", stop-start);
-	return "";
-    } else {
-	return qqq;
+	    return "";
     }
 }
