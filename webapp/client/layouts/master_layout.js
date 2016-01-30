@@ -98,5 +98,7 @@ Overlay = function(templateName, params) {
     $overlay.removeClass("hidden");
     $overlay.show();
     var $overlayContent = $( '#overlayContent' );
+    if (typeof(params) == "function")
+        params = params();
     Blaze.renderWithData( Template[templateName], params, $overlayContent.get(0) );
 }

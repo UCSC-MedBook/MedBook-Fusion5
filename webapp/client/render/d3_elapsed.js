@@ -80,7 +80,12 @@ window.makeD3Elapsed = function(theChart, opts) {
 		return x1 - x0;
 	     })
 	    .attr("class", "epoch")
-	    .style('fill', 'yellow');
+	    .style('fill', 'yellow')
+	    .on('click', function (d) { 
+	    	Overlay("Report", function() {
+		    return {data: JSON.stringify(d, null, 2)}
+		});
+	    })
 
  	gs.append("line")
 	 .attr("x1", xScale(0))
@@ -163,9 +168,6 @@ window.makeD3Elapsed = function(theChart, opts) {
 			// d3.select('#tooltip').classed('hidden', false)[0][0];
 		    })
 		    .on('mouseout', function () { tooltip.attr("opacity", 0.0); })
-		    .on('mousedown', function () { 
-		        console.log("click");
-		    })
 
 		});
 	 });
@@ -218,7 +220,7 @@ window.makeD3Elapsed = function(theChart, opts) {
 	    .attr('width', 160)
 	    .attr('height', 30 * patients.length)
 	    .attr('x', width + margins.left)
-	    .attr('y', 0);
+	    .attr('y', 0)
 
 	series.forEach(function (s, i) {
 	    outerTableau.append('text')
