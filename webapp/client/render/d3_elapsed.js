@@ -25,10 +25,16 @@ window.makeD3Elapsed = function(theChart, opts) {
 	height = totalHeight - margins.top - margins.bottom,
 	patients = theChart.chartData,
 
-	outerTableau = d3.select('#viz')
+	svg = d3.select('#viz')
 	    .append('svg')
 	    .attr('width', width + margins.left + margins.right + legendPanel.width)
-	    .attr('height', height + margins.top + margins.bottom)
+	    .attr('height', height + margins.top + margins.bottom),
+
+	outerTableau = svg
+	    .append('g')
+	    .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')')
+
+	frontTableau = svg
 	    .append('g')
 	    .attr('transform', 'translate(' + margins.left + ',' + margins.top + ')');
 
@@ -101,17 +107,19 @@ window.makeD3Elapsed = function(theChart, opts) {
 
 	 patients.map(function(patient) {
 	    var patientG = d3.select("." + patient.Patient_ID);
-	    patient.events.map(function(event, i) {
-	        if (event.on == null || event.off == null || event.on < -2000)
+	    patient.events.map(function(event, k) {
+	        if (event.on == null || event.off == null || isNaN(event.on) || isNaN(event.off) || event.on < -2000)
 		   return;
 		patientG
 		    .append("rect")
+		    .attr("k", k)
 		    .attr("class", "event")
 		    .style('fill', function() { 
 			if (!(event.description in eventColors))
 			    eventColors[event.description] = colours(colorIndex++)
 			return eventColors[event.description];
 		    })
+		    .attr('opacity', 0.8)
 		    .attr('x', function() { 
 		       if (isNaN(event.on))
 		          debugger
@@ -121,26 +129,43 @@ window.makeD3Elapsed = function(theChart, opts) {
 		    .attr('height', bandheight-4)
 		    .attr('y', 2)
 		    .attr('width', function() { 
-			   if (isNaN(event.on) || isNaN(event.off))
-			      debugger
+			   if (event.off < -2000 || (event.on - event.off)  < 20)
+			       return 20;
 			   var x0 = xScale(event.on) + 2;
-			   var x1 = xScale(event.off) + 2;
-			   return x1 - x0;
+			   var x1 = xScale(event.off) - 2;
+			   var width = x1 - x0;
+			   if (width < 20) {
+			       return 20;
+			   }
+			   return width;
 			})
 
 		    .on('mouseover', function (d) {
-			var xPos = parseFloat(d3.select(this).attr('x')) / 2 + width / 2;
-			var yPos = parseFloat(d3.select(this).attr('y')) + bandheight / 2;
+
+			tooltip.attr("opacity", 1.0)
+
+
+			var xPos = d3.mouse(frontTableau[0][0])[0];
+			var yPos = d3.mouse(frontTableau[0][0])[1] + 10;
 			console.log("mouseover", xPos, yPos);
+			var k = parseInt(d3.select(this).attr("k"));
 
-			d3.select('#elapsed_tooltip')
-			    .attr("x", xPos)
-			    .attr("y", yPos)
-			    .text(patient.Patient_ID);
+			d3.select('#tooltip').attr('transform', 'translate(' + xPos + ',' + yPos + ')')
 
-			// d3.select('#elapsed_tooltip').classed('hidden', false);
+			var textwidth = 
+			    Math.max(
+				d3.select('#tooltip-text1').text(patient.Patient_ID)[0][0].getComputedTextLength(),
+				d3.select('#tooltip-text2').text(event.description)[0][0].getComputedTextLength(),
+				d3.select('#tooltip-text3').text(String(event.on + ", "+ event.off))[0][0].getComputedTextLength())
+
+			d3.select('#tooltip-background').attr("width", textwidth + 20);
+
+			// d3.select('#tooltip').classed('hidden', false)[0][0];
 		    })
-		    // .on('mouseout', function () { d3.select('#elapsed_tooltip').classed('hidden', true); })
+		    .on('mouseout', function () { tooltip.attr("opacity", 0.0); })
+		    .on('mousedown', function () { 
+		        console.log("click");
+		    })
 
 		});
 	 });
@@ -157,14 +182,34 @@ window.makeD3Elapsed = function(theChart, opts) {
 	    .attr('class', 'elapsed_axis')
 	    .call(yAxis);
 
-	/*
-	outerTableau.append('rect')
-	    .attr('id', 'elapsed_tooltip')
-	    .attr('fill', 'blue')
-	    .attr('width', 1200)
-	    .attr('height', 1200)
+	var tooltip = frontTableau.append('g')
+	    .attr('id', 'tooltip')
+	    .attr('opacity', 0.0)
+
+	tooltip.append("rect")
+	    .attr('id', 'tooltip-background')
+	    .attr('stroke', 'blue')
+	    .attr('stroke-width', 2)
+	    .attr('fill', 'white')
 	    .attr('x', 0)
 	    .attr('y', 0)
+	    .attr('width', "100px")
+	    .attr('height', "80px")
+
+	tooltip.append("text")
+	    .attr('id', 'tooltip-text1')
+	    .attr('x', 10)
+	    .attr('y', 15)
+
+	tooltip.append("text")
+	    .attr('id', 'tooltip-text2')
+	    .attr('x', 10)
+	    .attr('y', 35)
+
+	tooltip.append("text")
+	    .attr('id', 'tooltip-text3')
+	    .attr('x', 10)
+	    .attr('y', 75)
 
 	/* legend
 
