@@ -182,6 +182,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
+   if (typeof(metadata) == "string")
+       metadata = JSON.parse(metadata);
     Object.keys(metadata).map(function(f) {
 	metadata[f].collection = "CRF";
 	metadata[f].crf = "Clinical_Info";
@@ -340,6 +342,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     	return;
 	     }
 	     var ms = m.schema;  
+	     if (typeof(ms) == "string")
+	       ms = JSON.parse(ms);
 	     var msf = ms[fieldName];
 
 	     if (msf == null) {
