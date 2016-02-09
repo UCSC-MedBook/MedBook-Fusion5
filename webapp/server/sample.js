@@ -460,7 +460,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     // console.log("renderChartData", chartData.length);
 
     ChartDocument.chartData = chartData;
-    ChartDocument.dataFieldsNames = dataFieldNames;
+    ChartDocument.dataFieldNames = dataFieldNames;
     ChartDocument.selectedFieldNames = selectedFieldNames;
     ChartDocument.metadata = metadata;
 
