@@ -50,10 +50,41 @@ GoogleChart = function(chartDocument, opts) {
 	dataTable.addColumn(type, field);
     })
 
+    var colors =  [
+	"#3366CC",
+	"#DC3912",
+	"#FF9900",
+	"#109618",
+	"#990099",
+	"#3B3EAC",
+	"#0099C6",
+	"#DD4477",
+	"#66AA00",
+	"#B82E2E",
+	"#316395",
+	"#994499",
+	"#22AA99",
+	"#AAAA11",
+	"#6633CC",
+	"#E67300",
+	"#8B0707",
+	"#329262",
+	"#5574A6",
+	"#3B3EAC"
+    ];
+
 
     dataTable.addColumn({type: 'string', role: 'tooltip'});
+    dataTable.addColumn({type: 'string', role: 'style'});
 
-    function columnCluster(columns, col) {
+    var legend = '<svg><g>';
+
+    var y = 0;
+    function columnCluster(columns, label, clusterNumber) {
+        legend += '<rect x="10" y="' + y + '" width="30" height="15" stroke="none" stroke-width="0" fill="' + colors[clusterNumber] + '"></rect>';
+        legend += '<text text-anchor="start" x="47" y="'+ (y+12.75) + '" font-family="Arial" font-size="15" stroke="none" stroke-width="0" fill="#222222">'+label+'</text>';
+	y += 20;
+        
 	columns.map(function(elem) {
 	    var valid = true;
 	    var row = cols.map(function(field) {
@@ -63,35 +94,41 @@ GoogleChart = function(chartDocument, opts) {
 		return value;
 	    });
 
-	    var tooltip = String(row) + col;
+	    var tooltip = String(row) + label;
 	    tooltip = tooltip.replace(/"/g, "")
 	    tooltip = tooltip.replace(/,/g, " ")
 	    row.push(tooltip);
+	    row.push(colors[clusterNumber]);
 	    if (valid)
 		dataTable.addRow(row);
 	});
     }
 
     if (rows == null || rows.length == 0)
-	columnCluster(chartDocument.chartData, "");
+	columnCluster(chartDocument.chartData, "", 0);
     else {
 	var clusters = {};
-	var blank = _.map(_.range(cols.length +1), function() {
+	var blank = _.map(_.range(cols.length +2), function() {
 	    return undefined;
 	});
 
 	chartDocument.chartData.map(function(elem) {
-	    var key = JSON.stringify(_.pick(elem, rows)).replace(/[{}]/, "");
+	    var key = JSON.stringify(_.pick(elem, rows)).replace(/[,{}"']/g, "");
 	    if (!(key in clusters)) clusters[key] = [];
 	    clusters[key].push(elem);
 	});
 	Object.keys(clusters).sort().map(function(key, i) {
 	    if (i > 0)
 		dataTable.addRow(blank);
-	    columnCluster(clusters[key], ','+key);
+	    columnCluster(clusters[key], key, i);
 	});
     }
 
+    legend += '</g></svg>';
+    setTimeout(function() {
+        window.legend = legend;
+	$('#legend').html(legend);
+    }, 3000);
 
     var title = vAxisTitle = "";
     var hAxisTitle = chartDocument.pivotTableConfig.cols.join("-");
@@ -134,7 +171,9 @@ GoogleChart = function(chartDocument, opts) {
 	},
 	vAxis: {
 	    title: vAxisTitle
-	}
+	},
+
+	legend : 'none'
     };
 
 
@@ -143,7 +182,7 @@ GoogleChart = function(chartDocument, opts) {
 	googleChart.draw(dataTable, options);
     }, 1000);
 
-    return "<div id='GoogleChartTarget' class='ChartWrapper'   style='animation-duration: 3s; animation-name: slidein; animation-iteration-count: infinite;  width: \'100%\' height: \'100%\'' >Loading</div> "
+    return "<div><div id='GoogleChartTarget' class='ChartWrapper'   style='animation-duration: 3s; animation-name: slidein; animation-iteration-count: infinite;  width: \'100%\' height: \'100%\'' >Loading</div><div id='legend'></div></div>";
 
     /*
      

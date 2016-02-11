@@ -242,8 +242,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				collection: domain.collection,
 				crf: null, 
 				label: label,
-				max: 200,
-				type: "String"
+				type: "Number"
 			    };
                     }
 
@@ -261,7 +260,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				crf: null, 
 				label: label,
 				max: 200,
-				type: "String"
+				type: "Number"
 			    };
                     }
                 } else if (domain.type == 1) {  // sample names are stored as labels
