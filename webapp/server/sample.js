@@ -222,7 +222,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("find", domain.collection, query, cursor.count(), domain);
+            console.log("find", domain.collection, query, cursor.count());
 	    
             cursor.forEach(function(geneData) {
                 var sampleID = geneData[domain.sample_label_name];
