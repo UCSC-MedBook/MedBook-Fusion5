@@ -31,6 +31,11 @@ Meteor.startup(SyncChartTypesWithFusionFeaturesDB);
 
 renderJSdom = function(ChartDocument) {
     var chartType = ChartDocument.pivotTableConfig.rendererName;
+    console.log("chartType", chartType);
+
+    if (chartType == null) 
+	chartType = "Table";
+
     var ct = ChartTypeMap[chartType];
     switch (ct.type) {
 

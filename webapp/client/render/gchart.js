@@ -81,8 +81,8 @@ GoogleChart = function(chartDocument, opts) {
 
     var y = 0;
     function columnCluster(columns, label, clusterNumber) {
-        legend += '<rect x="10" y="' + y + '" width="30" height="15" stroke="none" stroke-width="0" fill="' + colors[clusterNumber] + '"></rect>';
-        legend += '<text text-anchor="start" x="47" y="'+ (y+12.75) + '" font-family="Arial" font-size="15" stroke="none" stroke-width="0" fill="#222222">'+label+'</text>';
+        legend += '<rect x="50" y="' + y + '" width="30" height="15" stroke="none" stroke-width="0" fill="' + colors[clusterNumber] + '"></rect>';
+        legend += '<text text-anchor="start" x="87" y="'+ (y+12.75) + '" font-family="Arial" font-size="15" stroke="none" stroke-width="0" fill="#222222">'+label+'</text>';
 	y += 20;
         
 	columns.map(function(elem) {
@@ -117,10 +117,28 @@ GoogleChart = function(chartDocument, opts) {
 	    if (!(key in clusters)) clusters[key] = [];
 	    clusters[key].push(elem);
 	});
+
+	function sortF(aa,bb) {
+	    for (var i = 1; i < cols.length; i++) {
+	       if (aa[cols[i]] < bb[cols[i]]) return -1
+	       if (aa[cols[i]] > bb[cols[i]]) return 1
+	    }
+	    return 0;
+	};
+
 	Object.keys(clusters).sort().map(function(key, i) {
 	    if (i > 0)
 		dataTable.addRow(blank);
-	    columnCluster(clusters[key], key, i);
+	    var cluster = clusters[key];
+
+	    cluster = cluster.filter(function(elem) { // remove N/A
+		for (var i = 1; i < cols.length; i++) {
+		   if (elem[cols[i]] == "N/A") return false;
+		}
+		return true;
+	    })
+	    cluster.sort(sortF);
+	    columnCluster(cluster, key, i);
 	});
     }
 
@@ -128,7 +146,7 @@ GoogleChart = function(chartDocument, opts) {
     setTimeout(function() {
         window.legend = legend;
 	$('#legend').html(legend);
-    }, 3000);
+    }, 2000);
 
     var title = vAxisTitle = "";
     var hAxisTitle = chartDocument.pivotTableConfig.cols.join("-");
