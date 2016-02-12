@@ -1,20 +1,36 @@
 
+function dichotOp() {
+    var theChart = Template.currentData().theChart;
+    if (theChart == null) theChart = Template.parentData().theChart;
+    if (theChart == null) return false;
+
+    var field = Template.currentData().field;
+    if (field == null) field = Template.parentData().field;
+    if (field == null) return false;
+
+    var transforms = theChart.transforms;
+    if (transforms) {
+	var t = _.find(transforms, function(t){ return t.field == field; });
+	if (t)
+	    return t.op;
+    }
+    return "none"
+}; 
+
+Template.Element.rendered = function() {
+   Session.set("dichot", dichotOp());
+}
+
 Template.Element.helpers({
 
     operations: function() {
        return ChartData_Element_Ops;
     },
 
-    dichot: function(op) {
-	var transforms = Template.parentData().theChart.transforms;
-	var field = Template.parentData().field;
-	if (transforms) {
-	    var t = _.find(transforms, function(t){ return t.field == field; });
-	    if (t) 
-		return t.op == op ? "active" : "";
-	}
-	return op == "none" ? "active" : "";
-    }, 
+    dichotActive: function(op) {
+       Session.set("dichot", dichotOp());
+       return dichotOp() == op ? "active" : "";
+    },
 
     checked: function() {
 	var value = String(this);
@@ -38,7 +54,13 @@ Template.Element.helpers({
 	       values = TheChart.metadata[this.field].allowedValues;
 	   else {
 	       var excludedValues = this.field in TheChart.pivotTableConfig ? TheChart.pivotTableConfig.exclusions[this.field]  : [];
-	       values = _.uniq(_.union(excludedValues, _.pluck(TheChart.chartData, this.field))).sort();
+	       values = _.uniq(_.union(excludedValues, _.pluck(TheChart.chartData, this.field))).map(function(n) {
+	          try {
+		     return Number(n);
+		  } catch (err) {
+		     return n;
+		  }
+	       }).sort(function(a,b) {return a- b});
 	   }
        } catch (err) {
            debugger;
@@ -59,6 +81,7 @@ Template.Element.events({
 	   transforms = transforms.filter(function(e, i) {
 		if ( e.field == field) {
 		      e.op = op;
+		      Session.set("dichot", op);
 		      found = true;
 	        }
 		return e.op != "none";
@@ -66,6 +89,7 @@ Template.Element.events({
        if (!found && op != "none") {
 	    var found = false;
 	    if (transforms == null) transforms = [];
+	    Session.set("dichot", op);
 	    transforms.push( {
 		op: op,
 		field: field,
