@@ -1,13 +1,19 @@
 
 Template.Element.helpers({
-    dichot: function(arg) {
-	var val = "none";
-	var transforms = Template.currentData().theChart.transforms;
+
+    operations: function() {
+       return ChartData_Element_Ops;
+    },
+
+    dichot: function(op) {
+	var transforms = Template.parentData().theChart.transforms;
+	var field = Template.parentData().field;
 	if (transforms) {
-	    var t = _.find(transforms, function(t){ return t.op == "dichot" && t.field == this.field; });
-	    if (t) val = t.value;
+	    var t = _.find(transforms, function(t){ return t.field == field; });
+	    if (t) 
+		return t.op == op ? "active" : "";
 	}
-	return val == arg ? "active" : "";
+	return op == "none" ? "active" : "";
     }, 
 
     checked: function() {
@@ -42,6 +48,32 @@ Template.Element.helpers({
 });
 
 Template.Element.events({
+   'change .dichotomization' : function(evt, tmpl) {
+       var TheChart = Template.currentData().theChart;
+       var transforms = TheChart.transforms;
+       var op = evt.target.value;
+       var field = Template.currentData().field
+
+       var found = false;
+       if (transforms)
+	   transforms = transforms.filter(function(e, i) {
+		if ( e.field == field) {
+		      e.op = op;
+		      found = true;
+	        }
+		return e.op != "none";
+	   });
+       if (!found && op != "none") {
+	    var found = false;
+	    if (transforms == null) transforms = [];
+	    transforms.push( {
+		op: op,
+		field: field,
+		value: null
+	    });
+	}
+       var val = Charts.update(TheChart._id, {$set: { "transforms":  transforms}});
+   },
    'change .transform' : function(evt, tmpl) {
        var TheChart = Template.currentData().theChart;
        var transforms = TheChart.transforms;
@@ -64,7 +96,7 @@ Template.Element.events({
 		value: value
 	    });
        var val = Charts.update(TheChart._id, {$set: { "transforms":  transforms}});
-   },
+    },
     'click input': function(evt, tpl) {
 	var value = String(this);
 	var field = Template.currentData().field;
