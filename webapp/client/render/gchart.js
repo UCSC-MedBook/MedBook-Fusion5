@@ -9,16 +9,53 @@ Meteor.startup(function() {
     // google.charts.load("43", { packages: ["bar"] });
 })
 
+function keyPicks(elem, picks) 
+{
+    var key = JSON.stringify(_.pick(elem, picks)).replace(/[{}"']/g, "");
+    key = key.replace(/,/g, "\n");
+    return key;
+}
+
+
+
+
+function clusterThis(data, picks) {
+    var clusters = {};
+    data.map(function(elem) {
+	var key = keyPicks(elem, picks);
+	if (!(key in clusters)) clusters[key] = [];
+	clusters[key].push(elem);
+    });
+    var keys = Object.keys(clusters);
+    var n = keys.length;
+    var values = keys.map(function(key) { return clusters[key]});
+    return { n: n, keys: keys, values: values};
+}
+
 GoogleChart = function(chartDocument, opts) {
     var cols = chartDocument.pivotTableConfig.cols;
     var rows = chartDocument.pivotTableConfig.rows;
-    var aa = analyze(chartDocument.chartData, cols);
+    var chartData = chartDocument.chartData;
+    var aa = analyze(chartData, cols);
 
-    if (cols.length == 0 || !_.any(aa, function(elem) { return elem.isNumbers; }))
-	return "<div id='GoogleChartTarget' class='ChartWrapper'   style='  width: \'100%\' height: \'100%\'' >Need at least one numerical value for Bar Charts. <br> Drag data elements from the left to the box above. </div> "
+    if (cols.length == 0)
+	return "<div id='GoogleChartTarget' class='ChartWrapper'   style='  width: \'100%\' height: \'100%\'' > Drag data elements from the left to the box above. </div> "
 
-    if ( _.every(aa, function(elem) { return elem.isNumbers; })) {
-        cols.unshift("Sample_ID");
+    var performCount =  !_.any(aa, function(elem) { return elem.isNumbers; });
+
+    if (performCount) {
+	var clusters = clusterThis(chartData, cols.concat(rows));
+	var chartData = clusters.values.map(function(cluster) { 
+	    var representative = cluster[0];
+	    representative.count = cluster.length;
+	    return representative;
+	});
+	cols.push("count");
+
+    } else { // push Sample_IDs
+	if ( _.every(aa, function(elem) { return elem.isNumbers; })) {
+	    cols.unshift("Sample_ID");
+	}
     }
 
 
@@ -45,7 +82,8 @@ GoogleChart = function(chartDocument, opts) {
 	try {
 	    type = chartDocument.metadata[field].type.toLowerCase();
 	} catch (err) {
-	    // HACK: why should metadata be missing anything? TBD
+	    if (field == "count")
+	       type = "number";
 	}
 	dataTable.addColumn(type, field);
     })
@@ -94,9 +132,7 @@ GoogleChart = function(chartDocument, opts) {
 		return value;
 	    });
 
-	    var tooltip = String(row) + label;
-	    tooltip = tooltip.replace(/"/g, "")
-	    tooltip = tooltip.replace(/,/g, " ")
+	    var tooltip = keyPicks(elem, rows.concat(cols));
 	    row.push(tooltip);
 	    row.push(colors[clusterNumber]);
 	    if (valid)
@@ -105,18 +141,13 @@ GoogleChart = function(chartDocument, opts) {
     }
 
     if (rows == null || rows.length == 0)
-	columnCluster(chartDocument.chartData, "", 0);
+	columnCluster(chartData, "", 0);
     else {
-	var clusters = {};
 	var blank = _.map(_.range(cols.length +2), function() {
 	    return undefined;
 	});
 
-	chartDocument.chartData.map(function(elem) {
-	    var key = JSON.stringify(_.pick(elem, rows)).replace(/[,{}"']/g, "");
-	    if (!(key in clusters)) clusters[key] = [];
-	    clusters[key].push(elem);
-	});
+	var clusters = clusterThis(chartData, rows);
 
 	function sortF(aa,bb) {
 	    for (var i = 1; i < cols.length; i++) {
@@ -126,10 +157,10 @@ GoogleChart = function(chartDocument, opts) {
 	    return 0;
 	};
 
-	Object.keys(clusters).sort().map(function(key, i) {
-	    if (i > 0)
-		dataTable.addRow(blank);
-	    var cluster = clusters[key];
+	for (var i = 0; i < clusters.n; i++) {
+	    var key = clusters.keys[i];
+	    var cluster = clusters.values[i];
+	    // if (i > 0) dataTable.addRow(blank);
 
 	    cluster = cluster.filter(function(elem) { // remove N/A
 		for (var i = 1; i < cols.length; i++) {
@@ -139,7 +170,7 @@ GoogleChart = function(chartDocument, opts) {
 	    })
 	    cluster.sort(sortF);
 	    columnCluster(cluster, key, i);
-	});
+	}
     }
 
     legend += '</g></svg>';
@@ -193,6 +224,9 @@ GoogleChart = function(chartDocument, opts) {
 
 	legend : 'none'
     };
+
+    options.hAxis.slantedText = true;
+    options.hAxis.slantedTextAngle = 45;
 
 
     setTimeout(function() {
