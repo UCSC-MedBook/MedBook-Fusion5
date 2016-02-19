@@ -36,8 +36,8 @@ function Transform_Clinical_Info(f) {
     delete f["_id"];
     // delete f["Sample_ID"];
     // delete f["Patient_ID"];
-    delete f["On_Study_Date"];
-    delete f["Off_Study_Date"];
+    // delete f["On_Study_Date"];
+    // delete f["Off_Study_Date"];
 
     /*
     var on = f["On_Study_Date"];
@@ -163,6 +163,115 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                }});
 }
 
+function buildRemodelPlan(chartData, transforms, rows) {
+ var remodelPlan = { _doRemodel: false};
+
+ transforms.map(function(transform) {
+    console.log("transform", transform);
+    switch (transform.op) {
+
+    case "dichot-mean":
+    case "dichot-median":
+    case "cluster-median":
+    case "cluster-mean": {
+	    debugger;
+	    var clusters = {};
+	    chartData.map(function(elem) {
+		var context = _.pick(elem, rows);
+		var key = JSON.stringify(context).replace(/[,{}"']/g, "");
+		if (!(key in clusters)) clusters[key] = { 
+		    key: key,
+		    context: context,
+		    count: 0,
+		    total: 0.0,
+		    min: Number.MAX_VALUE,
+		    max: Number.MIN_VALUE,
+		    mean: 0,
+		    median: 0,
+		};
+
+		value = elem[transform.field];
+		if (!isNaN(value)) {
+		    clusters[key].total = value + clusters[key].count ;
+		    clusters[key].count = 1 + clusters[key].count ;
+		    if (clusters[key].min > value)
+			clusters[key].min = value;
+		    if (clusters[key].max < value)
+			clusters[key].max = value;
+		}
+	    });
+
+	    Object.keys(clusters).map(function(clusterKey) {
+		 var cluster = clusters[clusterKey];
+
+		 try {
+		     cluster.median = (cluster.max + cluster.min) / 2;
+		     cluster.mean = cluster.total / cluster.count;
+		 } catch (err) {
+		 }
+
+		if (!(clusterKey in remodelPlan)) remodelPlan[clusterKey] = _.clone(cluster.context);
+		switch (transform.op) {
+		case "cluster-mean":
+		    remodelPlan[clusterKey][transform.field] = cluster.mean;
+		    break;
+		case "cluster-median":
+		    remodelPlan[clusterKey][transform.field] = cluster.median;
+		    break;
+		}
+	    });
+	}
+	break;
+    }
+ });
+ return remodelPlan
+}
+
+function dichotomizeOrBin(chartData, transforms, rows, remodelPlan) {
+     chartData.map(function transformer(datum) {
+	 transforms.map(function(transform) {
+	     if (transform.field in datum) {
+		switch (transform.op) {
+		case "dichot-median":
+		case "dichot-mean": {
+		     var dataValue = parseFloat(datum[transform.field]);
+		     if (!isNaN(dataValue)) {
+			 var context = _.pick(datum, rows);
+			 var key = JSON.stringify(context).replace(/[,{}"']/g, "");
+			 debugger
+			 var cluster = remodelPlan[key];
+			 if (transform.op == "dichot-median")
+			     datum[transform.field] = cluster.median > dataValue ? 1 : -1;
+			 else
+			     datum[transform.field] = cluster.mean > dataValue ? 1 : -1;
+			 console.log( dataValue, transform, cluster );
+		     } else 
+			console.log("isNan false", dataValue, typeof(dataValue));
+		};
+		break;
+
+		case "bin": {
+		     var dataValue = parseFloat(datum[transform.field]);
+		     var binValue = parseFloat(transform.value);
+		     if (!isNaN(dataValue) && !isNaN(binValue)) {
+			var flooredValue = Math.floor(dataValue / binValue);
+			datum[transform.field] = flooredValue * binValue;
+		     }
+		 }
+		 break;
+		 case "rename": {
+		    // console.log("rename", transform.value,"<-", transform.field);
+		    datum[transform.value] = datum[transform.field];
+		    delete datum[transform.field];
+		 }
+		 break;
+	     } // switch 
+	   } // if
+	 });
+    });
+    return chartData;
+}
+
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
     // Step 0 alidate params
@@ -182,6 +291,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
+   if (typeof(metadata) == "string")
+       metadata = JSON.parse(metadata);
     Object.keys(metadata).map(function(f) {
 	metadata[f].collection = "CRF";
 	metadata[f].crf = "Clinical_Info";
@@ -220,7 +331,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("find", domain.collection, query, cursor.count(), domain);
+            console.log("find", domain.collection, query, cursor.count());
 	    
             cursor.forEach(function(geneData) {
                 var sampleID = geneData[domain.sample_label_name];
@@ -240,8 +351,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				collection: domain.collection,
 				crf: null, 
 				label: label,
-				max: 200,
-				type: "String"
+				type: "Number"
 			    };
                     }
 
@@ -259,7 +369,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				crf: null, 
 				label: label,
 				max: 200,
-				type: "String"
+				type: "Number"
 			    };
                     }
                 } else if (domain.type == 1) {  // sample names are stored as labels
@@ -340,6 +450,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     	return;
 	     }
 	     var ms = m.schema;  
+	     if (typeof(ms) == "string")
+	       ms = JSON.parse(ms);
 	     var msf = ms[fieldName];
 
 	     if (msf == null) {
@@ -399,25 +511,17 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData = chartData.map(Transform_Clinical_Info, keyUnion);
 
     var transforms = ChartDocument.transforms;
-    if (transforms)
-         chartData.map(function transformer(datum) {
-             transforms.map(function(transform) {
-                 if (transform.field in datum) {
-                    if (transform.op == "bin") {
-                         var dataValue = parseFloat(datum[transform.field]);
-                         var binValue = parseFloat(transform.value);
-                         if (!isNaN(dataValue) && !isNaN(binValue)) {
-                            var flooredValue = Math.floor(dataValue / binValue);
-                            datum[transform.field] = flooredValue * binValue;
-                         }
-                     } else if (transform.op == "rename") {
-                        // console.log("rename", transform.value,"<-", transform.field);
-                        datum[transform.value] = datum[transform.field];
-                        delete datum[transform.field];
-                     }
-                 } 
-             });
-        });
+    if (transforms && transforms.length > 0) {
+
+         var remodelPlan = buildRemodelPlan(chartData, transforms, rows);
+	 console.log("remodelPlan", remodelPlan);
+
+	 if (remodelPlan._doRemodel) {
+	     chartData = _.values(remodelPlan);
+	 } else {
+	     chartData = dichotomizeOrBin(chartData, transforms, rows, remodelPlan);
+	 }
+    } // if transforms
 
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
@@ -458,14 +562,23 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.
     // console.log("renderChartData", chartData.length);
+
+    ChartDocument.chartData = chartData;
+    ChartDocument.dataFieldNames = dataFieldNames;
+    ChartDocument.selectedFieldNames = selectedFieldNames;
+    ChartDocument.metadata = metadata;
+
+    var html = renderJSdom(ChartDocument);
+
     var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
-                dataFieldNames: dataFieldNames,
-                selectedFieldNames: selectedFieldNames,
-		metadata: metadata,
-                chartData: chartData,
-		html: renderJSdom(ChartDocument), // render may start a thread or a unix process 
+                dataFieldNames: ChartDocument.dataFieldNames,
+                selectedFieldNames: ChartDocument.selectedFieldNames,
+                elapsed: ChartDocument.elapsed,
+		metadata: ChartDocument.metadata,
+                chartData: ChartDocument.chartData,
+		html: html,
 		"pivotTableConfig.rows": rows, 
 		"pivotTableConfig.cols": cols, 
                }});

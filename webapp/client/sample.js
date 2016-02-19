@@ -517,7 +517,9 @@ Template.Controls.events({
 
 function initializeHtmlElements(document) {
 
-    $('.pvtRenderer').val(document.pivotTableConfig.rendererName)
+    $('.pvtRenderer').find("option[value='"+
+	document.pivotTableConfig.rendererName
+	+"']").attr("selected",true);
 
     if (document & document.samplelist)
          $("#samplelist").val(document.samplelist);

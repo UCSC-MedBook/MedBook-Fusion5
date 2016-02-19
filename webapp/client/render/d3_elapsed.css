@@ -1,0 +1,36 @@
+.elapsed_axis path, .elapsed_axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+.elapsed_axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+#elapsed_tooltip {
+    position: absolute;
+    text-align: center;
+    height: auto;
+    padding: 10px;
+    background-color: white;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+#elapsed_tooltip.hidden {
+    display: none;
+}
+#elapsed_tooltip p {
+    margin: 0;
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.event {
+    pointer-events: auto;
+}

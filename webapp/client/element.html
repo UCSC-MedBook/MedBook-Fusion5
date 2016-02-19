@@ -11,6 +11,7 @@
 			<a class="dropdown-item" href="#">Dropdown Mean</a>
 			<a class="dropdown-item" href="#">Dropdown Mean</a>
 			<a class="dropdown-item" href="#">Dichotomize Median</a>
+			<a class="dropdown-item" href="#">Dichotomize Mean</a>
 		    </div>
 		</div>
 
@@ -24,30 +25,30 @@
 		    {{#if $eq this.type "Number" }}
 
 			<div class="btn-group" data-toggle="buttons" style="margin-bottom:25px;">
-			    <label class="btn btn-default {{dichot 'none'}}">
-				<input name="dichotomization" value="none" type="radio">No dichotomization
+		          {{#each operations}}
+			    <label class="btn btn-default {{dichotActive this.op}}">
+				<input class="dichotomization" name="dichotomization" value="{{this.op}}" type="radio"> {{this.label}}
 			    </label>
-
-			    <label class="btn btn-default {{dichot 'mean'}}">
-				<input name="dichotimization" value="mean" type="radio">Mean
-			    </label>
-			    <label class="btn btn-default {{dichot "median"}}">
-				<input name="dichotomization" value="median" type="radio">Median
-			    </label>
+		          {{/each }}
 			</div>
 			<br>
 
-			Bin It:
-			<input style="width:40px;" value="{{this.bin}}" name="{{this.field}}" data-op="bin" data-precedence=1 data-field={{this.field}} class="transform" type="number">
+			{{#if $.Session.equals "dichot" "bin" }}
+			    Bin It:
+			    <input style="width:40px;" value="{{this.bin}}" name="{{this.field}}" data-op="bin" data-precedence=1 data-field={{this.field}} class="transform" type="number">
+		        {{/if}}
 		    {{/if}}
-		 <div style="overflow:scroll;height:200px;">
-		     {{#each values}}
-			 <div style="margin:15px;">
-			     {{this}}
-			     <input data-field="{{this}}" type="checkbox" checked={{checked}} />
+		    {{#if $.Session.equals "dichot" "none" }}
+		         Exclude values:
+			 <div style="margin:5px;border-radius:5px;border-style:dotted;border-width:1px;overflow:scroll;height:200px;">
+			     {{#each values}}
+				 <div style="margin:15px;">
+				     {{this}}
+				     <input data-field="{{this}}" type="checkbox" checked={{checked}} />
+				 </div>
+			     {{/each}}
 			 </div>
-		     {{/each}}
-		 </div>
+		     {{/if}}
 		 <p><button class="OK" type="button">OK</button></p>
 	    </div>
        </div>

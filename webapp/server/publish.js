@@ -145,7 +145,7 @@ Meteor.publish('CRFs', function(studies, crfs) {
 	studyQuery.id = {$in: studies};
     }
 
-    var crfsQuery = {CRF: {$in: crfs}};
+    var crfsQuery = Array.isArray(crfs) ? {CRF: {$in: crfs}} : crfs;
 
     if (metadata.study == "common") {
 	var study_ids = Collections.studies.find(

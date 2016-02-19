@@ -25,7 +25,7 @@ MinimalChart = {
    pivotTableConfig: {
        rows: [],
        cols: [],
-       rendererName: "table",
+       rendererName: "Table",
    },
    exclusions: [],
    chartData: []
