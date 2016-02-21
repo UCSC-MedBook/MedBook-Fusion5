@@ -56,11 +56,11 @@ GeneLikeDataDomainsPrototype = [
         collection: "Mutations",
         subscriptionName: "GeneMutations",
         queryField: 'Hugo_Symbol',
-        field: "Variant_Type",
+        field: "mutation_type",
         state: false,
-        study_label_name: 'Study_ID',
-        sample_label_name: 'Sample_ID',
-        gene_label_name: 'Hugo_Symbol',
+        study_label_name: 'study_label',
+        sample_label_name: 'sample_label',
+        gene_label_name: 'gene_label',
 
     },
     {
