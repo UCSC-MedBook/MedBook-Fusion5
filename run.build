@@ -8,6 +8,6 @@ cd build/bundle
 export MONGO_URL=mongodb://localhost:27017/MedBook
 export ROOT_URL=https://su2c.ucsc.edu/fusion/
 echo $MONGO_URL $ROOT_URL 
-export PORT=20011
+export PORT=30011
 
-node main.js
+node main.js --port 10011
