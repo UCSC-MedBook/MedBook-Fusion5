@@ -7,7 +7,7 @@ GeneLikeDataDomainsPrototype = [
         label: "Expression Quant",
         labelItem: "ExprQuant",
         checkBoxName: "ExprQuantCheckbox",
-        dataName: "GeneExprssion",
+        dataName: "GeneExpression",
         collection: "GeneExpression",
         subscriptionName: "GeneExpression",
         queryField: 'gene_label',
@@ -16,6 +16,7 @@ GeneLikeDataDomainsPrototype = [
         study_label_name: 'study_label',
         sample_label_name: 'sample_label',
         gene_label_name: 'gene_label',
+	index: {   gene_label : 1, sample_label: 1, study_label : 1 },
     },
     {
         type: 1,
@@ -31,6 +32,7 @@ GeneLikeDataDomainsPrototype = [
         study_label_name: 'Study_ID',
         sample_label_name: 'Sample_ID',
         gene_label_name: 'gene',
+	index: { "gene" : 1, "studies" : 1 },
     },
     {
         type: 1,
@@ -46,6 +48,7 @@ GeneLikeDataDomainsPrototype = [
         study_label_name: 'studyID',
         sample_label_name: 'Sample_ID',
         gene_label_name: 'gene',
+        index: { "gene" : 1, "studies" : 1 , "transcript" : 1},
     },
     {
         type: 2,
@@ -61,7 +64,7 @@ GeneLikeDataDomainsPrototype = [
         study_label_name: 'Study_ID',
         sample_label_name: 'Sample_ID',
         gene_label_name: 'Hugo_Symbol',
-
+	index: { "gene" : 1, "studies" : 1 },
     },
     {
         type: 3,
@@ -78,6 +81,7 @@ GeneLikeDataDomainsPrototype = [
         study_label_name: null,
         sample_label_name: 'id',
         gene_label_name: 'name',
+	index: null,
     },
     /*
     {
@@ -95,6 +99,14 @@ GeneLikeDataDomainsPrototype = [
         study_label_name: null,
         sample_label_name: 'id',
         gene_label_name: 'name',
+	index: null,
+    },
+    {
+        type: 3,
+        regex_genenames: true,
+        label: "Transcription Factor Pathway Signature (Viper Method)",
+        labelItem: "TF_Sig",
+        checkBoxName: "TfViperSignatureCheckbox",
     },
     */
 ];

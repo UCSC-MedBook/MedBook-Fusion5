@@ -163,10 +163,12 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                }});
 }
 
-function buildRemodelPlan(chartData, transforms, rows) {
- var remodelPlan = { _doRemodel: false};
+function buildRemodelPlan(chartData, transforms, rows, cols) {
+ var remodel = { doIt: false, plan: {} };
 
- transforms.map(function(transform) {
+ transforms
+ .filter(function(transform) {return _.contains(rows, transform.field) || _.contains(cols, transform.field) })
+ .map(function(transform) {
     console.log("transform", transform);
     switch (transform.op) {
 
@@ -174,7 +176,8 @@ function buildRemodelPlan(chartData, transforms, rows) {
     case "dichot-median":
     case "cluster-median":
     case "cluster-mean": {
-	    debugger;
+	    remodel.doIt = true;
+
 	    var clusters = {};
 	    chartData.map(function(elem) {
 		var context = _.pick(elem, rows);
@@ -210,13 +213,13 @@ function buildRemodelPlan(chartData, transforms, rows) {
 		 } catch (err) {
 		 }
 
-		if (!(clusterKey in remodelPlan)) remodelPlan[clusterKey] = _.clone(cluster.context);
+		if (!(clusterKey in remodel.plan)) remodel.plan[clusterKey] = _.clone(cluster.context);
 		switch (transform.op) {
 		case "cluster-mean":
-		    remodelPlan[clusterKey][transform.field] = cluster.mean;
+		    remodel.plan[clusterKey][transform.field] = cluster.mean;
 		    break;
 		case "cluster-median":
-		    remodelPlan[clusterKey][transform.field] = cluster.median;
+		    remodel.plan[clusterKey][transform.field] = cluster.median;
 		    break;
 		}
 	    });
@@ -224,10 +227,10 @@ function buildRemodelPlan(chartData, transforms, rows) {
 	break;
     }
  });
- return remodelPlan
+ return remodel
 }
 
-function dichotomizeOrBin(chartData, transforms, rows, remodelPlan) {
+function dichotomizeOrBin(chartData, transforms, rows, remodel) {
      chartData.map(function transformer(datum) {
 	 transforms.map(function(transform) {
 	     if (transform.field in datum) {
@@ -239,7 +242,7 @@ function dichotomizeOrBin(chartData, transforms, rows, remodelPlan) {
 			 var context = _.pick(datum, rows);
 			 var key = JSON.stringify(context).replace(/[,{}"']/g, "");
 			 debugger
-			 var cluster = remodelPlan[key];
+			 var cluster = remodel.plan[key];
 			 if (transform.op == "dichot-median")
 			     datum[transform.field] = cluster.median > dataValue ? 1 : -1;
 			 else
@@ -495,6 +498,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
     var dataFieldNames =  Object.keys(keyUnion);
+    debugger
     var cols = [];
     var rows = [];
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)
@@ -512,14 +516,14 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     var transforms = ChartDocument.transforms;
     if (transforms && transforms.length > 0) {
+         var remodel = buildRemodelPlan(chartData, transforms, rows, cols);
+	 console.log("remodel", remodel);
 
-         var remodelPlan = buildRemodelPlan(chartData, transforms, rows);
-	 console.log("remodelPlan", remodelPlan);
-
-	 if (remodelPlan._doRemodel) {
-	     chartData = _.values(remodelPlan);
+	 if (remodel.doIt) {
+	     chartData = _.values(remodel.plan);
+	     console.log("chartData", chartData);
 	 } else {
-	     chartData = dichotomizeOrBin(chartData, transforms, rows, remodelPlan);
+	     chartData = dichotomizeOrBin(chartData, transforms, rows, remodel);
 	 }
     } // if transforms
 

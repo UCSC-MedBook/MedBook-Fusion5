@@ -241,17 +241,20 @@ function parseCookies (request) {
 }
 
 function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  {
-  var Hugo_Symbol = null;
 
   var cursor = coll.find(
       {
-	  Study_ID: {$in: studiesFiltered},
+	  $or: [
+	      {Study_ID: {$in: studiesFiltered}},
+	      {study_label: {$in: studiesFiltered}}
+	  ],
+
 	  sample: {$in: samplesAllowed},
 	  "MA_FImpact": {$in: ["medium", "high"]},
       },
       {sort:{Hugo_Symbol:1, sample:1}});
 
-
+  var Hugo_Symbol = null;
   var bucket = {};
   function flush(symbol) {
       response.write(symbol);
@@ -277,8 +280,48 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
 }
 
 
-function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
-  coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
+function genomicDataSamples2(coll, samplesAllowed, studiesFiltered, response)  {
+     var cursor = coll.find(
+	  {
+	      study_label:  {$in: studiesFiltered},
+	      sample_label: {$in: samplesAllowed},
+	  },
+	  {sort:{gene_label:1, sample_label:1, study_label:1}});
+
+
+
+      var bucket = {};
+      function flush(symbol) {
+	  response.write(symbol);
+	  samplesAllowed.map(function(sample) {
+	      response.write("\t");
+	      if (sample in bucket)
+		  response.write(String(bucket[sample]));
+	  });
+	  response.write("\n");
+	  bucket = {};
+      }
+
+      var gene_label = null;
+      cursor.forEach(function(doc) {
+	  if (gene_label != null && gene_label != doc.gene_label) {
+	      flush(gene_label);
+	  }
+	  gene_label = doc.gene_label;
+	  bucket[doc.sample_label] = doc.values.quantile_counts_log;
+      });
+      flush(gene_label);
+}
+
+function genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response)  {
+  coll.find(
+	  {$or: [
+	      {Study_ID: {$in: studiesFiltered}},
+	      {study_label: {$in: studiesFiltered}}
+	  ]
+	  },
+	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
+
       var line = doc.gene;
       if ('transcript' in doc) // for isoforms
          line  += ' '+ doc.transcript;
@@ -298,34 +341,37 @@ function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
 }
 
 function clinical(coll, samplesAllowed, studiesFiltered, response)  {
-  coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
-      var line = doc.gene;
-      if ('transcript' in doc) // for isoforms
-         line  += ' '+ doc.transcript;
-      var any_got_rsem = false;
-      samplesAllowed.map(function(sample_label) {
-          line += "\t";
-          var value_container = doc.samples[sample_label];
-          if (value_container && "rsem_quan_log2" in value_container) {
-              any_got_rsem = true;
-              line += String(value_container.rsem_quan_log2);
-          }
-      });
-      line += "\n";
-      if (any_got_rsem)
-          response.write(line);
-  });
+  coll.find(
+	  {$or: [
+	      {Study_ID: {$in: studiesFiltered}},
+	      {study_label: {$in: studiesFiltered}}
+	  ]},
+	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
+	      var line = doc.gene;
+	      if ('transcript' in doc) // for isoforms
+		 line  += ' '+ doc.transcript;
+	      var any_got_rsem = false;
+	      samplesAllowed.map(function(sample_label) {
+		  line += "\t";
+		  var value_container = doc.samples[sample_label];
+		  if (value_container && "rsem_quan_log2" in value_container) {
+		      any_got_rsem = true;
+		      line += String(value_container.rsem_quan_log2);
+		  }
+	      });
+	      line += "\n";
+	      if (any_got_rsem)
+		  response.write(line);
+	  });
 }
 
 if (Meteor.isServer) {
     Meteor.startup(function() {
-	var keys = Object.keys(DomainCollections);
-	keys.map(function(key) {
-	    console.log("Ensuring index ", key);
-	    if (key == "ExpressionIsoform")
-		DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 , "transcript" : 1})
-	    else
-		DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 })
+	GeneLikeDataDomainsPrototype.map(function(domain) {
+	    if (domain.index) {
+	        console.log("Ensuring index ", domain.collection);
+		DomainCollections[domain.collection]._ensureIndex(domain.index);
+	    }
 	})
     });
 };
@@ -405,9 +451,13 @@ exportData = function() {
   response.writeHead(200, {
     // 'Content-Type': 'text/tab-separated-values',
     'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   });
 
   samplesAllowed = samplesAllowed.sort();
+
 
   if (kind == "genomic") {
       response.write("Gene");
@@ -419,12 +469,21 @@ exportData = function() {
       var coll =  DomainCollections[table];
       if (table == "Mutations")
 	  genomicDataMutations(coll, samplesAllowed, studiesFiltered, response);
+      else if (true)
+	  genomicDataSamples2(coll, samplesAllowed, studiesFiltered, response);
       else
-	  genomicDataSamples(coll, samplesAllowed, studiesFiltered, response);
+	  genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response);
 
   } else if (kind == "clinical") {
       var meta = Collections.Metadata.findOne({name: table});
-      var data = Collections.CRFs.find({CRF: table, Study_ID: {$in: studiesFiltered}}, {sort: {Sample_ID:1}}).fetch();
+
+      var data = Collections.CRFs.find(
+	  {$or: [
+	      {Study_ID: {$in: studiesFiltered}},
+	      {study_label: {$in: studiesFiltered}}
+	  ]},
+	  {sort: {Sample_ID:1}}).fetch();
+
       data.map(function(row,i) {
 	  Object.keys(row).map(function(key) {
 	      if (Array.isArray(row[key]))
