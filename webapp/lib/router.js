@@ -242,19 +242,29 @@ function parseCookies (request) {
 
 function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  {
 
+  /*
+  var yyy =  db.mutations.aggregate( [ 
+        { $group:
+	    {
+		_id: "$gene_label",
+		samples: { $push:  "$sample_label" },
+		size: {$sum:1},
+	    }
+	}, 
+	{ $sort: { size:-1 } }
+
+    ]);
+  */
+
+
   var cursor = coll.find(
       {
-	  $or: [
-	      {Study_ID: {$in: studiesFiltered}},
-	      {study_label: {$in: studiesFiltered}}
-	  ],
-
-	  sample: {$in: samplesAllowed},
-	  "MA_FImpact": {$in: ["medium", "high"]},
+	  study_label: {$in: studiesFiltered},
+	  sample_label: {$in: samplesAllowed},
       },
-      {sort:{Hugo_Symbol:1, sample:1}});
+      {sort:{gene_label:1, sample_label:1, study_label:1}});
 
-  var Hugo_Symbol = null;
+  var gene_label = null;
   var bucket = {};
   function flush(symbol) {
       response.write(symbol);
@@ -270,13 +280,12 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
   }
 
   cursor.forEach(function(doc) {
-      if (Hugo_Symbol != doc.Hugo_Symbol) {
-	  Hugo_Symbol = doc.Hugo_Symbol;
-	  flush(Hugo_Symbol);
-      }
-      bucket[doc.sample] = 1;
+      if (gene_label != null && gene_label != doc.gene_label)
+	  flush(gene_label);
+      gene_label = doc.gene_label;
+      bucket[doc.sample_label] = 1;
   });
-  flush(Hugo_Symbol);
+  flush(gene_label);
 }
 
 
@@ -315,11 +324,7 @@ function genomicDataSamples2(coll, samplesAllowed, studiesFiltered, response)  {
 
 function genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response)  {
   coll.find(
-	  {$or: [
-	      {Study_ID: {$in: studiesFiltered}},
-	      {study_label: {$in: studiesFiltered}}
-	  ]
-	  },
+	  {Study_ID: {$in: studiesFiltered}},
 	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
 
       var line = doc.gene;
@@ -342,10 +347,7 @@ function genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response)  {
 
 function clinical(coll, samplesAllowed, studiesFiltered, response)  {
   coll.find(
-	  {$or: [
-	      {Study_ID: {$in: studiesFiltered}},
-	      {study_label: {$in: studiesFiltered}}
-	  ]},
+	  {Study_ID: {$in: studiesFiltered}},
 	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
 	      var line = doc.gene;
 	      if ('transcript' in doc) // for isoforms
@@ -478,10 +480,10 @@ exportData = function() {
       var meta = Collections.Metadata.findOne({name: table});
 
       var data = Collections.CRFs.find(
-	  {$or: [
-	      {Study_ID: {$in: studiesFiltered}},
-	      {study_label: {$in: studiesFiltered}}
-	  ]},
+	  {
+	      CRF: table,
+	      Study_ID: {$in: studiesFiltered}
+	  },
 	  {sort: {Sample_ID:1}}).fetch();
 
       data.map(function(row,i) {
