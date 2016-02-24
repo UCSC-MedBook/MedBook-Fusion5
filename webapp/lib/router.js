@@ -399,13 +399,29 @@ function loginMLT(request, params) {
 
 
 exportData = function() {
-  var user = loginMLT(this.request, this.params);
+  console.log("request", this.request.headers);
 
+  var isLocal = this.request.headers ['x-forwarded-for'] ==  '127.0.0.1';
+  var collaborations  = [];
+
+  if (!isLocal) {
+      user = loginMLT(this.request, this.params);
+      if (user == null)
+          return;
+      if (user.collaborations)
+	  collaborations = user.colluser.collaborations;
+  }
 
   // Kind parameter
   var kind = 'genomic';
+  var local = null;
+
+
   if (this.params && this.params.query && this.params.query.kind) {
       kind = this.params.query.kind;
+  }
+  if (this.params && this.params.query && this.params.query.local) {
+      local = this.params.query.local;
   }
 
 
@@ -434,15 +450,17 @@ exportData = function() {
   // Filter studies to only thosea allowed by collaborations
   var studiesFiltered = [];
   var samplesAllowed = [];
-  Collections.studies.find( {
-        id: {$in: studiesRequested},
-        collaborations: {$in: ["public"].concat(user.profile.collaborations)}
-      },
-      {fields: {id:1, Sample_IDs: 1}}
-  ).forEach( function(doc) {
+  var query = { id: {$in: studiesRequested} };
+  if (!isLocal) 
+      query.collaborations = {$in: ["public"].concat(collaborations)};
+
+  Collections.studies.find( query, {fields: {id:1, Sample_IDs: 1}}).forEach( function(doc) {
       studiesFiltered.push(doc.id);
       samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
   });
+
+  if (isLocal)
+     studiesFiltered = studiesRequested;
 
   // Last Security check
   if (studiesFiltered.length === 0 || samplesAllowed.length === 0)
@@ -450,31 +468,39 @@ exportData = function() {
 
 
   var response = this.response;
-  response.writeHead(200, {
-    // 'Content-Type': 'text/tab-separated-values',
-    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-  });
+  var outstream;
+
+  if (local != null) {
+      outstream = fs.createWriteStream(local, {encoding: "utf8"});
+
+  } else {
+      response.writeHead(200, {
+	// 'Content-Type': 'text/tab-separated-values',
+	'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+	'Cache-Control': 'no-cache, no-store, must-revalidate',
+	'Pragma': 'no-cache',
+	'Expires': '0',
+      });
+      outstream = response;
+  }
 
   samplesAllowed = samplesAllowed.sort();
 
 
   if (kind == "genomic") {
-      response.write("Gene");
+      outstream.write("Gene");
       samplesAllowed.map(function(sample_label) {
-	  response.write("\t");
-	  response.write(sample_label);
+	  outstream.write("\t");
+	  outstream.write(sample_label);
       });
-      response.write("\n");
+      outstream.write("\n");
       var coll =  DomainCollections[table];
       if (table == "Mutations")
-	  genomicDataMutations(coll, samplesAllowed, studiesFiltered, response);
+	  genomicDataMutations(coll, samplesAllowed, studiesFiltered, outstream);
       else if (true)
-	  genomicDataSamples2(coll, samplesAllowed, studiesFiltered, response);
+	  genomicDataSamples2(coll, samplesAllowed, studiesFiltered, outstream);
       else
-	  genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response);
+	  genomicDataSamples1(coll, samplesAllowed, studiesFiltered, outstream);
 
   } else if (kind == "clinical") {
       var meta = Collections.Metadata.findOne({name: table});
@@ -492,12 +518,13 @@ exportData = function() {
 		  row[key] = row[key].join(";");
 	  });
       });
-      response.write(ConvertToTSV(data, meta.fieldOrder));
+      outstream.write(ConvertToTSV(data, meta.fieldOrder));
   }
 
-  response.end();
+  outstream.end();
+  if (isLocal)
+     response.end();
 };
-
 
 Router.map(function() {
   this.route('export', {
