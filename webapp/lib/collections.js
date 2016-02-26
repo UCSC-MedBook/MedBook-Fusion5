@@ -16,6 +16,7 @@ GeneExpression = new Meteor.Collection("gene_expression");
 
 DomainCollections = {
   'Expression' : Expression,
+  'Expression3' : Expression3,
   'ExpressionIsoform' : ExpressionIsoform,
   'Mutations' : Mutations,
   'SignatureScores' : SignatureScores,

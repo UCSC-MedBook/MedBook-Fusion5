@@ -355,9 +355,10 @@ Template.Controls.events({
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)
        var field = $checkbox.data('field');
+       var checkBoxName = $checkbox.prop("name");
        var collection = $checkbox.data('collection');
        GeneLikeDataDomainsPrototype.map(function(domain) {
-           if ( domain.field == field && domain.collection == collection ) {
+           if ( domain.checkBoxName == checkBoxName && domain.collection == collection ) {
               domain.state = $checkbox.prop("checked");
               // update
           }
