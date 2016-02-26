@@ -1,12 +1,4 @@
 
-/*
-Meteor.startup(function() {
-  if (Meteor.isServer) {
-     Expression._ensureIndex( {gene:1, studies:1});
-     Expression_Isoform._ensureIndex( {gene:1, studies:1});
-  }
-});
-*/
 
 /*
 Router.onBeforeAction(function () {
@@ -240,7 +232,7 @@ function parseCookies (request) {
     return list;
 }
 
-function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  {
+function genomicDataMutations(coll, samplesAllowed, study_label, response)  {
 
   /*
   var yyy =  db.mutations.aggregate( [ 
@@ -259,8 +251,7 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
 
   var cursor = coll.find(
       {
-	  study_label: {$in: studiesFiltered},
-	  sample_label: {$in: samplesAllowed},
+	  study_label: study_label,
       },
       {sort:{gene_label:1, sample_label:1, study_label:1}});
 
@@ -288,11 +279,28 @@ function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  
   flush(gene_label);
 }
 
+function genomicDataSamples3(coll, study, response)  {
+      var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
+	  return study.gene_expression_index[sample_id];
+      })
 
-function genomicDataSamples2(coll, samplesAllowed, studiesFiltered, response)  {
+      var cursor = coll.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      cursor.forEach(function(doc) {
+          var line = doc.gene_label;
+	  sort_order.map(function(i, j) {
+	     line += "\t" + String(doc.rsem_quan_log2[i]);
+	  });
+	  line += "\n";
+	  response.write(line);
+      });
+}
+
+
+/*
+function genomicDataSamples2(coll, samplesAllowed, study_label, response)  {
      var cursor = coll.find(
 	  {
-	      study_label:  {$in: studiesFiltered},
+	      study_label:  study_label,
 	      sample_label: {$in: samplesAllowed},
 	  },
 	  {sort:{gene_label:1, sample_label:1, study_label:1}});
@@ -322,9 +330,9 @@ function genomicDataSamples2(coll, samplesAllowed, studiesFiltered, response)  {
       flush(gene_label);
 }
 
-function genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response)  {
+function genomicDataSamples1(coll, samplesAllowed, study_label, response)  {
   coll.find(
-	  {Study_ID: {$in: studiesFiltered}},
+	  {Study_ID: study_label},
 	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
 
       var line = doc.gene;
@@ -344,10 +352,11 @@ function genomicDataSamples1(coll, samplesAllowed, studiesFiltered, response)  {
           response.write(line);
   });
 }
+*/
 
-function clinical(coll, samplesAllowed, studiesFiltered, response)  {
+function clinical(coll, samplesAllowed, study_label, response)  {
   coll.find(
-	  {Study_ID: {$in: studiesFiltered}},
+	  {Study_ID: study_label},
 	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
 	      var line = doc.gene;
 	      if ('transcript' in doc) // for isoforms
@@ -438,33 +447,24 @@ exportData = function() {
 
 
   // Studies requsted parameter, default to prad_wcdt for now
-  var studiesRequested;
+  var study_query = { }
   if (this.params && this.params.query && this.params.query.study)
-      studiesRequested = [this.params.query.study];
-  else if (this.params && this.params.query && this.params.query.studies)
-      studiesRequested = this.params.query.studies;
+      study_query.id = this.params.query.study;
   else
-      studiesRequested = ["prad_wcdt"];
+      study_query.id = "prad_wcdt";
 
 
   // Filter studies to only thosea allowed by collaborations
-  var studiesFiltered = [];
-  var samplesAllowed = [];
-  var query = { id: {$in: studiesRequested} };
   if (!isLocal) 
-      query.collaborations = {$in: ["public"].concat(collaborations)};
+      study_query.collaborations = {$in: ["public"].concat(collaborations)};
 
-  Collections.studies.find( query, {fields: {id:1, Sample_IDs: 1}}).forEach( function(doc) {
-      studiesFiltered.push(doc.id);
-      samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
-  });
+  study = Collections.studies.findOne( study_query );
 
-  if (isLocal)
-     studiesFiltered = studiesRequested;
-
-  // Last Security check
-  if (studiesFiltered.length === 0 || samplesAllowed.length === 0)
-      throw new Error("must specify studies that your collaborations are allowed to use");
+  if (study == null) {
+     console.log("No Study Found", study_query);
+     response.end();
+     return;
+  }
 
 
   var response = this.response;
@@ -484,23 +484,18 @@ exportData = function() {
       outstream = response;
   }
 
-  samplesAllowed = samplesAllowed.sort();
-
-
   if (kind == "genomic") {
       outstream.write("Gene");
-      samplesAllowed.map(function(sample_label) {
+      study.Sample_IDs.map(function(sample_label) {
 	  outstream.write("\t");
 	  outstream.write(sample_label);
       });
       outstream.write("\n");
       var coll =  DomainCollections[table];
       if (table == "Mutations")
-	  genomicDataMutations(coll, samplesAllowed, studiesFiltered, outstream);
-      else if (true)
-	  genomicDataSamples2(coll, samplesAllowed, studiesFiltered, outstream);
-      else
-	  genomicDataSamples1(coll, samplesAllowed, studiesFiltered, outstream);
+	  genomicDataMutations(coll, study, outstream);
+      else 
+	  genomicDataSamples3(Expression3, study, outstream);
 
   } else if (kind == "clinical") {
       var meta = Collections.Metadata.findOne({name: table});
@@ -508,7 +503,7 @@ exportData = function() {
       var data = Collections.CRFs.find(
 	  {
 	      CRF: table,
-	      Study_ID: {$in: studiesFiltered}
+	      Study_ID: study,
 	  },
 	  {sort: {Sample_ID:1}}).fetch();
 
