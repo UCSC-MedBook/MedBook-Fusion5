@@ -409,7 +409,7 @@ exportData = function() {
       if (user == null)
           return;
       if (user.collaborations)
-	  collaborations = user.colluser.collaborations;
+	  collaborations = user.collaborations;
   }
 
   // Kind parameter
