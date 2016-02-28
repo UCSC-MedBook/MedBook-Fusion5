@@ -7,6 +7,7 @@ Collections.FusionFeatures = new Meteor.Collection("FusionFeatures");
 DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
 Expression = new Meteor.Collection('expression2');
+Expression3 = new Meteor.Collection('expression3');
 ExpressionIsoform = new Meteor.Collection('expression_isoform');
 Mutations = new Meteor.Collection('mutations');
 SignatureScores = new Meteor.Collection('signature_scores');
@@ -15,6 +16,7 @@ GeneExpression = new Meteor.Collection("gene_expression");
 
 DomainCollections = {
   'Expression' : Expression,
+  'Expression3' : Expression3,
   'ExpressionIsoform' : ExpressionIsoform,
   'Mutations' : Mutations,
   'SignatureScores' : SignatureScores,

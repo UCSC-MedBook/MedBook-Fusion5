@@ -241,7 +241,6 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
 		     if (!isNaN(dataValue)) {
 			 var context = _.pick(datum, rows);
 			 var key = JSON.stringify(context).replace(/[,{}"']/g, "");
-			 debugger
 			 var cluster = remodel.plan[key];
 			 if (transform.op == "dichot-median")
 			     datum[transform.field] = cluster.median > dataValue ? 1 : -1;
@@ -336,7 +335,23 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
             var cursor = DomainCollections[domain.collection].find(query);
             console.log("find", domain.collection, query, cursor.count());
 	    
-            cursor.forEach(function(geneData) {
+	    if (domain.type == 4) {
+	        var studyCache = {};
+
+		cursor.forEach(function(geneData) {
+		    if (!(geneData.study_label in studyCache)) 
+		        studyCache[geneData.study_label] = Collections.studies.findOne({id: geneData.study_label})
+
+		    var study = studyCache[geneData.study_label];
+		    var field_label = geneData.gene_label + ' ' + domain.labelItem;
+		    ChartDocument.samplelist.map(function(sample_label) {
+			chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
+		    });
+		    console.log("type 4", geneData.gene_label);
+		})
+
+	    } else cursor.forEach(function(geneData) {
+
                 var sampleID = geneData[domain.sample_label_name];
                 var geneName = geneData[domain.gene_label_name];
                 var label = geneName + ' ' + domain.labelItem;
@@ -498,7 +513,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
     var dataFieldNames =  Object.keys(keyUnion);
-    debugger
     var cols = [];
     var rows = [];
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)

@@ -46,16 +46,15 @@ d3_tooltip_boxplot = function () {
 	highlightedSample = d;
 	var dd = d3.select(d);
 	var label = dd.attr("text");
+	var text2 = dd.attr("text2");
+	var text3 = dd.attr("text3");
 	var href = '/wb/patient/' + label;
 
 	var study = dd.attr("class").split(" ").filter(function(c){ return c.indexOf("Study_ID") >= 0;})
 	if (study && study.length > 0)
 	    href +=  '?Study_ID=' + study[0];
 
-	var m = "<a style='text-decoration: underline;' href='" + href
-	    + "'>" + label + "</a><br/>" 
-	    // + ( d.Phenotype == null ? "" : (d.Phenotype.replace("_", "&nbsp;") + "<br/>" ))
-	    // + d.Value.toFixed(3);
+	var m = "<a style='text-decoration: underline;' href='" + href + "'>" + label + "</a><br>" + text2 + "<br>" + text3;
 	toolTip.html(m)
 	    .style("left", (event.pageX + 15) + "px")     
 	    .style("top", (event.pageY - 28) + "px");    
