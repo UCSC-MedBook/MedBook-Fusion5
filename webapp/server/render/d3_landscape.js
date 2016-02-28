@@ -87,12 +87,12 @@ function addViz(geneDataBundle, viz, chartDocument) {
     var height = parseInt(d3.select(viz).style('height'), 10) - margin.top - margin.bottom;
 
     // var xScale = d3.scale.ordinal() .domain(geneDataBundle.sample_labels) .rangePoints([0, width]);
-    var yScale = d3.scale.ordinal() .domain(gene_list) .rangePoints([0, height]);
+    // var yScale = d3.scale.ordinal() .domain(gene_list) .rangePoints([0, height]);
 
     // var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
-    var yAxis = d3.svg.axis().scale(yScale).orient("left");
+    // var yAxis = d3.svg.axis().scale(yScale).orient("left");
 
-    var leftLabel = 100;
+    var leftLabel = 50;
 
     var svg = d3.select(viz).append("svg").attr("id", "vizsvg")
 	.attr("width", width + margin.left + margin.right)
@@ -101,38 +101,25 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     // svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")") .call(xAxis);
-    svg.append("g").attr("class", "axis").attr("transform", "translate(" + leftLabel + ", 0)") .call(yAxis);
+    // svg.append("g").attr("class", "axis").attr("transform", "translate(" + leftLabel + ", 0)") .call(yAxis);
 
     var w=10, h=20;
-
-    /*
-    function leftText(text, j) {
-	var x = leftLabel;
-	var y = (j*h) + 10;
-	var text = svg.append("text")
-	  .attr("x", x)
-	  .attr("y", y)
-	  .attr("text", text)
-    }
-
-    gene_list.map(leftText);
-    */
 
     svg.selectAll("text")
 	.data(gene_list)
 	.enter()
 	.append("text")
 	.text(function(d){ return d; })
-	.attr("y",function(d,j){ return (j*h)+10 })
+	.attr("y",function(d,j){ return (j*h)+10 + (h/2) })
 	.attr("x", function(d,i){ return leftLabel })
 	.attr("font-size",10)
-	.attr("font-family","serif")
-	// .attr("text-anchor","middle")
+	.attr("font-family","sans-serif")
+	.attr("text-anchor","end")
 	.attr("font-weight","bold");
 
 
     function rect(i, j, pvalue, label, text2, text3) {
-	var x = leftLabel + (i*w) + 10;
+	var x = leftLabel + (i*w);
 	var y = (j*h) + 10;
 	var rectangle = svg.append("rect")
 	  .attr("x", x)
