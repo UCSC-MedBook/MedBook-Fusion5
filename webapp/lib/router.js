@@ -284,11 +284,11 @@ function genomicDataSamples3(coll, study, response)  {
 	  return study.gene_expression_index[sample_id];
       })
 
-      var cursor = coll.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var cursor = Expression3.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
-	     line += "\t" + String(doc.rsem_quan_log2[i]);
+	     line += "\t" + String(doc.rsem_quant_log2[i]);
 	  });
 	  line += "\n";
 	  response.write(line);
