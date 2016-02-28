@@ -55,7 +55,7 @@ Template.Controls.helpers({
 	      html = func(TheChart, {});
 	  }
        } else {
-	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0)
+	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0 || TheChart.pivotTableConfig.rendererName.indexOf("Landscape") >= 0)
 	      setTimeout(d3_tooltip_boxplot, 1000);
        }
        return html;

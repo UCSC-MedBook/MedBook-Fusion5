@@ -46,15 +46,15 @@ renderJSdom = function(ChartDocument) {
 
     case 3: jsdom.env(htmlStub,  {
 		done : function(errors, window) {
-		    jquery_bind(window);
-		    var html = ct.func(window, ChartDocument, null, []);
-		    html = html ? 
-		    	(typeof(html) == "string" 
-			    ? html
-			    : serializeDocument(html))
-			: "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 		    Fiber(function(){
-			// console.log("updating html", html);
+			jquery_bind(window);
+			var html = ct.func(window, ChartDocument, null, []);
+			html = html ? 
+			    (typeof(html) == "string" 
+				? html
+				: serializeDocument(html))
+			    : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
+			    // console.log("updating html", html);
 		        Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
