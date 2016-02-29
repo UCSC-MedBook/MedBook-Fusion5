@@ -65,7 +65,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 var gene_list =  ["AR", "TP53", "PTEN", "FOXA1", "ZBTB16", "NCOR1", "NCOR2", "PIK3CA", "PIC3CB", "PIK3R1", "AKT1", "BRAF", "RAF1", "APC", "CTNNB1", "RSPO2", "ZNRF3", "BRCA2", "ATM", "BRCA1", "CDK12", "MLH1", "MSH2", "RB1", "CDKN1B", "CDKN2A", "CCND1", "KMT2C", "KMT2D", "KDM6A", "CHD1", "SPOP", "MED12", "ZFHX3", "ERF", "GNAS"];
 
 var gene_panel =  [ 
-    {name:"", feature_list: ["AR", "TP53", "PTEN"]},
+    {name:"Important", feature_list: ["AR", "TP53", "PTEN"]},
     {name:"AR-Associated", feature_list: ["FOXA1", "ZBTB16", "NCOR1", "NCOR2"]},
     {name:"PI3K Pathway", feature_list: [ "PIK3CA", "PIC3CB", "PIK3R1", "AKT1"]},
     {name:"RAF Pathway", feature_list: [ "BRAF", "RAF1"]},
@@ -78,9 +78,13 @@ var gene_panel =  [
 function query(chartDocument) {
    var study_label = chartDocument.studies[0];
    var study = Collections.studies.findOne({id: study_label});
-   var sample_labels = study.Sample_IDs;
 
    var gene_data = Mutations.find({study_label: study_label, gene_label: {$in: gene_list}}).fetch();
+
+   var sample_labels = 
+   	_.union( study.Sample_IDs,
+	       Object.keys(study.gene_expression_index),
+	       gene_data.map(function (gd) { return gd.sample_label  })).sort();
 
    var gene_labels = gene_data.map(function(doc) { return doc.gene_label; });
    var sort_order = [];
@@ -177,35 +181,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 		.attr("text-anchor","end")
 		.attr("font-weight","bold")
 	}
-/*
-	for (var jj = 0; jj < gene_panel[j].feature_list.length; jj++, k++)  {
-	    svg.append("text")
-		.text(gene_panel[j].feature_list[jj])
-		.attr("y", (k*h)+10 + (h/2))
-		.attr("x",  leftLabel)
-		.attr("font-size",10)
-		.attr("font-family","sans-serif")
-		.attr("text-anchor","end")
-		.attr("font-weight","bold")
-	}
-	*/
-
     }
-
-    /*
-    svg.selectAll("text")
-	.data(gene_list)
-	.enter()
-	.append("text")
-	.text(function(d){ return d; })
-	.attr("y",function(d,j){ return (j*h)+10 + (h/2) })
-	.attr("x", function(d,i){ return leftLabel })
-	.attr("font-size",10)
-	.attr("font-family","sans-serif")
-	.attr("text-anchor","end")
-	.attr("font-weight","bold");
-	*/
-
 
     function rect(i, j, pvalue, label, text2, text3) {
 	var x = leftLabel + (i*w);
@@ -221,6 +197,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	  .attr("height", h)
 	  .style("fill", probability_color(pvalue));
     }
+
     var sample_label_map = {};
     geneDataBundle.sample_labels.map(function(sample_label, i) {
 	sample_label_map[sample_label] = i;
