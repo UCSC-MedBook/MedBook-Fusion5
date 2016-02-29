@@ -1,10 +1,12 @@
 var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
 
+var WIDTH="800px";
+
 D3Landscape = function(window, chartDocument, opts, exclusions) {
     var geneDataBundle = query(chartDocument);
 
-    var wrapper = window.$("<div id='wrapper' >").css({ width: "800px", height: "1000px" });
-    var viz = window.$("<div id='viz' >").css({ "margin-top": "20px", width: "800px", height: "1000px" }).appendTo(wrapper);
+    var wrapper = window.$("<div id='wrapper' >").css({ width: WIDTH, height: "1000px" });
+    var viz = window.$("<div id='viz' >").css({ "margin-top": "20px", width: WIDTH, height: "1000px" }).appendTo(wrapper);
     window.$("<div id='stat' class='stat'title='two-tail P-value'>" ).css({ width: "100%", height: "50" }).appendTo(wrapper);
 
     var v = _.clone(chartDocument.pivotTableConfig.rows);
@@ -62,6 +64,17 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 var gene_list =  ["AR", "TP53", "PTEN", "FOXA1", "ZBTB16", "NCOR1", "NCOR2", "PIK3CA", "PIC3CB", "PIK3R1", "AKT1", "BRAF", "RAF1", "APC", "CTNNB1", "RSPO2", "ZNRF3", "BRCA2", "ATM", "BRCA1", "CDK12", "MLH1", "MSH2", "RB1", "CDKN1B", "CDKN2A", "CCND1", "KMT2C", "KMT2D", "KDM6A", "CHD1", "SPOP", "MED12", "ZFHX3", "ERF", "GNAS"];
 
+var gene_panel =  [ 
+    {name:"", feature_list: ["AR", "TP53", "PTEN"]},
+    {name:"AR-Associated", feature_list: ["FOXA1", "ZBTB16", "NCOR1", "NCOR2"]},
+    {name:"PI3K Pathway", feature_list: [ "PIK3CA", "PIC3CB", "PIK3R1", "AKT1"]},
+    {name:"RAF Pathway", feature_list: [ "BRAF", "RAF1"]},
+    {name:"WNT Pathway", feature_list: ["APC", "CTNNB1", "RSPO2", "ZNRF3"]},
+    {name:"DNA Repair", feature_list: ["BRCA2", "ATM", "BRCA1", "CDK12", "MLH1", "MSH2"]},
+    {name:"Cell Cycle", feature_list: ["RB1", "CDKN1B", "CDKN2A", "CCND1"]},
+    {name:"Chromatin Modifier", feature_list: ["KMT2C", "KMT2D", "KDM6A", "CHD1"]},
+    {name:"other", feature_list: ["SPOP", "MED12", "ZFHX3", "ERF", "GNAS"]}
+];
 function query(chartDocument) {
    var study_label = chartDocument.studies[0];
    var study = Collections.studies.findOne({id: study_label});
@@ -92,7 +105,8 @@ function addViz(geneDataBundle, viz, chartDocument) {
     // var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
     // var yAxis = d3.svg.axis().scale(yScale).orient("left");
 
-    var leftLabel = 50;
+    var leftleftLabel = 100;
+    var leftLabel = 200;
 
     var svg = d3.select(viz).append("svg").attr("id", "vizsvg")
 	.attr("width", width + margin.left + margin.right)
@@ -105,6 +119,80 @@ function addViz(geneDataBundle, viz, chartDocument) {
 
     var w=10, h=20;
 
+
+
+    var j = 0;
+
+    function foo(arg) {
+        debugger
+	svg.selectAll("text")
+	    .data(arg.feature_list)
+	    .enter()
+	    .append("text")
+	    .text(function(d){ return d })
+	    .attr("y",function(d){ ++j; return (j*h)+10 + (h/2) })
+	    .attr("x", function(d,i){ return leftLabel })
+	    .attr("font-size",10)
+	    .attr("font-family","sans-serif")
+	    .attr("text-anchor","end")
+	    .attr("font-weight","bold")
+    }
+
+    var k = 0;
+    for (var j = 0; j < gene_panel.length; j++)  {
+	var g = svg
+	   .append("g")
+	   .attr("transform", "translate(" + 0 +  "," + ((0.5+k)*h) + ")");
+
+         var hh = (h * gene_panel[j].feature_list.length) -5;
+	 var ww = leftLabel;
+	 g .append("rect")
+	   .attr("x", 0)
+	   .attr("y", 0)
+	   .attr("width", WIDTH)
+	   .attr("height", hh)
+	   // .attr("stroke", "green") .attr("stroke-width", "3px")
+	   .attr("fill", colors[j])
+	   .style("opacity", 0.5)
+
+	g 
+	    .append("text")
+	    .text(gene_panel[j].name)
+	    .attr("x",  leftleftLabel)
+	    .attr("y", hh/2)
+	    .attr("font-size",10)
+	    .attr("font-family","sans-serif")
+	    .attr("text-anchor","middle")
+	    .attr("font-weight","bold")
+            .attr("transform", "rotate(-30, " + (ww/2) +","+  (hh/2)+ ")");
+
+
+	for (var jj = 0; jj < gene_panel[j].feature_list.length; jj++, k++)  {
+	    g.append("text")
+		.text(gene_panel[j].feature_list[jj])
+		.attr("y", (jj*h)+10)
+		.attr("x",  leftLabel)
+		.attr("font-size",10)
+		.attr("font-family","sans-serif")
+		.attr("text-anchor","end")
+		.attr("font-weight","bold")
+	}
+/*
+	for (var jj = 0; jj < gene_panel[j].feature_list.length; jj++, k++)  {
+	    svg.append("text")
+		.text(gene_panel[j].feature_list[jj])
+		.attr("y", (k*h)+10 + (h/2))
+		.attr("x",  leftLabel)
+		.attr("font-size",10)
+		.attr("font-family","sans-serif")
+		.attr("text-anchor","end")
+		.attr("font-weight","bold")
+	}
+	*/
+
+    }
+
+    /*
     svg.selectAll("text")
 	.data(gene_list)
 	.enter()
@@ -116,6 +204,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	.attr("font-family","sans-serif")
 	.attr("text-anchor","end")
 	.attr("font-weight","bold");
+	*/
 
 
     function rect(i, j, pvalue, label, text2, text3) {
