@@ -1,6 +1,6 @@
 var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
 
-var WIDTH="800px";
+var WIDTH="1600px";
 
 D3Landscape = function(window, chartDocument, opts, exclusions) {
     var geneDataBundle = query(chartDocument);
@@ -87,10 +87,7 @@ function query(chartDocument) {
 	       gene_data.map(function (gd) { return gd.sample_label  })).sort();
 
    var gene_labels = gene_data.map(function(doc) { return doc.gene_label; });
-   var sort_order = [];
-   for (var i = 0; i < study.Sample_IDs; i++)
-       sort_order.push(study.gene_expression_index[sample_labels[i]]);
-   return { study: study, gene_data: gene_data, gene_labels: gene_labels, sample_labels: sample_labels,  sort_order: sort_order };
+   return { study: study, gene_data: gene_data, gene_labels: gene_labels, sample_labels: sample_labels};
 }
 
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};

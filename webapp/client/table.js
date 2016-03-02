@@ -58,7 +58,8 @@ window.makeHandsontable = function(theChart, extraOptions) {
 	     contextMenu: true,
 	     colHeaders: fields,
 	     columns: columns,
-	     data: theChart.chartData
+	     data: theChart.chartData,
+	     height: 1200
 
 	});
     }, 250);

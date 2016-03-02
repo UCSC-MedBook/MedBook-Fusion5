@@ -1,5 +1,8 @@
 
 BoxPlotCategorical = function(pivotData, exclusions) {
+   debugger;
+
+   console.log("B1", ST - Date.now());
 
     var value_color_scale = d3.scale.category10();
 
@@ -7,6 +10,10 @@ BoxPlotCategorical = function(pivotData, exclusions) {
     var cols = pivotData.pivotTableConfig.cols;
     if (rows == null) rows = [];
     if (cols == null) cols = [];
+
+    if (cols.length == 0)
+       throw new Error("Please select data elements by dragging from the left most box to the above box.");
+
     var analysis = analyze(pivotData.chartData, rows.concat(cols));
 
     var rowCategoricalVariables = [];
@@ -18,11 +25,17 @@ BoxPlotCategorical = function(pivotData, exclusions) {
 
     var rowValuePairs = [];
     rows.map(function(rowLabel) {
-       if (!analysis[rowLabel].isNumbers)
+       var l = analysis[rowLabel].values.length;
+       if (!analysis[rowLabel].isNumbers) {
+	   if (l > 10)
+	       throw new Error("Attribute "+rowLabel+ " has too many values (" +l + ") and would result in too complex a chart, please simplify");
 	   rowValuePairs.push(analysis[rowLabel].values.map(function(rowValue){
 	       return ({rowLabel: rowLabel, rowValue: rowValue});
 	   }));
+       }
     });
+
+   console.log("B2", ST - Date.now());
 
     var combos = cartesianProductOf(rowValuePairs);
     combos.map(function(pairList, c) {
@@ -41,8 +54,14 @@ BoxPlotCategorical = function(pivotData, exclusions) {
 		    }
 		]
 	    })
+
+       var l = rowCategoricalVariables.length;
+       if (l > 20)
+	   throw new Error("Rows are too complex, please simplify");
     }) // map
 
+
+   console.log("B3", ST - Date.now());
 
     var numberVariables = [], columnCategoricalVariables = [];
 
@@ -50,6 +69,10 @@ BoxPlotCategorical = function(pivotData, exclusions) {
         if (analysis[label].isNumbers)
             numberVariables.push( { label: label, decide: function(elem) { return !isNaN(elem[label]); } });
         else  {
+	    var l = analysis[label].values.length ;
+	    if (l > 10)
+	        throw new Error("Attribute "+label+ " has too many values (" +l + ") and would result in too complex a chart, please simplify");
+
             columnCategoricalVariables.push(
                 analysis[label].values
                 .filter(function(value) { 
@@ -62,6 +85,8 @@ BoxPlotCategorical = function(pivotData, exclusions) {
             );
         }
     });
+    if (numberVariables.length == 0)
+	throw new Error("Boxplot needs at least one numeric data element. Please select one from at left and drag it to the column box above.");
 
     // preflight(input, {rows: rows, cols: cols});
 
@@ -131,8 +156,11 @@ BoxPlotCategorical = function(pivotData, exclusions) {
         });
         return plot;
     });
+   console.log("B4", ST - Date.now());
+
     rows = rows.join(",");
     cols = cols.join(",");
+
     return [plotDataSets, rows, cols, rowCategoricalVariables, strata, strataSampleSets];
 }
 

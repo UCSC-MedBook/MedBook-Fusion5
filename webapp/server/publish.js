@@ -4,6 +4,7 @@ Meteor.publish('FusionFeatures', function() {
     return cursor;
 });
 
+/*
 Meteor.publish('Chart', function(_id) {
     var q;
     if (_id != null) {
@@ -35,6 +36,7 @@ Meteor.publish('Chart', function(_id) {
     console.log("Chart", q, cursor.count());
     return cursor;
 });
+*/
 
 Charts.allow({
   insert: function (userId, doc) { return true; }, 
@@ -184,6 +186,7 @@ Meteor.publish('QuickR', function(_id) {
     return null;
 });
 
+
 Meteor.publish('MyCharts', function(_id) {
     var q;
     if (_id != null) {
@@ -221,12 +224,35 @@ Meteor.publish('MyCharts', function(_id) {
     return cursor;
 });
 
+
+
+// var fields = {fields: { "_id":1, "updatedAt":1, "userId":1, "pivotTableConfig":1, "selectedFieldNames":1,"studies":1,"gene_list: "exclusions":1, "html":1 }};
+/*
 Meteor.publish('TheChart', function(_id) {
-    var cursor = Charts.find({_id: _id});
+    var cursor = Charts.find({_id: _id}, fields);
     console.log("TheChart", _id, cursor.count());
     return cursor;
 });
+*/
 
+Meteor.publish('TheChart', function(_id) {
+    var obj = Charts.findOne({_id: _id}, {fields:{pivotTableConfig:1}});
+    console.log("TheChart", obj);
 
-
+    // try to limit how much is published
+    if (obj && obj.pivotTableConfig && obj.pivotTableConfig.rendererName == "Table") {
+	var fieldlist = _.difference(obj.selectedFieldsNames, obj.pivotTableConfig.rows, obj.pivotTableConfig.cols );
+	if (fieldlist.length == 0)
+	    cursor = Charts.find({_id: _id});
+	else {
+	    var exclude = {};
+	    fieldlist.map(function(f) { exclude[f] = 0 });
+	    cursor = Charts.find({_id: _id}, {fields: exclude });
+	}
+    } else
+	cursor = Charts.find({_id: _id}, {fields: { chartData:0 }});
+	
+    console.log("TheChart", _id, cursor.count());
+    return cursor;
+});
 

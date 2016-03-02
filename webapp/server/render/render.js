@@ -48,7 +48,13 @@ renderJSdom = function(ChartDocument) {
 		done : function(errors, window) {
 		    Fiber(function(){
 			jquery_bind(window);
-			var html = ct.func(window, ChartDocument, null, []);
+			var html;
+			try {
+			    html = ct.func(window, ChartDocument, null, []);
+			} catch (err) {
+			    html = "<B><font color='red'>" + err.message + "</font><B>";
+			    console.log("err html", html);
+			}
 			html = html ? 
 			    (typeof(html) == "string" 
 				? html

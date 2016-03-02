@@ -189,7 +189,8 @@ Meteor.startup(function() {
 	  // Update samples.
 	  var gg = g.append("g").attr("class", "gg");
 
-          if (full.length > 500) {
+	  debugger
+          if (full.length < 500) {
               var sample = gg.selectAll("circle.sample") .data(full)
 
               function L(d) {

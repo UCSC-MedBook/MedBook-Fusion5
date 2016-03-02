@@ -274,8 +274,11 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
     return chartData;
 }
 
+
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
+    ST = Date.now();
+
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
@@ -305,6 +308,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     })
 
 
+    console.log("step 1",  Date.now() - ST);
     // Step 2. Build Map and other bookkeeping 
     var chartDataMap = {};
     chartData.map(function (cd) { 
@@ -314,6 +318,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
 
+    console.log("step 2",  Date.now() - ST);
 
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
@@ -438,6 +443,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
           }); // .map 
     } // if ChartDocument.geneLikeDataDomain 
 
+    console.log("step 3a",  Date.now() - ST);
+
     var mapPatient_ID_to_Sample_ID = {};
     chartData.map(function(cd) {
 	 if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
@@ -447,6 +454,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
 
+    console.log("step 3b",  Date.now() - ST);
     // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
@@ -504,6 +512,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              }); // forEach
 
         }); //  ChartDocument.additionalQueries.map
+    console.log("step 4",  Date.now() - ST);
 
 
     // Step 5. Transform any data.
@@ -511,6 +520,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.map(function(datum) { 
         Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
+
+    console.log("step 5a",  Date.now() - ST);
 
     var dataFieldNames =  Object.keys(keyUnion);
     var cols = [];
@@ -541,6 +552,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	 }
     } // if transforms
 
+    console.log("step 5b",  Date.now() - ST);
+
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
     if (exclusions == null) exclusions = [];
@@ -554,6 +567,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	       return true;
 	    }
 	});
+    console.log("step 6a",  Date.now() - ST);
     chartData = chartData.sort(function(a,b) { 
         var something = 0;
         for (var i = 0; i < selectedFieldNames.length; i++) {
@@ -577,6 +591,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
        }
        return something;
     });
+
+    console.log("step 6b",  Date.now() - ST);
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.
     // console.log("renderChartData", chartData.length);
@@ -603,7 +619,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
 
-    // console.log("done", ret);
+    console.log("step 6c - done",  Date.now() - ST);
+    console.log("done", ret);
 } 
 
 
