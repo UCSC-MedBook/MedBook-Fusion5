@@ -1,7 +1,5 @@
 
 BoxPlotCategorical = function(pivotData, exclusions) {
-   debugger;
-
    console.log("B1", ST - Date.now());
 
     var value_color_scale = d3.scale.category10();
@@ -83,6 +81,9 @@ BoxPlotCategorical = function(pivotData, exclusions) {
 			  return elem[label] == value; } });
                 })
             );
+	   var l = columnCategoricalVariables.length;
+	   if (l > 20)
+	       throw new Error("Columns are too complex, please simplify");
         }
     });
     if (numberVariables.length == 0)
