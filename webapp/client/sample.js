@@ -691,8 +691,10 @@ renderChart = function() {
 Template.Controls.rendered = function(){
    var TheChart = CurrentChart();
    initializeHtmlElements(TheChart);
-   initializeJQuerySelect2(TheChart);
-   initializeJQuerySortable(TheChart);
+   setTimeout(function() {
+       initializeJQuerySelect2(TheChart);
+       initializeJQuerySortable(TheChart);
+   }, 5000);
 };
 
 /*
