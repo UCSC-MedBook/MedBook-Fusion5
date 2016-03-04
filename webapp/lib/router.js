@@ -471,6 +471,7 @@ exportData = function() {
   var outstream;
 
   if (local != null) {
+      console.log("local", local);
       outstream = fs.createWriteStream(local, {encoding: "utf8"});
 
   } else {
@@ -499,13 +500,13 @@ exportData = function() {
 
   } else if (kind == "clinical") {
       var meta = Collections.Metadata.findOne({name: table});
-
-      var data = Collections.CRFs.find(
-	  {
+      var q = {
 	      CRF: table,
-	      Study_ID: study,
-	  },
-	  {sort: {Sample_ID:1}}).fetch();
+	      Study_ID: study.id,
+	  };
+      console.log("q", q);
+
+      var data = Collections.CRFs.find(q, {sort: {Sample_ID:1}}).fetch();
 
       data.map(function(row,i) {
 	  Object.keys(row).map(function(key) {
