@@ -288,7 +288,7 @@ function genomicDataSamples3(coll, study, response)  {
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
-	     line += "\t" + String(doc.rsem_quant_log2[i]);
+	     line += "\t" + String(doc.rsem_quan_log2[i]);
 	  });
 	  line += "\n";
 	  response.write(line);
