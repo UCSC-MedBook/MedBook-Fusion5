@@ -352,6 +352,13 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		    ChartDocument.samplelist.map(function(sample_label) {
 			chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
 		    });
+		    if (metadata[field_label] == null)
+			metadata[field_label] = { 
+			    collection: domain.collection,
+			    crf: null, 
+			    label: field_label,
+			    type: "Number"
+			};
 		    console.log("type 4", geneData.gene_label);
 		})
 
