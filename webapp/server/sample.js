@@ -573,13 +573,16 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         for (var i = 0; i < selectedFieldNames.length; i++) {
 	   var key = selectedFieldNames[i];
 	   if (key in a && key in b) {
-	       return naturalSort(a[key], b[key]);
-	   /*
-	       if (a[key] < b[key])
-		   return -1;
-	       if (a[key] > b[key])
-		   return 1;
-	   */
+	       if (a[key] == "N/A" && b[key] == "N/A")
+	           continue;
+	       else if (a[key] != "N/A" && b[key] == "N/A")
+	           return -1;
+	       else if (a[key] == "N/A" && b[key] != "N/A")
+	           return 1;
+
+	       var x =  naturalSort(a[key], b[key]);
+	       if (x != 0)
+	           return x;
 	   } else {
 	       if (key in a)
 		   something = 1;
