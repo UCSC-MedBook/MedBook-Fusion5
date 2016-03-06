@@ -338,9 +338,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("find", domain.collection, query, cursor.count());
+            console.log("find", domain.collection, query, cursor.count(), domain);
 	    
-	    if (domain.type == 4) {
+	    if (domain.format_type == 4) {
 	        var studyCache = {};
 
 		cursor.forEach(function(geneData) {
@@ -357,9 +357,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 			    collection: domain.collection,
 			    crf: null, 
 			    label: field_label,
-			    type: "Number"
+			    type: domain.field_type
 			};
-		    console.log("type 4", geneData.gene_label);
+		    console.log("format_type 4", geneData.gene_label);
 		})
 
 	    } else cursor.forEach(function(geneData) {
@@ -368,7 +368,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 var geneName = geneData[domain.gene_label_name];
                 var label = geneName + ' ' + domain.labelItem;
 
-                if (domain.type == 3) {  // signature scores
+                if (domain.format_type == 3) {  // signature scores
                     if (sampleID in chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
@@ -381,11 +381,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				collection: domain.collection,
 				crf: null, 
 				label: label,
-				type: "Number"
+				type: domain.field_type
 			    };
                     }
 
-                } else if (domain.type == 2) {  // sample names are stored as attributes
+                } else if (domain.format_type == 2) {  // sample names are stored as attributes
                     if (sampleID in chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
@@ -393,16 +393,17 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
                         // console.log("found", label, geneName, sampleID, obj);
                         chartDataMap[sampleID][label] = obj;
+			debugger
 			if (metadata[label] == null)
 			    metadata[label] = { 
 				collection: domain.collection,
 				crf: null, 
 				label: label,
 				max: 200,
-				type: "Number"
+				type: domain.field_type
 			    };
                     }
-                } else if (domain.type == 1) {  // sample names are stored as labels
+                } else if (domain.format_type == 1) {  // sample names are stored as labels
                     var label = ('transcript' in geneData) 
                         ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                         : geneName + ' ' + domain.labelItem
@@ -428,7 +429,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 					collection: domain.collection,
 					crf: null, 
 					label: label,
-					type: "Number"
+					type: domain.field_type
 				    };
                             }
                         }
