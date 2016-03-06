@@ -224,7 +224,6 @@ function addViz(geneDataBundle, viz, chartDocument) {
 		 max = _.max(values),
 	         min = _.min(values),
 		 mid = (max + min) / 2; 
-	     console.log("min",min,"mid",mid,"max",max);
 	     numerical_color_map = d3.scale.linear().domain([min, mid, max]).range(["blue", "white", "red"]);
 	}
 

@@ -169,7 +169,7 @@ function buildRemodelPlan(chartData, transforms, rows, cols) {
  transforms
  .filter(function(transform) {return _.contains(rows, transform.field) || _.contains(cols, transform.field) })
  .map(function(transform) {
-    console.log("transform", transform);
+    // console.log("transform", transform);
     switch (transform.op) {
 
     case "dichot-mean":
@@ -246,9 +246,9 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
 			     datum[transform.field] = cluster.median > dataValue ? 1 : -1;
 			 else
 			     datum[transform.field] = cluster.mean > dataValue ? 1 : -1;
-			 console.log( dataValue, transform, cluster );
+			 // console.log( dataValue, transform, cluster );
 		     } else 
-			console.log("isNan false", dataValue, typeof(dataValue));
+			// console.log("isNan false", dataValue, typeof(dataValue));
 		};
 		break;
 
@@ -308,7 +308,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     })
 
 
-    console.log("step 1",  Date.now() - ST);
+    // console.log("step 1",  Date.now() - ST);
     // Step 2. Build Map and other bookkeeping 
     var chartDataMap = {};
     chartData.map(function (cd) { 
@@ -318,7 +318,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
 
-    console.log("step 2",  Date.now() - ST);
+    // console.log("step 2",  Date.now() - ST);
 
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
@@ -338,7 +338,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("find", domain.collection, query, cursor.count(), domain);
+            // console.log("find", domain.collection, query, cursor.count(), domain);
 	    
 	    if (domain.format_type == 4) {
 	        var studyCache = {};
@@ -359,7 +359,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 			    label: field_label,
 			    type: domain.field_type
 			};
-		    console.log("format_type 4", geneData.gene_label);
+		    // console.log("format_type 4", geneData.gene_label);
 		})
 
 	    } else cursor.forEach(function(geneData) {
