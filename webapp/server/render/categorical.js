@@ -1,18 +1,18 @@
 
-BoxPlotCategorical = function(pivotData, exclusions) {
+BoxPlotCategorical = function(chartDocument, exclusions) {
    console.log("B1", ST - Date.now());
 
     var value_color_scale = d3.scale.category10();
 
-    var rows = pivotData.pivotTableConfig.rows;
-    var cols = pivotData.pivotTableConfig.cols;
+    var rows = chartDocument.pivotTableConfig.rows;
+    var cols = chartDocument.pivotTableConfig.cols;
     if (rows == null) rows = [];
     if (cols == null) cols = [];
 
     if (cols.length == 0)
        throw new Error("Please select data elements by dragging from the left most box to the above box.");
 
-    var analysis = analyze(pivotData.chartData, rows.concat(cols));
+    var analysis = analyze(chartDocument.chartData, rows.concat(cols));
 
     var rowCategoricalVariables = [];
     var colCategoricalVariables = cols.filter(function(field) { return analysis[field].allNumbers == false });
@@ -101,7 +101,7 @@ BoxPlotCategorical = function(pivotData, exclusions) {
         var points = [];
         var plot = [labelForView, points];
 
-        pivotData.chartData.map(function(elem, e) {
+        chartDocument.chartData.map(function(elem, e) {
             var good = true;
             for (var p = 0; good && p < plotPredicates.length; p++)
                 if (!plotPredicates[p].decide(elem))
@@ -157,7 +157,7 @@ BoxPlotCategorical = function(pivotData, exclusions) {
         });
         return plot;
     });
-   console.log("B4", ST - Date.now());
+    console.log("B4", ST - Date.now());
 
     rows = rows.join(",");
     cols = cols.join(",");

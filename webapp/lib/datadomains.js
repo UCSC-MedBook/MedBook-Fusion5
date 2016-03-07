@@ -3,7 +3,7 @@
 // The most important data domains: the ones which are indexed by gene (or gene-like) names.
 GeneLikeDataDomainsPrototype = [
     {
-        type: 4,
+        format_type: 4,
         label: "Expression3 RSEM",
         labelItem: "Expr3RSEM",
         checkBoxName: "ExprCheckbox3",
@@ -17,10 +17,11 @@ GeneLikeDataDomainsPrototype = [
         sample_label_name: null,
         gene_label_name: 'gene_label',
 	index: { "gene_label" : 1, "study_label" : 1 },
+	field_type: "Number",
     },
     /*
     {
-        type: 1,
+        format_type: 1,
         label: "Isoform RSEM",
         labelItem: "IsoformRSEM",
         checkBoxName: "IsoformCheckbox",
@@ -34,10 +35,11 @@ GeneLikeDataDomainsPrototype = [
         sample_label_name: 'Sample_ID',
         gene_label_name: 'gene',
         index: { "gene" : 1, "studies" : 1 , "transcript" : 1},
+	field_type: "Number",
     },
     */
     {
-        type: 2,
+        format_type: 2,
         label: "Mutations",
         labelItem: "Mut",
         checkBoxName: "MutCheckbox",
@@ -52,10 +54,11 @@ GeneLikeDataDomainsPrototype = [
         sample_label_name: 'sample_label',
         gene_label_name: 'gene_label',
         index:{gene_label:1, sample_label:1, study_label:1},
+	field_type: "String",
 
     },
     {
-        type: 3,
+        format_type: 3,
         regex_genenames: true,
         label: "Pathway Signature (Viper Method)",
         labelItem: "Kinase_Sig",
@@ -70,10 +73,11 @@ GeneLikeDataDomainsPrototype = [
         sample_label_name: 'id',
         gene_label_name: 'name',
 	index: null,
+	field_type: "Number",
     },
     /*
     {
-        type: 3,
+        format_type: 3,
         regex_genenames: true,
         label: "Transcription Factor Pathway Signature (Viper Method)",
         labelItem: "TF_Sig",
@@ -88,13 +92,15 @@ GeneLikeDataDomainsPrototype = [
         sample_label_name: 'id',
         gene_label_name: 'name',
 	index: null,
+	field_type: "Number",
     },
     {
-        type: 3,
+        format_type: 3,
         regex_genenames: true,
         label: "Transcription Factor Pathway Signature (Viper Method)",
         labelItem: "TF_Sig",
         checkBoxName: "TfViperSignatureCheckbox",
+	field_type: "Number",
     },
     */
 ];

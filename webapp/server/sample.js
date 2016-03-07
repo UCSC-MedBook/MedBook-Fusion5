@@ -169,7 +169,7 @@ function buildRemodelPlan(chartData, transforms, rows, cols) {
  transforms
  .filter(function(transform) {return _.contains(rows, transform.field) || _.contains(cols, transform.field) })
  .map(function(transform) {
-    console.log("transform", transform);
+    // console.log("transform", transform);
     switch (transform.op) {
 
     case "dichot-mean":
@@ -246,9 +246,8 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
 			     datum[transform.field] = cluster.median > dataValue ? 1 : -1;
 			 else
 			     datum[transform.field] = cluster.mean > dataValue ? 1 : -1;
-			 console.log( dataValue, transform, cluster );
-		     } else 
-			console.log("isNan false", dataValue, typeof(dataValue));
+			 // console.log( dataValue, transform, cluster );
+		     } // else  console.log("isNan false", dataValue, typeof(dataValue));
 		};
 		break;
 
@@ -308,7 +307,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     })
 
 
-    console.log("step 1",  Date.now() - ST);
+    // console.log("step 1",  Date.now() - ST);
     // Step 2. Build Map and other bookkeeping 
     var chartDataMap = {};
     chartData.map(function (cd) { 
@@ -318,7 +317,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
 
-    console.log("step 2",  Date.now() - ST);
+    // console.log("step 2",  Date.now() - ST);
 
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
@@ -338,9 +337,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            console.log("find", domain.collection, query, cursor.count());
+            // console.log("find", domain.collection, query, cursor.count(), domain);
 	    
-	    if (domain.type == 4) {
+	    if (domain.format_type == 4) {
 	        var studyCache = {};
 
 		cursor.forEach(function(geneData) {
@@ -352,7 +351,14 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		    ChartDocument.samplelist.map(function(sample_label) {
 			chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
 		    });
-		    console.log("type 4", geneData.gene_label);
+		    if (metadata[field_label] == null)
+			metadata[field_label] = { 
+			    collection: domain.collection,
+			    crf: null, 
+			    label: field_label,
+			    type: domain.field_type
+			};
+		    // console.log("format_type 4", geneData.gene_label);
 		})
 
 	    } else cursor.forEach(function(geneData) {
@@ -361,7 +367,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 var geneName = geneData[domain.gene_label_name];
                 var label = geneName + ' ' + domain.labelItem;
 
-                if (domain.type == 3) {  // signature scores
+                if (domain.format_type == 3) {  // signature scores
                     if (sampleID in chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
@@ -374,11 +380,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 				collection: domain.collection,
 				crf: null, 
 				label: label,
-				type: "Number"
+				type: domain.field_type
 			    };
                     }
 
-                } else if (domain.type == 2) {  // sample names are stored as attributes
+                } else if (domain.format_type == 2) {  // sample names are stored as attributes
                     if (sampleID in chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
@@ -386,16 +392,17 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
                         // console.log("found", label, geneName, sampleID, obj);
                         chartDataMap[sampleID][label] = obj;
+			debugger
 			if (metadata[label] == null)
 			    metadata[label] = { 
 				collection: domain.collection,
 				crf: null, 
 				label: label,
 				max: 200,
-				type: "Number"
+				type: domain.field_type
 			    };
                     }
-                } else if (domain.type == 1) {  // sample names are stored as labels
+                } else if (domain.format_type == 1) {  // sample names are stored as labels
                     var label = ('transcript' in geneData) 
                         ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                         : geneName + ' ' + domain.labelItem
@@ -421,7 +428,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 					collection: domain.collection,
 					crf: null, 
 					label: label,
-					type: "Number"
+					type: domain.field_type
 				    };
                             }
                         }
@@ -486,28 +493,30 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
-	     // console.log("META QUERY", label, msf);
+	     console.log("META QUERY", label, msf);
 	     metadata[label] = msf;
 
              var fl = {};
              fl[fieldName] = 1;
 	     fl.Sample_ID = 1;
 	     fl.Patient_ID = 1;
+
+	     // the following query needs study_id and perhaps sample_list
              Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
 
 
 		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
                  if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
                      chartDataMap[doc.Sample_ID][label] = doc[fieldName];
-		     // console.log("joined Sample_ID", doc);
+		     console.log("joined Sample_ID", doc);
                  } else {
                      if (doc.Patient_ID in mapPatient_ID_to_Sample_ID) {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
                              chartDataMap[sample_ID][label] = doc[fieldName];
                          });
-			 // console.log("joined through Patient_ID", doc);
+			  console.log("joined through Patient_ID", doc);
 		     } 
-			 // else console.log("addQ", crfName, fieldName, doc);
+			  else console.log("addQ", crfName, fieldName, doc);
                 } // else
              }); // forEach
 
@@ -573,13 +582,16 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         for (var i = 0; i < selectedFieldNames.length; i++) {
 	   var key = selectedFieldNames[i];
 	   if (key in a && key in b) {
-	       return naturalSort(a[key], b[key]);
-	   /*
-	       if (a[key] < b[key])
-		   return -1;
-	       if (a[key] > b[key])
-		   return 1;
-	   */
+	       if (a[key] == "N/A" && b[key] == "N/A")
+	           continue;
+	       else if (a[key] != "N/A" && b[key] == "N/A")
+	           return -1;
+	       else if (a[key] == "N/A" && b[key] != "N/A")
+	           return 1;
+
+	       var x =  naturalSort(a[key], b[key]);
+	       if (x != 0)
+	           return x;
 	   } else {
 	       if (key in a)
 		   something = 1;

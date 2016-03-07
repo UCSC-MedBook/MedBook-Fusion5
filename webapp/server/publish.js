@@ -236,23 +236,11 @@ Meteor.publish('TheChart', function(_id) {
 */
 
 Meteor.publish('TheChart', function(_id) {
-    var obj = Charts.findOne({_id: _id}, {fields:{pivotTableConfig:1}});
-    console.log("TheChart", obj);
-
-    // try to limit how much is published
-    if (obj && obj.pivotTableConfig && obj.pivotTableConfig.rendererName == "Table") {
-	var fieldlist = _.difference(obj.selectedFieldsNames, obj.pivotTableConfig.rows, obj.pivotTableConfig.cols );
-	if (fieldlist.length == 0)
-	    cursor = Charts.find({_id: _id});
-	else {
-	    var exclude = {};
-	    fieldlist.map(function(f) { exclude[f] = 0 });
-	    cursor = Charts.find({_id: _id}, {fields: exclude });
-	}
-    } else
-	cursor = Charts.find({_id: _id}, {fields: { chartData:0 }});
-	
-    console.log("TheChart", _id, cursor.count());
+    var cursor = Charts.find({_id: _id}, {fields: { chartData:0 }});
     return cursor;
 });
 
+Meteor.publish('TheChartData', function(_id, n, m) {
+    var cursor = Charts.find({_id: _id}, {fields: { chartData:1 }});
+    return cursor;
+});

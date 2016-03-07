@@ -43,7 +43,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
     var predicates = cartesianProductOf(h.concat(v).map(unique));
 
-    var legend = window.$('<div class="legend" style="float:right;margin-right:20px;">').appendTo(wrapper);
+    var legend = window.$('<div class="legend" style="background-color:#fff3ea;float:right;margin-right:20px;">').appendTo(wrapper);
     predicates.map(function(p, i) {
         var line = window.$("<div>").appendTo(legend);
         window.$("<div style='display:inline-block;'>").css({
@@ -100,11 +100,9 @@ function addViz(geneDataBundle, viz, chartDocument) {
     var width = parseInt(d3.select(viz).style('width'), 10) - margin.left - margin.right;
     var height = parseInt(d3.select(viz).style('height'), 10) - margin.top - margin.bottom;
 
-    // var xScale = d3.scale.ordinal() .domain(geneDataBundle.sample_labels) .rangePoints([0, width]);
-    // var yScale = d3.scale.ordinal() .domain(gene_list) .rangePoints([0, height]);
 
-    // var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
-    // var yAxis = d3.svg.axis().scale(yScale).orient("left");
+
+
 
     var leftleftLabel = 100;
     var leftLabel = 200;
@@ -120,26 +118,11 @@ function addViz(geneDataBundle, viz, chartDocument) {
 
     var w=10, h=20;
 
+    var attrs = chartDocument.pivotTableConfig.cols.concat( chartDocument.pivotTableConfig.rows);
 
 
     var j = 0;
-
-    function foo(arg) {
-        debugger
-	svg.selectAll("text")
-	    .data(arg.feature_list)
-	    .enter()
-	    .append("text")
-	    .text(function(d){ return d })
-	    .attr("y",function(d){ ++j; return (j*h)+10 + (h/2) })
-	    .attr("x", function(d,i){ return leftLabel })
-	    .attr("font-size",10)
-	    .attr("font-family","sans-serif")
-	    .attr("text-anchor","end")
-	    .attr("font-weight","bold")
-    }
-
-    var k = 0;
+    var k = attrs.length;
     for (var j = 0; j < gene_panel.length; j++)  {
 	var g = svg
 	   .append("g")
@@ -147,7 +130,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 
          var hh = (h * gene_panel[j].feature_list.length) -5;
 	 var ww = leftLabel;
-	 g .append("rect")
+	 g.append("rect")
 	   .attr("x", 0)
 	   .attr("y", 0)
 	   .attr("width", WIDTH)
@@ -156,8 +139,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	   .attr("fill", colors[j])
 	   .style("opacity", 0.5)
 
-	g 
-	    .append("text")
+	 g.append("text")
 	    .text(gene_panel[j].name)
 	    .attr("x",  leftleftLabel)
 	    .attr("y", hh/2)
@@ -172,7 +154,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	    g.append("text")
 		.text(gene_panel[j].feature_list[jj])
 		.attr("y", (jj*h)+10)
-		.attr("x",  leftLabel)
+		.attr("x",  leftLabel -2)
 		.attr("font-size",10)
 		.attr("font-family","sans-serif")
 		.attr("text-anchor","end")
@@ -180,7 +162,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	}
     }
 
-    function rect(i, j, pvalue, label, text2, text3) {
+    function rect(i, j, pvalue, label, text2, text3, color) {
 	var x = leftLabel + (i*w);
 	var y = (j*h) + 10;
 	var rectangle = svg.append("rect")
@@ -191,25 +173,29 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	  .attr("text3", text3)
 	  .attr("class", "BoxPlotToolTipHover")
 	  .attr("width", w)
-	  .attr("height", h)
-	  .style("fill", probability_color(pvalue));
+	  .attr("height", h);
+        
+	if (color == null)
+	  rectangle.style("fill", probability_color(pvalue));
+        else
+	  rectangle.style("fill", color);
     }
 
     var sample_label_map = {};
-    geneDataBundle.sample_labels.map(function(sample_label, i) {
-	sample_label_map[sample_label] = i;
+
+    chartDocument.chartData.map(function(doc, i) {
+	sample_label_map[doc.Sample_ID] = i;
     });
 
     var gene_label_map = {};
-    gene_list.map(function(gene, i) {
-        gene_label_map[gene_list[i]] = i;
+    gene_list.map(function(gene, j) {
+        gene_label_map[gene_list[j]] = attrs.length + j;
     });
 
 
     geneDataBundle.gene_data.map(function(doc) {
 	var i = sample_label_map[doc.sample_label];
 	var j = gene_label_map[doc.gene_label];
-	console.log(doc.sample_label, doc.gene_label, i, j);
 	var label = doc.sample_label;
 
 	var text2 = doc.gene_label + " " + doc.mutation_type; 
@@ -220,7 +206,50 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	if (doc.vest_pathogenicity_p_value)
 	    text3 += " vest path pval " + doc.vest_pathogenicity_p_value.toPrecision(3);
 
-	rect(i,j, doc.chasm_driver_p_value, label, text2, text3);
+	rect(i, j, doc.chasm_driver_p_value, label, text2, text3);
+    });
+
+
+
+    var categorical_color_map = d3.scale.category20c();
+
+    attrs.map(function(attr, j) {
+	var meta = chartDocument.metadata[attr];
+	var numerical_color_map;
+
+	if (meta.type == "String" && meta.allowedValues  && meta.allowedValues.length > 0 && meta.allowedValues.length < 10) {
+	    meta.allowedValues.map(function (value) { categorical_color_map(attr+";"+value)});
+	} else if (meta.type == "Number") {
+	     var values =_.pluck(chartDocument.chartData, attr).filter(function(n) { return !isNaN(n)});
+		 max = _.max(values),
+	         min = _.min(values),
+		 mid = (max + min) / 2; 
+	     numerical_color_map = d3.scale.linear().domain([min, mid, max]).range(["blue", "white", "red"]);
+	}
+
+
+	chartDocument.chartData.map(function(doc, i) {
+	    // var i = sample_label_map[doc.Sample_ID];
+
+	    var value = doc[attr];
+	    var color = "orange";
+	    if (meta.type == "String")
+	    	color = categorical_color_map(attr+";"+value);
+	    else if (meta.type == "Number") {
+		debugger
+	    	color = numerical_color_map(value);
+	    }
+
+	    rect(i, j, 0, doc.Sample_ID, attr, String(value), color);
+	})
+	svg.append("text")
+	    .text(attr)
+	    .attr("y", (j+1)*h +6)
+	    .attr("x",  leftLabel -2)
+	    .attr("font-size",10)
+	    .attr("font-family","sans-serif")
+	    .attr("text-anchor","end")
+	    .attr("font-weight","bold")
     });
 }
 
