@@ -247,8 +247,7 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
 			 else
 			     datum[transform.field] = cluster.mean > dataValue ? 1 : -1;
 			 // console.log( dataValue, transform, cluster );
-		     } else 
-			// console.log("isNan false", dataValue, typeof(dataValue));
+		     } // else  console.log("isNan false", dataValue, typeof(dataValue));
 		};
 		break;
 
@@ -494,28 +493,30 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
-	     // console.log("META QUERY", label, msf);
+	     console.log("META QUERY", label, msf);
 	     metadata[label] = msf;
 
              var fl = {};
              fl[fieldName] = 1;
 	     fl.Sample_ID = 1;
 	     fl.Patient_ID = 1;
+
+	     // the following query needs study_id and perhaps sample_list
              Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
 
 
 		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
                  if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
                      chartDataMap[doc.Sample_ID][label] = doc[fieldName];
-		     // console.log("joined Sample_ID", doc);
+		     console.log("joined Sample_ID", doc);
                  } else {
                      if (doc.Patient_ID in mapPatient_ID_to_Sample_ID) {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
                              chartDataMap[sample_ID][label] = doc[fieldName];
                          });
-			 // console.log("joined through Patient_ID", doc);
+			  console.log("joined through Patient_ID", doc);
 		     } 
-			 // else console.log("addQ", crfName, fieldName, doc);
+			  else console.log("addQ", crfName, fieldName, doc);
                 } // else
              }); // forEach
 
