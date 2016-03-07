@@ -41,7 +41,7 @@ window.makeReactiveTable = function(theChart, extraOptions) {
     return result.html();
 }
 
-var hot;
+hot = null;
 
 window.makeHandsontable = function(theChart, extraOptions) {
 
@@ -50,6 +50,7 @@ window.makeHandsontable = function(theChart, extraOptions) {
 	var columns = fields.map(function(field, i) { return {data: field}});
 	if (hot)
 	   try { hot.destroy(); } catch (err) {};
+
 
 	hot = new Handsontable(document.getElementById('ChartWrapper'), { 
 	     minSpareRows: 1,
@@ -62,6 +63,12 @@ window.makeHandsontable = function(theChart, extraOptions) {
 	     height: 1200
 
 	});
+	Meteor.subscribe("TheChartData", theChart._id);
+	Tracker.autorun(function() {
+	    var tc = Charts.findOne({_id: theChart._id}, {fields: {chartData: 1}});
+	    console.log("tc.chartData.length", tc.chartData.length);
+	});
     }, 250);
     return "<div id='ChartWrapper' style='min-width:800px;min-height:600px;'></div>"
 }
+
