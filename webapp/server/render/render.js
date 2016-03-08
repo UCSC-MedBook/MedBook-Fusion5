@@ -14,12 +14,12 @@ Type 3: call the function with asynchronously using jsdom
 */
 
 ChartTypeMap = {
+  "Table" :          { type: 1, client: "makeHandsontable"},
+  "Timescape" :      { type: 2, func: D3Timescape},
   "Landscape" :      { type: 3, func: D3Landscape},
-  "Bar Chart" :      { type: 1, client: "GoogleChart"},
-  "Elapsed" :        { type: 2, func: makeD3Elapsed},
   "Box Plot" :       { type: 3, func: D3BoxPlot },
   "Scatter Chart" :  { type: 1, client: "makeD3Scatter"},
-  "Table" :          { type: 1, client: "makeHandsontable"},
+  "Bar Chart" :      { type: 1, client: "GoogleChart"},
 }
 
 // use FusionFeatures collection to communicate from server to client

@@ -1,5 +1,5 @@
 
-makeD3Elapsed = function(window, chartDocument) {
+D3Timescape = function(window, chartDocument) {
     var patients = {};
     var now = new Date();
     var milliSecondsPerDay = 24*60*60*1000;
@@ -109,6 +109,6 @@ makeD3Elapsed = function(window, chartDocument) {
     chartDocument.pivotTableConfig.cols = [];
     chartDocument.elapsed = { min: min, max: max };
 
-    console.log("makeD3Elapsed", max, min, chartDocument.chartData.length);
-    return "makeD3Elapsed";
+    console.log("D3Timescape", max, min, chartDocument.chartData.length);
+    return "D3Timescape";
 }
