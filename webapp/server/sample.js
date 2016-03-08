@@ -577,25 +577,47 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	    }
 	});
     console.log("step 6a",  Date.now() - ST);
-    chartData = chartData.sort(function(a,b) { 
+
+    chartData = chartData.sort(function(a,b) {  // sort by field order
         var something = 0;
         for (var i = 0; i < selectedFieldNames.length; i++) {
-	   var key = selectedFieldNames[i];
-	   if (key in a && key in b) {
-	       if (a[key] == "N/A" && b[key] == "N/A")
+	   var field = selectedFieldNames[i];
+
+	   // If this field is a list of allowedValues in the schema, then use that order
+	   var meta = ChartDocument && ChartDocument.metadata && ChartDocument.metadata[field];
+	   var order = null;
+	   var order_n = 0;
+
+	   if (meta && meta.allowedValues) { 
+	       order = {};
+	       meta.allowedValues.map(function(value, i) { order[value] = order_n = i });
+	       order_n++;
+	   }
+
+	   if (field in a && field in b) {
+	       if (a[field] == "N/A" && b[field] == "N/A")
 	           continue;
-	       else if (a[key] != "N/A" && b[key] == "N/A")
+	       else if (a[field] != "N/A" && b[field] == "N/A")
 	           return -1;
-	       else if (a[key] == "N/A" && b[key] != "N/A")
+	       else if (a[field] == "N/A" && b[field] != "N/A")
 	           return 1;
 
-	       var x =  naturalSort(a[key], b[key]);
+	       var a_value = a[field];
+	       var b_value = b[field];
+
+	       if (order) {
+	           a_value = a_value in order ? order[a_value] : order_n;
+	           b_value = b_value in order ? order[b_value] : order_n;
+	       }
+
+	       var x =  naturalSort(a_value, b_value);
+	       
 	       if (x != 0)
 	           return x;
 	   } else {
-	       if (key in a)
+	       if (field in a)
 		   something = 1;
-	       else if (key in b)
+	       else if (field in b)
 		   something = -1;
 	       else 
 		   something = 0;

@@ -1,9 +1,14 @@
 var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
 
-var WIDTH="1600px";
+
+var leftleftLabel = 100;
+var leftLabel = 200;
+var mark_unit_width=10, mark_unit_height=20;
 
 D3Landscape = function(window, chartDocument, opts, exclusions) {
     var geneDataBundle = query(chartDocument);
+
+    var WIDTH = (leftLabel + (chartDocument.chartData.length * mark_unit_width)) + "px";
 
     var wrapper = window.$("<div id='wrapper' >").css({ width: WIDTH, height: "1000px" });
     var viz = window.$("<div id='viz' >").css({ "margin-top": "20px", width: WIDTH, height: "1000px" }).appendTo(wrapper);
@@ -58,7 +63,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
             + "</span>").appendTo(line);
     });
 
-    addViz(geneDataBundle, viz[0], chartDocument);
+    addViz(geneDataBundle, viz[0], chartDocument, WIDTH);
     return wrapper;
 } // D3Landscape()
 
@@ -92,7 +97,7 @@ function query(chartDocument) {
 
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
-function addViz(geneDataBundle, viz, chartDocument) {
+function addViz(geneDataBundle, viz, chartDocument, WIDTH) {
 
     var probability_color = d3.scale.linear() .domain([0, .1])
         .range(["green", "white"]);
@@ -104,8 +109,6 @@ function addViz(geneDataBundle, viz, chartDocument) {
 
 
 
-    var leftleftLabel = 100;
-    var leftLabel = 200;
 
     var svg = d3.select(viz).append("svg").attr("id", "vizsvg")
 	.attr("width", width + margin.left + margin.right)
@@ -116,7 +119,6 @@ function addViz(geneDataBundle, viz, chartDocument) {
     // svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")") .call(xAxis);
     // svg.append("g").attr("class", "axis").attr("transform", "translate(" + leftLabel + ", 0)") .call(yAxis);
 
-    var w=10, h=20;
 
     var attrs = chartDocument.pivotTableConfig.cols.concat( chartDocument.pivotTableConfig.rows);
 
@@ -126,9 +128,9 @@ function addViz(geneDataBundle, viz, chartDocument) {
     for (var j = 0; j < gene_panel.length; j++)  {
 	var g = svg
 	   .append("g")
-	   .attr("transform", "translate(" + 0 +  "," + ((0.5+k)*h) + ")");
+	   .attr("transform", "translate(" + 0 +  "," + ((0.5+k)*mark_unit_height) + ")");
 
-         var hh = (h * gene_panel[j].feature_list.length) -5;
+         var hh = (mark_unit_height * gene_panel[j].feature_list.length) -5;
 	 var ww = leftLabel;
 	 g.append("rect")
 	   .attr("x", 0)
@@ -153,7 +155,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	for (var jj = 0; jj < gene_panel[j].feature_list.length; jj++, k++)  {
 	    g.append("text")
 		.text(gene_panel[j].feature_list[jj])
-		.attr("y", (jj*h)+10)
+		.attr("y", (jj*mark_unit_height)+10)
 		.attr("x",  leftLabel -2)
 		.attr("font-size",10)
 		.attr("font-family","sans-serif")
@@ -163,8 +165,8 @@ function addViz(geneDataBundle, viz, chartDocument) {
     }
 
     function rect(i, j, pvalue, label, text2, text3, color) {
-	var x = leftLabel + (i*w);
-	var y = (j*h) + 10;
+	var x = leftLabel + (i*mark_unit_width);
+	var y = (j*mark_unit_height) + 10;
 	var rectangle = svg.append("rect")
 	  .attr("x", x)
 	  .attr("y", y)
@@ -172,8 +174,8 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	  .attr("text2", text2)
 	  .attr("text3", text3)
 	  .attr("class", "BoxPlotToolTipHover")
-	  .attr("width", w)
-	  .attr("height", h);
+	  .attr("width", mark_unit_width)
+	  .attr("height", mark_unit_height);
         
 	if (color == null)
 	  rectangle.style("fill", probability_color(pvalue));
@@ -244,7 +246,7 @@ function addViz(geneDataBundle, viz, chartDocument) {
 	})
 	svg.append("text")
 	    .text(attr)
-	    .attr("y", (j+1)*h +6)
+	    .attr("y", (j+1)*mark_unit_height +6)
 	    .attr("x",  leftLabel -2)
 	    .attr("font-size",10)
 	    .attr("font-family","sans-serif")
