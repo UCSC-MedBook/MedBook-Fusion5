@@ -49,21 +49,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var predicates = cartesianProductOf(h.concat(v).map(unique));
 
     var legend = window.$('<div class="legend" style="background-color:#fff3ea;float:right;margin-right:20px;">').appendTo(wrapper);
-    predicates.map(function(p, i) {
-        var line = window.$("<div>").appendTo(legend);
-        window.$("<div style='display:inline-block;'>").css({
-          background: colors[i],
-          width: "20px",
-          height: "20px",
-          "border-radius": "50%",
-        }).appendTo(line);
-
-        window.$("<span>"  
-            + p.map(function(pp) { return pp[0] + "=" + pp[1] }).join(",&nbsp")
-            + "</span>").appendTo(line);
-    });
-
-    addViz(geneDataBundle, viz[0], chartDocument, WIDTH);
+    addViz(window, geneDataBundle, viz[0], chartDocument, WIDTH,legend);
     return wrapper;
 } // D3Landscape()
 
@@ -97,7 +83,7 @@ function query(chartDocument) {
 
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
-function addViz(geneDataBundle, viz, chartDocument, WIDTH) {
+function addViz(window, geneDataBundle, viz, chartDocument, WIDTH,legend) {
 
     var probability_color = d3.scale.linear() .domain([0, .1])
         .range(["green", "white"]);
@@ -120,11 +106,11 @@ function addViz(geneDataBundle, viz, chartDocument, WIDTH) {
     // svg.append("g").attr("class", "axis").attr("transform", "translate(" + leftLabel + ", 0)") .call(yAxis);
 
 
-    var attrs = chartDocument.pivotTableConfig.cols.concat( chartDocument.pivotTableConfig.rows);
+    var fields = chartDocument.pivotTableConfig.cols.concat( chartDocument.pivotTableConfig.rows);
 
 
     var j = 0;
-    var k = attrs.length;
+    var k = fields.length;
     for (var j = 0; j < gene_panel.length; j++)  {
 	var g = svg
 	   .append("g")
@@ -191,7 +177,7 @@ function addViz(geneDataBundle, viz, chartDocument, WIDTH) {
 
     var gene_label_map = {};
     gene_list.map(function(gene, j) {
-        gene_label_map[gene_list[j]] = attrs.length + j;
+        gene_label_map[gene_list[j]] = fields.length + j;
     });
 
 
@@ -215,14 +201,29 @@ function addViz(geneDataBundle, viz, chartDocument, WIDTH) {
 
     var categorical_color_map = d3.scale.category20c();
 
-    attrs.map(function(attr, j) {
-	var meta = chartDocument.metadata[attr];
+    function addLegend(field, value, color) {
+        var line = window.$("<div>").appendTo(legend);
+
+        window.$("<div style='display:inline-block;border:1px solid %000;'>&nbsp;</div>").css({
+          background: color,
+          width:  mark_unit_width  + "px",
+          height: mark_unit_height + "px",
+        }).appendTo(line);
+        window.$("<span>"  + field+",&nbsp"+value + "</span>").appendTo(line);
+    };
+
+
+    fields.map(function(field, j) {
+	var meta = chartDocument.metadata[field];
 	var numerical_color_map;
 
 	if (meta.type == "String" && meta.allowedValues  && meta.allowedValues.length > 0 && meta.allowedValues.length < 10) {
-	    meta.allowedValues.map(function (value) { categorical_color_map(attr+";"+value)});
+	    meta.allowedValues.map(function (value) { 
+		var color = categorical_color_map(field+";"+value)
+		addLegend(field, value, color);
+	    });
 	} else if (meta.type == "Number") {
-	     var values =_.pluck(chartDocument.chartData, attr).filter(function(n) { return !isNaN(n)});
+	     var values =_.pluck(chartDocument.chartData, field).filter(function(n) { return !isNaN(n)});
 		 max = _.max(values),
 	         min = _.min(values),
 		 mid = (max + min) / 2; 
@@ -233,19 +234,18 @@ function addViz(geneDataBundle, viz, chartDocument, WIDTH) {
 	chartDocument.chartData.map(function(doc, i) {
 	    // var i = sample_label_map[doc.Sample_ID];
 
-	    var value = doc[attr];
+	    var value = doc[field];
 	    var color = "orange";
 	    if (meta.type == "String")
-	    	color = categorical_color_map(attr+";"+value);
+	    	color = categorical_color_map(field+";"+value);
 	    else if (meta.type == "Number") {
-		debugger
 	    	color = numerical_color_map(value);
 	    }
 
-	    rect(i, j, 0, doc.Sample_ID, attr, String(value), color);
+	    rect(i, j, 0, doc.Sample_ID, field, String(value), color);
 	})
 	svg.append("text")
-	    .text(attr)
+	    .text(field)
 	    .attr("y", (j+1)*mark_unit_height +6)
 	    .attr("x",  leftLabel -2)
 	    .attr("font-size",10)
