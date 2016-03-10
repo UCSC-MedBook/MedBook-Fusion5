@@ -14,6 +14,32 @@ SignatureScores = new Meteor.Collection('signature_scores');
 GeneSets = new Meteor.Collection('gene_sets');
 GeneExpression = new Meteor.Collection("gene_expression");
 
+Meteor.startup(function() {
+    FeaturePanels = new Meteor.Collection("FeaturePanels");
+
+    FeaturePanelsSchema = new SimpleSchema({
+	categories: {
+	    type: [Object]
+	},
+	"categories.$.name": {
+	    type: String
+	},
+	"categories.$.features": {
+	    type: [Object]
+	},
+	"categories.$.features.$.name": {
+	    type: String
+	},
+	"categories.$.features.$.kind": {
+	    type: String
+	},
+    });
+    FeaturePanels.attachSchema( FeaturePanelsSchema );
+});
+
+
+
+
 DomainCollections = {
   'Expression' : Expression,
   'Expression3' : Expression3,
