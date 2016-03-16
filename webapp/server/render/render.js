@@ -18,6 +18,7 @@ ChartTypeMap = {
   "Timescape" :      { type: 2, func: D3Timescape},
   "Landscape" :      { type: 3, func: D3Landscape},
   "Box Plot" :       { type: 3, func: D3BoxPlot },
+  "Contingency" :    { type: 3, func: Contingency },
   "Scatter Chart" :  { type: 1, client: "makeD3Scatter"},
   "Bar Chart" :      { type: 1, client: "GoogleChart"},
 }
@@ -31,6 +32,7 @@ SyncChartTypesWithFusionFeaturesDB = function() {
 Meteor.startup(SyncChartTypesWithFusionFeaturesDB);
 
 renderJSdom = function(ChartDocument) {
+    debugger
     var chartType = ChartDocument.pivotTableConfig.rendererName;
     console.log("chartType", chartType);
 

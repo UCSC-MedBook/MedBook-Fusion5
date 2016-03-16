@@ -508,15 +508,15 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
                  if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
                      chartDataMap[doc.Sample_ID][label] = doc[fieldName];
-		     console.log("joined Sample_ID", doc);
+		     // console.log("joined Sample_ID", doc);
                  } else {
                      if (doc.Patient_ID in mapPatient_ID_to_Sample_ID) {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
                              chartDataMap[sample_ID][label] = doc[fieldName];
                          });
-			  console.log("joined through Patient_ID", doc);
+			  // console.log("joined through Patient_ID", doc);
 		     } 
-			  else console.log("addQ", crfName, fieldName, doc);
+			  // else console.log("addQ", crfName, fieldName, doc);
                 } // else
              }); // forEach
 

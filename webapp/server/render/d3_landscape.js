@@ -17,6 +17,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var v = _.clone(chartDocument.pivotTableConfig.rows);
     var h = _.clone(chartDocument.pivotTableConfig.cols);
 
+    debugger;
     var xk = Object.keys(exclusions);
     var data = chartDocument.chartData.filter(function(elem) {
         for (var i = 0; i < xk.length; i++) {

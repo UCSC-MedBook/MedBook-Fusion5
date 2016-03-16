@@ -293,6 +293,7 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+
   'click .element' : function(e) {
        var field =  $(e.target).data("field");
        var TheChart = CurrentChart();
