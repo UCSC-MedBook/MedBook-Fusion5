@@ -1,16 +1,16 @@
 fss = Npm.require('fs-extra');
 
 Meteor.startup(function() {
-    Expression._ensureIndex({variance:-1});
-});
-
-Meteor.startup(function() {
-    GeneExpression._ensureIndex({gene_label:1, sample_label: 1});
+    Expression3._ensureIndex({study_label: 1});
+    GeneStatistics._ensureIndex({study_label: 1});
+    Expression3._ensureIndex({gene_label:1,  study_label: 1});
+    GeneStatistics._ensureIndex({gene_label:1, study_label: 1});
 });
 
 Meteor.methods({
+
+
     expressionVariance: function(study_label) {
-    
 	var data = GeneStatistics.aggregate([
             { $match: { study_label: study_label}},
             { $sort: {variance: -1}},
@@ -23,8 +23,42 @@ Meteor.methods({
 	console.log("expressionVariance", study_label, data.length);
 	return data;
     },
+    prepareGeneStatistics: function(study_label) {
+	console.log("prepareGeneStatistics", study_label);
 
-    prepareDIPSC: function(study, genelist) {
+        var study = Collections.studies.findOne({id: study_label});
+	var index = study.cohort.map(function(sample) { return study.gene_expression_index[sample]});
+	var i = 0;
+	var start = Date.now();
+
+	if (Expression3.find({study_label: study_label}).count() > GeneExpression.find({study_label: study_label}).count()) {
+	    Expression3.find({study_label: study_label}).forEach(function(ge) {
+		if ((++i % 1000) == 0)
+		    console.log(i, ge.gene_label, (Date.now() - start) / 1000);
+		var data = index.map(function(i) { return ge.rsem_quan_log2[i] });
+		if (data.length > 2) {
+		    var variance = ss.variance(data);
+		    var mean = ss.mean(data);
+
+		    GeneStatistics.upsert(
+			{ 
+			  study_label: study_label,
+			  gene_label: ge.gene_label
+			},
+			
+			{$set: {
+			    study_label: study_label,
+			    gene_label: ge.gene_label,
+			    mean: mean,
+			    variance: variance
+			}});
+		}
+	    });
+	}
+	console.log("prepareGeneStatistics done", i, Date.now() - start);
+    },
+
+    prepareDIPSC: function(study_label, genelist) {
 
         var directory = process.env.MEDBOOK_WORKSPACE + "bridge/" + "DIPSC" + "/";
 	fss.mkdirsSync(directory);
@@ -42,7 +76,7 @@ Meteor.methods({
 	function flush() {
 	   if (firstline) {
 	       firstline = false;
-	       var buf =  study;
+	       var buf =  study_label;
 	       line.map(function(elem) {
 		   buf += "\t";
 		   buf +=  String(elem.sample_label);
@@ -67,7 +101,7 @@ Meteor.methods({
 	   line = [];
 	}
 
-	var cursor = GeneExpression.find({study_label: study, gene_label: {$in: genelist}  }, {
+	var cursor = GeneExpression.find({study_label: study_label, gene_label: {$in: genelist}  }, {
 	   fields: {gene_label:1, sample_label:1, "values.quantile_counts_log": 1},
 	   sort: {gene_label:1, sample_label: 1},
 	});
@@ -622,5 +656,8 @@ correlateDscore = function(a, b) {
 
 
 // Meteor.startup(DIPSCtest);
+Meteor.startup(function() {
+    Meteor.call("prepareGeneStatistics", "prad_wcdt");
+});
 
 
