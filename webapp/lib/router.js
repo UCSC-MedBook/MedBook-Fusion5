@@ -288,7 +288,7 @@ function genomicDataSamples3(coll, study, response)  {
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
-	     line += "\t" + String(doc.rsem_quant_log2[i]);
+	     line += "\t" + String(doc.rsem_quan_log2[i]);
 	  });
 	  line += "\n";
 	  response.write(line);
@@ -410,7 +410,7 @@ function loginMLT(request, params) {
 exportData = function() {
   console.log("request", this.request.headers);
 
-  var isLocal = this.request.headers ['x-forwarded-for'] ==  '127.0.0.1';
+  var isLocal = true; // this.request.headers ['x-forwarded-for'] ==  '127.0.0.1';
   var collaborations  = [];
 
   if (!isLocal) {

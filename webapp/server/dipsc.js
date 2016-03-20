@@ -24,6 +24,7 @@ Meteor.methods({
 	return data;
     },
     prepareGeneStatistics: function(study_label) {
+        return;
 	console.log("prepareGeneStatistics", study_label);
 
         var study = Collections.studies.findOne({id: study_label});
@@ -657,7 +658,7 @@ correlateDscore = function(a, b) {
 
 // Meteor.startup(DIPSCtest);
 Meteor.startup(function() {
-    Meteor.call("prepareGeneStatistics", "prad_wcdt");
+    // Meteor.call("prepareGeneStatistics", "prad_wcdt");
 });
 
 
