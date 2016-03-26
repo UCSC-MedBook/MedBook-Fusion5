@@ -17,7 +17,6 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var v = _.clone(chartDocument.pivotTableConfig.rows);
     var h = _.clone(chartDocument.pivotTableConfig.cols);
 
-    debugger;
     var xk = Object.keys(exclusions);
     var data = chartDocument.chartData.filter(function(elem) {
         for (var i = 0; i < xk.length; i++) {
@@ -56,7 +55,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 var gene_list =  ["AR", "TP53", "PTEN", "FOXA1", "ZBTB16", "NCOR1", "NCOR2", "PIK3CA", "PIC3CB", "PIK3R1", "AKT1", "BRAF", "RAF1", "APC", "CTNNB1", "RSPO2", "ZNRF3", "BRCA2", "ATM", "BRCA1", "CDK12", "MLH1", "MSH2", "RB1", "CDKN1B", "CDKN2A", "CCND1", "KMT2C", "KMT2D", "KDM6A", "CHD1", "SPOP", "MED12", "ZFHX3", "ERF", "GNAS"];
 
-var gene_panel =  [ 
+var Prototype_gene_panel =  [ 
     {name:"Important", feature_list: ["AR", "TP53", "PTEN"]},
     {name:"AR-Associated", feature_list: ["FOXA1", "ZBTB16", "NCOR1", "NCOR2"]},
     {name:"PI3K Pathway", feature_list: [ "PIK3CA", "PIC3CB", "PIK3R1", "AKT1"]},
@@ -112,6 +111,7 @@ function addViz(window, geneDataBundle, viz, chartDocument, WIDTH,legend) {
 
     var j = 0;
     var k = fields.length;
+    var gene_panel = chartDocument.genePanel || Prototype_gene_panel;
     for (var j = 0; j < gene_panel.length; j++)  {
 	var g = svg
 	   .append("g")

@@ -294,6 +294,19 @@ Template.checkBox.helpers({
 
 Template.Controls.events({
 
+  'click .genePanelPicker' : function(e) {
+       var TheChart = CurrentChart();
+       var genePanel = TheChart.genePanel;
+
+       var text = genePanel == null ? "example:feature1,feature2,feature3" : genePanel.map(function(row) {
+           return row.name + ":" + row.feature_list.join(",");
+       }).join("\n");
+       Overlay("GenePanelPicker", { 
+	   theChart: TheChart,
+	   text: text
+       });
+  }, 
+
   'click .element' : function(e) {
        var field =  $(e.target).data("field");
        var TheChart = CurrentChart();
