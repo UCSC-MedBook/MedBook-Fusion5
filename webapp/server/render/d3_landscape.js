@@ -6,12 +6,10 @@ var leftLabel = 200;
 var mark_unit_width=10, mark_unit_height=20;
 
 D3Landscape = function(window, chartDocument, opts, exclusions) {
-    var geneDataBundle = query(chartDocument);
 
     var WIDTH = (leftLabel + (chartDocument.chartData.length * mark_unit_width)) + "px";
 
     var wrapper = window.$("<div id='wrapper' >").css({ width: WIDTH, height: "1000px" });
-    var viz = window.$("<div id='viz' >").css({ "margin-top": "20px", width: WIDTH, height: "1000px" }).appendTo(wrapper);
     window.$("<div id='stat' class='stat'title='two-tail P-value'>" ).css({ width: "100%", height: "50" }).appendTo(wrapper);
 
     var v = _.clone(chartDocument.pivotTableConfig.rows);
@@ -48,8 +46,16 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
     var predicates = cartesianProductOf(h.concat(v).map(unique));
 
-    var legend = window.$('<div class="legend" style="background-color:#fff3ea;float:right;margin-right:20px;">').appendTo(wrapper);
-    addViz(window, geneDataBundle, viz[0], chartDocument, WIDTH,legend);
+    addFields(window, wrapper, chartDocument, WIDTH);
+
+    var gene_panel = chartDocument.genePanel || Prototype_gene_panel;
+    for (var j = 0; j < gene_panel.length; j++)  {
+        var bunch = gene_panel[j]
+        var height = mark_unit_height * bunch.feature_list.length;
+	var viz = window.$("<div id='viz' >").css({ "background-color" : colors[j], "margin-bottom": "2px", width: WIDTH, height: height + "px" }).appendTo(wrapper);
+	addViz(bunch, window, viz[0], chartDocument, WIDTH);
+    }
+
     return wrapper;
 } // D3Landscape()
 
@@ -66,7 +72,7 @@ var Prototype_gene_panel =  [
     {name:"Chromatin Modifier", feature_list: ["KMT2C", "KMT2D", "KDM6A", "CHD1"]},
     {name:"other", feature_list: ["SPOP", "MED12", "ZFHX3", "ERF", "GNAS"]}
 ];
-function query(chartDocument) {
+function query(chartDocument, gene_list) {
    var study_label = chartDocument.studies[0];
    var study = Collections.studies.findOne({id: study_label});
 
@@ -83,72 +89,59 @@ function query(chartDocument) {
 
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
-function addViz(window, geneDataBundle, viz, chartDocument, WIDTH,legend) {
+function addViz(bunch, window, viz, chartDocument, WIDTH) {
+    var geneDataBundle = query(chartDocument, bunch.feature_list);
 
     var probability_color = d3.scale.linear() .domain([0, .1])
         .range(["green", "white"]);
 
-    var width = parseInt(d3.select(viz).style('width'), 10) - margin.left - margin.right;
-    var height = parseInt(d3.select(viz).style('height'), 10) - margin.top - margin.bottom;
-
-
-
-
+    var SVGwidth = parseInt(d3.select(viz).style('width'), 10);
+    var SVGheight = parseInt(d3.select(viz).style('height'), 10);
 
 
     var svg = d3.select(viz).append("svg").attr("id", "vizsvg")
-	.attr("width", width + margin.left + margin.right)
-	.attr("height", height + margin.top + margin.bottom)
-        .append("g")
-	   .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    // svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")") .call(xAxis);
-    // svg.append("g").attr("class", "axis").attr("transform", "translate(" + leftLabel + ", 0)") .call(yAxis);
-
-
-    var fields = chartDocument.pivotTableConfig.cols.concat( chartDocument.pivotTableConfig.rows);
-
+	.attr("width", SVGwidth)
+	.attr("height", SVGheight)
+        .append("g").attr("transform", "translate(" + margin.left + ", -10)");
 
     var j = 0;
-    var k = fields.length;
-    var gene_panel = chartDocument.genePanel || Prototype_gene_panel;
-    for (var j = 0; j < gene_panel.length; j++)  {
-	var g = svg
-	   .append("g")
-	   .attr("transform", "translate(" + 0 +  "," + ((0.5+k)*mark_unit_height) + ")");
+    var g = svg
+       .append("g")
+       .attr("transform", "translate(" + 0 +  "," + ((0.5)*mark_unit_height) + ")");
 
-         var hh = (mark_unit_height * gene_panel[j].feature_list.length) -5;
-	 var ww = leftLabel;
-	 g.append("rect")
-	   .attr("x", 0)
-	   .attr("y", 0)
-	   .attr("width", WIDTH)
-	   .attr("height", hh)
-	   // .attr("stroke", "green") .attr("stroke-width", "3px")
-	   .attr("fill", colors[j])
-	   .style("opacity", 0.5)
+     var hh = (mark_unit_height * bunch.feature_list.length) -5;
+     var ww = leftLabel;
+     /*
+     g.append("rect")
+       .attr("x", 0)
+       .attr("y", 0)
+       .attr("width", WIDTH)
+       .attr("height", hh)
+       // .attr("stroke", "green") .attr("stroke-width", "3px")
+       .attr("fill", colors[j])
+       .style("opacity", 0.5)
+       */
 
-	 g.append("text")
-	    .text(gene_panel[j].name)
-	    .attr("x",  leftleftLabel)
-	    .attr("y", hh/2)
+     g.append("text")
+	.text(bunch.name)
+	.attr("x",  leftleftLabel)
+	.attr("y", hh/2)
+	.attr("font-size",10)
+	.attr("font-family","sans-serif")
+	.attr("text-anchor","middle")
+	.attr("font-weight","bold")
+	.attr("transform", "rotate(-30, " + (ww/2) +","+  (hh/2)+ ")");
+
+
+    for (var jj = 0; jj < bunch.feature_list.length; jj++)  {
+	g.append("text")
+	    .text(bunch.feature_list[jj])
+	    .attr("y", (jj*mark_unit_height)+10)
+	    .attr("x",  leftLabel -2)
 	    .attr("font-size",10)
 	    .attr("font-family","sans-serif")
-	    .attr("text-anchor","middle")
+	    .attr("text-anchor","end")
 	    .attr("font-weight","bold")
-            .attr("transform", "rotate(-30, " + (ww/2) +","+  (hh/2)+ ")");
-
-
-	for (var jj = 0; jj < gene_panel[j].feature_list.length; jj++, k++)  {
-	    g.append("text")
-		.text(gene_panel[j].feature_list[jj])
-		.attr("y", (jj*mark_unit_height)+10)
-		.attr("x",  leftLabel -2)
-		.attr("font-size",10)
-		.attr("font-family","sans-serif")
-		.attr("text-anchor","end")
-		.attr("font-weight","bold")
-	}
     }
 
     function rect(i, j, pvalue, label, text2, text3, color) {
@@ -177,9 +170,7 @@ function addViz(window, geneDataBundle, viz, chartDocument, WIDTH,legend) {
     });
 
     var gene_label_map = {};
-    gene_list.map(function(gene, j) {
-        gene_label_map[gene_list[j]] = fields.length + j;
-    });
+    bunch.feature_list.map(function(gene, j) { gene_label_map[gene] =  j; });
 
 
     geneDataBundle.gene_data.map(function(doc) {
@@ -200,28 +191,66 @@ function addViz(window, geneDataBundle, viz, chartDocument, WIDTH,legend) {
 
 
 
+}
+
+function addFields(window, wrapper, chartDocument, SVGwidth) {
+    var fields = chartDocument.pivotTableConfig.cols.concat( chartDocument.pivotTableConfig.rows);
+    if (fields.length == 0)
+        return 
+
+    var SVGheight = fields.length * mark_unit_height;
+    var viz = window.$("<div id='viz' >").css({  width: SVGwidth, height: SVGheight + "px" }).appendTo(wrapper);
+    var probability_color = d3.scale.linear() .domain([0, .1]).range(["green", "white"]);
+
+    viz = viz[0];
+
+    var svg = d3.select(viz).append("svg").attr("id", "vizsvg")
+	.attr("width", SVGwidth)
+	.attr("height", SVGheight)
+        .append("g").attr("transform", "translate(" + margin.left + ", -10)");
+
+    var j = 0;
+    var k = fields.length;
+    var g = svg
+       .append("g")
+       .attr("transform", "translate(" + 0 +  "," + ((0.5+k)*mark_unit_height) + ")");
+
+    function rect(i, j, pvalue, label, text2, text3, color) {
+	var x = leftLabel + (i*mark_unit_width);
+	var y = (j*mark_unit_height) + 10;
+	var rectangle = svg.append("rect")
+	  .attr("x", x)
+	  .attr("y", y)
+	  .attr("text", label)
+	  .attr("text2", text2)
+	  .attr("text3", text3)
+	  .attr("class", "BoxPlotToolTipHover")
+	  .attr("width", mark_unit_width)
+	  .attr("height", mark_unit_height);
+        
+	if (color == null)
+	  rectangle.style("fill", probability_color(pvalue));
+        else
+	  rectangle.style("fill", color);
+    }
+
+    var sample_label_map = {};
+
+    chartDocument.chartData.map(function(doc, i) {
+	sample_label_map[doc.Sample_ID] = i;
+    });
+
     var categorical_color_map = d3.scale.category20c();
-
-    function addLegend(field, value, color) {
-        var line = window.$("<div>").appendTo(legend);
-
-        window.$("<div style='display:inline-block;border:1px solid %000;'>&nbsp;</div>").css({
-          background: color,
-          width:  mark_unit_width  + "px",
-          height: mark_unit_height + "px",
-        }).appendTo(line);
-        window.$("<span>"  + field+",&nbsp"+value + "</span>").appendTo(line);
-    };
-
 
     fields.map(function(field, j) {
 	var meta = chartDocument.metadata[field];
 	var numerical_color_map;
 
+
 	if (meta.type == "String" && meta.allowedValues  && meta.allowedValues.length > 0 && meta.allowedValues.length < 10) {
 	    meta.allowedValues.map(function (value) { 
 		var color = categorical_color_map(field+";"+value)
-		addLegend(field, value, color);
+		// addLegend(field, value, color);
 	    });
 	} else if (meta.type == "Number") {
 	     var values =_.pluck(chartDocument.chartData, field).filter(function(n) { return !isNaN(n)});
@@ -230,7 +259,6 @@ function addViz(window, geneDataBundle, viz, chartDocument, WIDTH,legend) {
 		 mid = (max + min) / 2; 
 	     numerical_color_map = d3.scale.linear().domain([min, mid, max]).range(["blue", "white", "red"]);
 	}
-
 
 	chartDocument.chartData.map(function(doc, i) {
 	    // var i = sample_label_map[doc.Sample_ID];
