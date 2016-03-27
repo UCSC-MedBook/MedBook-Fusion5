@@ -90,8 +90,11 @@ function analyze(rowData) {
 function saveTable(rowData) {
     var headers = _.clone(rowData[0]);
     var primaryKeys = rowData.map(function(row) { return row[0]; });
+    var results = analyze(_.clone(rowData));
 
-    var fields =  headers.map(function(fieldName) {
+    var fields =  headers.map(function(fieldName, i) {
+	console.log(results);
+	debugger;
 	return {
 		  "Field_Name": fieldName,
 		  "optional": true,
@@ -100,9 +103,13 @@ function saveTable(rowData) {
     });
 
     Meteor.call("newTableFromSpreadsheet", 
-       $("newTableName").val(), $("#studyForNewTable").val(), fields, rowData, 
+       $("#newTableName").val(), $("#studyForNewTable").val(), fields, rowData, 
 
        function(err, ret) {
+	   if (err)
+	       Overlay("MessageOver", { text: err })
+	   else if (ret)
+	       Overlay("MessageOver", { text: ret })
        }
     );
 }
