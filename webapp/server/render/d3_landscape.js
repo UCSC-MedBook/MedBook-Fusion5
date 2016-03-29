@@ -88,7 +88,11 @@ var Prototype_gene_panel =  [
 function query(chartDocument, gene_list) {
    var study_label = chartDocument.studies[0];
    var study = Collections.studies.findOne({id: study_label});
-   var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, study_label: study_label, gene_label: {$in: gene_list}}).fetch();
+   var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
+       study_label: study_label,
+       gene_label: {$in: gene_list}
+       // sample_label: {$in: chartDocument.sample_list}
+   }).fetch();
 
    var sample_labels = 
    	_.union( study.Sample_IDs,
