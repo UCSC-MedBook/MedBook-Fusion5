@@ -235,14 +235,18 @@ Template.Controls.helpers({
 	      rest.push(c);
        });
        function ss(a, b){
-          var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
-	  if (studyA < studyB) return -1 
-	  if (studyA > studyB) return 1
+          try {
+	      var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
+	      if (studyA < studyB) return -1 
+	      if (studyA > studyB) return 1
 
-          var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
-	  if (nameA < nameB) return -1 
-	  if (nameA > nameB) return 1
-	  return 0 //default return value (no sorting)
+	      var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
+	      if (nameA < nameB) return -1 
+	      if (nameA > nameB) return 1
+	      return 0 //default return value (no sorting)
+	  } catch (err) {
+	      return 0;
+	  }
        };
        mine   = mine.sort(ss);
        others = others.sort(ss);
