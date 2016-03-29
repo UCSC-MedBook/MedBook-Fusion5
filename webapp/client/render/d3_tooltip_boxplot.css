@@ -1,0 +1,7 @@
+rect.Toggle {
+   display:none;
+}
+
+rect.Toggle:hover {
+   display:visible;
+}

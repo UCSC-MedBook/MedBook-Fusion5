@@ -27,6 +27,13 @@ d3_tooltip_boxplot = function () {
       }
     };
 
+    $(".Toggle").on("click", function(event) { 
+	var klass = $(this).data("klass");
+	console.log("clicked", klass);
+	$("."+klass).toggle();
+
+    });
+
     $(".BoxPlotToolTipHover")
     .on("mouseover", function(event) {
         

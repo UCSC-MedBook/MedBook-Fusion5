@@ -1,7 +1,7 @@
 /*
  * this file has the landscape visualizaton.
  */
-var colors = ["#f898e8", "#f87859", "#ffad33", "#00b6ff", "#ee6900", "#00a167", "#005d4d", "#d0ecb2", "#de6d8a", "#862e7b", "#861a41", "#00fadb", "#006fdb", "#006a97", "#ffbdb5", "#835de7", "#374e14", "#acb20e", "#00def7", "#00cb2d", "#901500", "#ccccff"];
+var colors = ["rgb(179,100,200)", "rgb(100,200,146)", "rgb(200,50,50)", "rgb(100,225,250)", "#ffbdb5", "#835de7", "#00b6ff", "#00fadb", "#ee6900", "#acb20e", "#f898e8", "#f87859", "#ffad33", "#d0ecb2", "#00def7", "#de6d8a", "#00cb2d", "#901500", "#ccccff"];
 
 
 var mark_unit_width=10, mark_unit_height=20;
@@ -63,7 +63,9 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     for (var j = 0; j < gene_panel.length; j++)  {
         var bunch = gene_panel[j]
 	var color = colors[(j % colors.length)];
-	addViz(bunch, window, wrapper, chartDocument, WIDTH, color, leftLabel);
+	color = "white";
+	addViz("k" + j, true, bunch, window, wrapper, chartDocument, WIDTH, color, leftLabel);
+	addViz("k" + j, false, bunch, window, wrapper, chartDocument, WIDTH, color, leftLabel);
     }
 
     console.log("elapsed time", Date.now() - start);
@@ -101,12 +103,31 @@ function query(chartDocument, gene_list) {
 
 var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
 
-function addViz(bunch, window, wrapper, chartDocument, WIDTH, color, leftLabel) {
+var fontSize = 10, fontSizeHalf = 5;
+
+function addViz(klass, collapse, bunch, window, wrapper, chartDocument, WIDTH, color, leftLabel) {
     var geneDataBundle = query(chartDocument, bunch.feature_list);
+
+    if (collapse) {
+	geneDataBundle.gene_labels = [""];
+	geneDataBundle.gene_data.map(function(doc) {
+	    doc.gene_label = "none";
+	});
+    }
+    // console.log("bundle", geneDataBundle);
+
+
     var feature_list = geneDataBundle.gene_labels;
     var height = mark_unit_height * feature_list.length;
 
-    var viz = window.$("<div id='viz' >").css({ "background-color" : color, "margin-bottom": "2px", width: WIDTH, height: height + "px" }).appendTo(wrapper);
+    var viz = window.$("<div id='viz' >").css({ 
+	"display": collapse ? "display" : "none", // display collapsed by default
+	"background-color" : color,
+	"margin-bottom": "2px",
+	width: WIDTH,
+	height: height + "px" }).appendTo(wrapper);
+
+    viz.addClass(klass);
     viz = viz[0];
 
     var probability_color = d3.scale.linear() .domain([0, .1])
@@ -128,14 +149,31 @@ function addViz(bunch, window, wrapper, chartDocument, WIDTH, color, leftLabel) 
 
      var feature_list_height = (mark_unit_height * feature_list.length) -5;
 
+     var bunch_label_toggle = g.append("rect")
+        .attr("class", "Toggle")
+	.attr("x", 0)
+	.attr("y", 0)
+	.attr("rx", 15)
+	.attr("ry", 15)
+	.attr("height", feature_list_height)
+	.attr("width", leftLabel)
+        .attr("class", "Toggle")
+        .attr("data-klass", klass)
+	.attr("stroke-width",1)
+	.attr("stroke", "black")
+	.attr("fill", "white")
+	.attr("fill-opacity", "0.03")
+
      var bunch_label = g.append("text")
 	.text(bunch.name)
 	.attr("x",  leftLabel / 2)
-	.attr("y", feature_list_height/2)
-	.attr("font-size",10)
+	.attr("y", feature_list_height/2 + fontSizeHalf )
+	.attr("font-size",fontSize)
 	.attr("font-family","sans-serif")
 	.attr("text-anchor","middle")
-	.attr("font-weight","bold");
+	.attr("font-weight","bold")
+        .attr("class", "Toggle")
+        .attr("data-klass", klass)
 
     if (feature_list.length > 2) {
         var degrees = feature_list.length < 5  ? -10 : -30;
