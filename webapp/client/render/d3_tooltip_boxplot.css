@@ -1,7 +1,3 @@
-rect.Toggle {
-   display:none;
-}
-
-rect.Toggle:hover {
-   display:visible;
+text.Toggle:hover {
+   fill:blue;
 }

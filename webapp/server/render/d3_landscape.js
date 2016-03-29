@@ -21,7 +21,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
     var WIDTH = (leftLabel + (chartDocument.chartData.length * mark_unit_width)) + "px";
 
-    var wrapper = window.$("<div id='wrapper' >").css({ width: WIDTH, height: "1000px" });
+    var wrapper = window.$("<div id='wrapper' >").css({ width: WIDTH, height: "auto" });
     window.$("<div id='stat' class='stat'title='two-tail P-value'>" ).css({ width: "100%", height: "50" }).appendTo(wrapper);
 
     var v = _.clone(chartDocument.pivotTableConfig.rows);
@@ -157,14 +157,12 @@ function addViz(klass, collapse, bunch, window, wrapper, chartDocument, WIDTH, c
         .attr("class", "Toggle")
 	.attr("x", 0)
 	.attr("y", 0)
-	.attr("rx", 15)
-	.attr("ry", 15)
+	.attr("rx", collapse ? 3 : 5)
+	.attr("ry", collapse ? 3 : 5)
 	.attr("height", feature_list_height)
 	.attr("width", leftLabel)
         .attr("class", "Toggle")
         .attr("data-klass", klass)
-	.attr("stroke-width",1)
-	.attr("stroke", "black")
 	.attr("fill", "white")
 	.attr("fill-opacity", "0.03")
 
