@@ -5,7 +5,7 @@ function pruneTable(source_data) {
 	// prune off end null rows 
 	while ( source_data.length > 0 && source_data[source_data.length -1] != null && source_data[source_data.length -1].length == 0 || source_data[source_data.length -1][0] == null)
 	     source_data.pop();
-	if (source_data.length  <= 2 || source_data[0].length <= 2)
+	if (source_data.length  < 2 || source_data[0].length < 2)
 	    throw new Meteor.Error("Data table too small");
 
 	//  prune off null ends of column header (first row)
