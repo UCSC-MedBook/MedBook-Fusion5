@@ -298,6 +298,18 @@ Template.checkBox.helpers({
 
 Template.Controls.events({
 
+  'click .geneSignatureFormula' : function(e) {
+       var TheChart = CurrentChart();
+       var geneSignatureFormula = TheChart.geneSignatureFormula;
+
+       var text = geneSignatureFormula == null ? "Upreg = 2*TP53 + AR + RB" : geneSignatureFormula;
+       Overlay("GeneSignatureFormula", { 
+	   theChart: TheChart,
+	   text: text
+       });
+  }, 
+
+
   'click .genePanelPicker' : function(e) {
        var TheChart = CurrentChart();
        var genePanel = TheChart.genePanel;

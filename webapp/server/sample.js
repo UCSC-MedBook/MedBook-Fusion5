@@ -278,7 +278,8 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
 function SampleJoin(userId, ChartDocument, fieldNames) {
     ST = Date.now();
 
-    // Step 0 alidate params
+    // Step 0 validate params
+    // console.log("step 0",  ChartDocument.pivotTableConfig);
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
       return { dataFieldNames: [], chartData: []};
@@ -530,7 +531,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
 
-    console.log("step 5a",  Date.now() - ST);
+    console.log("step 5a",  Date.now() - ST, ChartDocument.pivotTableConfig);
 
     var dataFieldNames =  Object.keys(keyUnion);
     var cols = [];
@@ -540,8 +541,10 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
 	rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
+    /*
     cols = _.intersection(cols, dataFieldNames);
     rows = _.intersection(rows, dataFieldNames);
+    */
 
     var selectedFieldNames = _.union(rows, cols);
 
@@ -561,7 +564,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	 }
     } // if transforms
 
-    console.log("step 5b",  Date.now() - ST);
+    // console.log("step 5b",  Date.now() - ST, ChartDocument.pivotTableConfig, cols);
 
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
@@ -576,7 +579,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	       return true;
 	    }
 	});
-    console.log("step 6a",  Date.now() - ST);
+    // console.log("step 6a",  Date.now() - ST, ChartDocument.pivotTableConfig);
 
     chartData = chartData.sort(function(a,b) {  // sort by field order
         var something = 0;
@@ -626,7 +629,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
        return something;
     });
 
-    console.log("step 6b",  Date.now() - ST);
+    // console.log("step 6b",  Date.now() - ST);
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.
     // console.log("renderChartData", chartData.length);
@@ -636,7 +639,16 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     ChartDocument.selectedFieldNames = selectedFieldNames;
     ChartDocument.metadata = metadata;
 
+    // console.log("step 6b1",  Date.now() - ST);
+
     var html = renderJSdom(ChartDocument);
+
+    // console.log("step 6b2",  Date.now() - ST);
+
+    if (ChartDocument.geneSignatureFormula)
+	ProcessGeneSignatureFormula(ChartDocument);
+
+    // console.log("step 6b3",  Date.now() - ST);
 
     var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
@@ -651,10 +663,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		"pivotTableConfig.cols": cols, 
                }});
 
-
-
-    console.log("step 6c - done",  Date.now() - ST);
-    console.log("done", ret);
+    // console.log("step 6c - done",  Date.now() - ST);
+    // console.log("done", ret);
 } 
 
 
@@ -673,7 +683,7 @@ Meteor.startup(function() {
     });// chart.after.update
 
     Charts.find({html: {$exists:0}}).forEach(function(doc) {
-	console.log("render", doc._id);
+	// console.log("render", doc._id);
         ensureMinimalChart(doc);
 	doc.html = renderJSdom(doc);
 	Charts.direct.update({ _id : doc._id }, {$set: doc});
