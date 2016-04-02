@@ -1,4 +1,3 @@
-var jsdom, serializeDocument;
 
 Meteor.startup(function() {
     jsdom = Meteor.npmRequire("node-jsdom");
@@ -61,8 +60,9 @@ renderJSdom = function(ChartDocument) {
 				? html
 				: serializeDocument(html))
 			    : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
-			    // console.log("updating html", html);
-		        Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
+
+			console.log("updating html", html);
+		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
 	    }) // end jsdom.env
