@@ -640,12 +640,17 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     // console.log("step 6b1",  Date.now() - ST);
 
+    try {
+	if (ChartDocument.geneSignatureFormula)
+	    ProcessGeneSignatureFormula(ChartDocument);
+    } catch (err) {
+        console.log("ERROR", err);
+    }
+
     var html = renderJSdom(ChartDocument);
 
     // console.log("step 6b2",  Date.now() - ST);
 
-    if (ChartDocument.geneSignatureFormula)
-	ProcessGeneSignatureFormula(ChartDocument);
 
     // console.log("step 6b3",  Date.now() - ST);
 

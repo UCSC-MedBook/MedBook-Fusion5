@@ -29,14 +29,14 @@ ProcessGeneSignatureFormula = function(chart) {
 
     console.log("allGeneFields", allGeneFields);
 
-    var program = lines.map(function(line) { return "try {" + line + "} catch (err) {};" }).join("\n");
+    var program = lines.map(function(line) { 
+        var lhs = line.replace(/=.*/, "");
+	return "try {" + line + "} catch (err) {" + lhs + "='N/A'};" }).join("\n");
     console.log("program", program);
     var script = new vm.Script(program);
 
 
 
-    var studiesCache = {};
-    Collections.studies.find({ id: {$in: chart.studies}, }).forEach(function(study) { studiesCache[study.id] = study; });
 
     var geneCache = {};
     Expression3.find({
@@ -46,6 +46,9 @@ ProcessGeneSignatureFormula = function(chart) {
        console.log("expression3", chart.studies, allGeneFields, gene.study_label, gene.gene_label);
        geneCache[gene.study_label + gene.gene_label] = gene;
     });
+
+    var studiesCache = {};
+    Collections.studies.find({ id: {$in: chart.studies} }).forEach(function(study) { studiesCache[study.id] = study; });
 
     var sandbox = {};
 

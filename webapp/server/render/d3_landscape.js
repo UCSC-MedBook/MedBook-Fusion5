@@ -224,9 +224,15 @@ function addViz(klass, collapse, bunch, window, wrapper, chartDocument, WIDTH, c
 
 
     geneDataBundle.gene_data.map(function(doc) {
+	if (doc.gene_label == null || doc.gene_label == "none")
+	    return;
+	if (doc.sample_label == null || doc.sample_label == "none")
+	    return;
+
 	var i = sample_label_map[doc.sample_label];
 	var j = gene_label_map[doc.gene_label];
 	var label = doc.sample_label;
+
 
 	var text2 = doc.gene_label + " " + doc.mutation_type; 
 	if (doc.chasm_driver_p_value)
