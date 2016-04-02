@@ -393,7 +393,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
                         // console.log("found", label, geneName, sampleID, obj);
                         chartDataMap[sampleID][label] = obj;
-			debugger
 			if (metadata[label] == null)
 			    metadata[label] = { 
 				collection: domain.collection,
