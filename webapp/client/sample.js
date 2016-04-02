@@ -720,11 +720,11 @@ renderChart = function() {
 
 Template.Controls.rendered = function(){
    var TheChart = CurrentChart();
-   initializeHtmlElements(TheChart);
    setTimeout(function() {
+       initializeHtmlElements(TheChart);
        initializeJQuerySelect2(TheChart);
        initializeJQuerySortable(TheChart);
-   }, 5000);
+   }, 1000);
 };
 
 /*
