@@ -80,6 +80,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	   // sample_label: {$in: chartDocument.sample_list}
        }).fetch();
        sample_labels = _.union(gene_data.map(function (gd) { return gd.sample_label  }).sort());
+       console.log("number of samples which contain mutations", sample_labels.length);
        return sample_labels;
     }
 
@@ -108,6 +109,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	if (_.indexOf(sample_labels, doc.Sample_ID, true) >= 0)
 	    sample_label_map[doc.Sample_ID] = n++;
     });
+    console.log("number of samples", n);
 
     function addViz(klass, collapse) {
 	var geneDataBundle = query(chartDocument, bunch.feature_list);
