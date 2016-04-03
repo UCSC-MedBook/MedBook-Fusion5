@@ -16,7 +16,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
          var l  = gene_panel[j].name.length;
 	 if (maxLabel < l) maxLabel = l;
     }
-    var leftLabel = l * mark_unit_width;
+    var leftLabel =  2 * l * mark_unit_width;
 
 
     var WIDTH = (leftLabel + (chartDocument.chartData.length * mark_unit_width)) + "px";
@@ -171,11 +171,11 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	 var bunch_label = g.append("text")
 	    .text(bunch.name)
-	    .attr("x",  leftLabel / 2)
+	    .attr("x",  leftLabel)
 	    .attr("y", feature_list_height/2 + fontSizeHalf )
 	    .attr("font-size",fontSize)
 	    .attr("font-family","sans-serif")
-	    .attr("text-anchor","middle")
+	    .attr("text-anchor","end")
 	    .attr("font-weight","bold")
 	    .attr("class", "Toggle")
 	    .attr("data-klass", klass)
