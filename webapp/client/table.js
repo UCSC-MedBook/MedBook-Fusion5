@@ -30,8 +30,13 @@ function TableData(theChart, exclusions) {
 window.makeReactiveTable = function(theChart, extraOptions) {
 
     var result = $("<div class='ChartWrapper' >").css({
+
+      /*
       "min-width": "800px",
       "min-height": "600px"
+      */
+      width: "100%",
+      height: "100%"
     });
 
     var data =  TableData(theChart, {});
@@ -42,18 +47,18 @@ window.makeReactiveTable = function(theChart, extraOptions) {
 }
 
 hot = null;
+hotSet = null;
 
 window.makeHandsontable = function(theChart, extraOptions) {
 
     Meteor.subscribe("TheChartData", theChart._id);
-    function dataTable() {
+
+    window.hotSet = function() {
         var fields = theChart.pivotTableConfig.rows.concat(theChart.pivotTableConfig.cols);
 	var columns = fields.map(function(field, i) { return {data: field}});
 	if (hot)
 	   try { hot.destroy(); } catch (err) {};
-
-
-	hot = new Handsontable(document.getElementById('ChartWrapper'), { 
+	window.hot = new Handsontable(document.getElementById('ChartWrapper'), { 
 	     minSpareRows: 1,
 	     rowHeaders: true,
 	     colHeaders: true,
@@ -61,12 +66,12 @@ window.makeHandsontable = function(theChart, extraOptions) {
 	     colHeaders: fields,
 	     columns: columns,
 	     data: theChart.chartData,
-	     height: 1200
-
-	});
+	     width:  "100%",
+	     height: "100%"
+	 });
     }
-    
-    setTimeout(dataTable, 250);
+
+    setTimeout(function() { window.hotSet(1200, 1200); }, 250);
     return "<div id='ChartWrapper' style='min-width:800px;min-height:600px;'></div>"
 }
 

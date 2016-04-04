@@ -576,6 +576,8 @@ function initializeHtmlElements(document) {
 	  });
 
      $('.studiesSelectedTable th').hide();
+
+     $(".dataExplorerControlPanel").resizable().resize(window.hotSet);
 }
 
 function initializeJQuerySelect2(document) {
