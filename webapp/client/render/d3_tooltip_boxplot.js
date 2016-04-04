@@ -36,7 +36,6 @@ d3_tooltip_boxplot = function () {
 		console.log("clicked", klass);
 		$("."+klass).toggle();
 	    }, 100);
-
 	});
 
 	$(".BoxPlotToolTipHover")
