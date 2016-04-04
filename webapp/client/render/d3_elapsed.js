@@ -1,12 +1,16 @@
 
-window.makeD3Elapsed = function(theChart, opts) {
+window.D3Timescape = function(theChart, opts) {
     var totalWidth = 2000;
     var totalHeight = 2000;
-    
+
+    Meteor.subscribe("TheChartData", theChart._id);
+    if (theChart.chartData.length == 0) return "<div>Loading ... </div>";
+
 
     theChart.chartData.sort(function(a,b) { return b.Days_on_Study - a.Days_on_Study; });
 
     var wrapper = "<div id='wrapper' style='width " + totalHeight + ";height:" + totalHeight + " ;'><div id='viz' style='margin-top:20p;'></div><div id='stat' class='stat' title='two-tail P-value' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
+
     setTimeout(function() {
         $('#viz').empty();
         $('#stat').empty();
