@@ -3,6 +3,18 @@
  */
 var colors = ["rgb(179,100,200)", "rgb(100,200,146)", "rgb(200,50,50)", "rgb(100,225,250)", "#ffbdb5", "#835de7", "#00b6ff", "#00fadb", "#ee6900", "#acb20e", "#f898e8", "#f87859", "#ffad33", "#d0ecb2", "#00def7", "#de6d8a", "#00cb2d", "#901500", "#ccccff"];
 
+var Prototype_gene_panel =  [ 
+    {name:"Important", feature_list: ["AR", "TP53", "PTEN"]},
+    {name:"AR-Associated", feature_list: ["FOXA1", "ZBTB16", "NCOR1", "NCOR2"]},
+    {name:"PI3K Pathway", feature_list: [ "PIK3CA", "PIC3CB", "PIK3R1", "AKT1"]},
+    {name:"RAF Pathway", feature_list: [ "BRAF", "RAF1"]},
+    {name:"WNT Pathway", feature_list: ["APC", "CTNNB1", "RSPO2", "ZNRF3"]},
+    {name:"DNA Repair", feature_list: ["BRCA2", "ATM", "BRCA1", "CDK12", "MLH1", "MSH2"]},
+    {name:"Cell Cycle", feature_list: ["RB1", "CDKN1B", "CDKN2A", "CCND1"]},
+    {name:"Chromatin Modifier", feature_list: ["KMT2C", "KMT2D", "KDM6A", "CHD1"]},
+    {name:"other", feature_list: ["SPOP", "MED12", "ZFHX3", "ERF", "GNAS"]}
+];
+
 
 var mark_unit_width=10, mark_unit_height=20;
 
@@ -10,6 +22,9 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var start = Date.now();
 
     var gene_panel = chartDocument.genePanel || Prototype_gene_panel;
+
+    if (gene_panel == null || gene_panel.length == 0)
+       throw new Error("Click on gene panel and add some gene sets");
 
     var maxLabel = 0;
     for (var j = 0; j < gene_panel.length; j++)  {
@@ -61,17 +76,6 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var gene_labels = _.union.apply(null, _.pluck(gene_panel, "feature_list"));
     var sample_labels = querySampleLabels(chartDocument, gene_labels);
 
-    var Prototype_gene_panel =  [ 
-	{name:"Important", feature_list: ["AR", "TP53", "PTEN"]},
-	{name:"AR-Associated", feature_list: ["FOXA1", "ZBTB16", "NCOR1", "NCOR2"]},
-	{name:"PI3K Pathway", feature_list: [ "PIK3CA", "PIC3CB", "PIK3R1", "AKT1"]},
-	{name:"RAF Pathway", feature_list: [ "BRAF", "RAF1"]},
-	{name:"WNT Pathway", feature_list: ["APC", "CTNNB1", "RSPO2", "ZNRF3"]},
-	{name:"DNA Repair", feature_list: ["BRCA2", "ATM", "BRCA1", "CDK12", "MLH1", "MSH2"]},
-	{name:"Cell Cycle", feature_list: ["RB1", "CDKN1B", "CDKN2A", "CCND1"]},
-	{name:"Chromatin Modifier", feature_list: ["KMT2C", "KMT2D", "KDM6A", "CHD1"]},
-	{name:"other", feature_list: ["SPOP", "MED12", "ZFHX3", "ERF", "GNAS"]}
-    ];
     function querySampleLabels(chartDocument, gene_list) {
        var study_label = chartDocument.studies[0];
        var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
