@@ -111,7 +111,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     });
     console.log("number of samples", n);
 
-    function addViz(klass, collapse) {
+    function addViz(klass, collapse, background_color) {
 	var geneDataBundle = query(chartDocument, bunch.feature_list);
 
 	if (collapse) {
@@ -130,7 +130,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	var viz = window.$("<div id='viz' >").css({ 
 	    "display": collapse ? "display" : "none", // display collapsed by default
-	    "background-color" : color,
+	    "background-color" : background_color,
 	    "margin-bottom": "2px",
 	    width: WIDTH,
 	    height: height + "px" }).appendTo(wrapper);
@@ -171,11 +171,11 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	 var bunch_label = g.append("text")
 	    .text(bunch.name)
-	    .attr("x",  leftLabel)
+	    .attr("x",   collapse ? leftLabel : (leftLabel / 2))
 	    .attr("y", feature_list_height/2 + fontSizeHalf )
 	    .attr("font-size",fontSize)
 	    .attr("font-family","sans-serif")
-	    .attr("text-anchor","end")
+	    .attr("text-anchor",collapse ? "end" : "middle")
 	    .attr("font-weight","bold")
 	    .attr("class", "Toggle")
 	    .attr("data-klass", klass)
@@ -294,6 +294,9 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	fields.map(function(field, j) {
 	    var meta = chartDocument.metadata[field];
+	    if (meta == null)
+	       throw new Error("In landscape, undefined field:" + String( field));
+
 	    var numerical_color_map;
 
 
@@ -339,10 +342,9 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
     for (var j = 0; j < gene_panel.length; j++)  {
         var bunch = gene_panel[j]
-	var color = colors[(j % colors.length)];
-	color = "white";
-	addViz("k" + j, true);
-	addViz("k" + j, false);
+	var background_color = colors[(j % colors.length)];
+	addViz("k" + j, true, "white");
+	addViz("k" + j, false, background_color);
     }
 
     console.log("elapsed time", Date.now() - start);

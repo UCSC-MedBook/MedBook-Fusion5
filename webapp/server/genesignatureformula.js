@@ -15,7 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 var vm = Npm.require("vm");
 
-ProcessGeneSignatureFormula = function(chart) {
+ProcessGeneSignatureFormula = function(chart, nextChartData) {
     var ST = Date.now();
     var lines = chart.geneSignatureFormula.split("\n").map(function(line) { return line.replace(/#.*/, "")})
 	.filter(function(line) { return line.match(/=/)});
@@ -52,22 +52,24 @@ ProcessGeneSignatureFormula = function(chart) {
 
     var sandbox = {};
 
-    chart.chartData.map(function(elem) {
+    nextChartData.map(function(elem) {
 
         var study = studiesCache[elem.Study_ID];
 
 	allGeneFields.map(function(gene_label) {
 	    var study = studiesCache[elem.Study_ID];
 	    var gene = geneCache[ elem.Study_ID + gene_label ];
-	    var n = gene.rsem_quan_log2[study.gene_expression_index[ elem.Sample_ID]];
+	    var n = gene ?  gene.rsem_quan_log2[study.gene_expression_index[ elem.Sample_ID]] : 0.0;
 	    sandbox[gene_label] = n;
 	});
 
 	script.runInNewContext(sandbox);
-	// console.log("after sandbox",sandbox, program);
+	console.log("after sandbox",sandbox, program);
+
 	resultFields.map(function (field) {
 	    elem[field] = sandbox[field];
 	});
+	console.log("elem", elem);
     });
 
     resultFields.map(function(field_label){
@@ -79,5 +81,4 @@ ProcessGeneSignatureFormula = function(chart) {
 	};
     });
     chart.dataFieldNames = _.union(chart.dataFieldNames, resultFields);
-    console.log("pgsf", Date.now() - ST);
 }
