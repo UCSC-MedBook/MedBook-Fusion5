@@ -450,7 +450,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
           }); // .map 
     } // if ChartDocument.geneLikeDataDomain 
 
-    console.log("step 3a",  Date.now() - ST);
+    // console.log("step 3a",  Date.now() - ST);
 
     var mapPatient_ID_to_Sample_ID = {};
     nextChartData.map(function(cd) {
@@ -461,7 +461,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
 
-    console.log("step 3b",  Date.now() - ST);
+    // console.log("step 3b",  Date.now() - ST);
     // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
@@ -493,7 +493,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
-	     console.log("META QUERY", label, msf);
+	     // console.log("META QUERY", label, msf);
 	     metadata[label] = msf;
 
              var fl = {};
@@ -521,7 +521,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              }); // forEach
 
         }); //  ChartDocument.additionalQueries.map
-    console.log("step 4",  Date.now() - ST);
+    // console.log("step 4",  Date.now() - ST);
 
     ChartDocument.metadata = metadata;
     try {
@@ -538,7 +538,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
 
-    console.log("step 5a",  Date.now() - ST, ChartDocument.pivotTableConfig,  ChartDocument.chartData);
+    // console.log("step 5a",  Date.now() - ST, ChartDocument.pivotTableConfig,  ChartDocument.chartData);
 
     var dataFieldNames =  Object.keys(keyUnion);
     var cols = [];
@@ -561,17 +561,17 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     var transforms = ChartDocument.transforms;
     if (transforms && transforms.length > 0) {
          var remodel = buildRemodelPlan(nextChartData, transforms, rows, cols);
-	 console.log("remodel", remodel);
+	 // console.log("remodel", remodel);
 
 	 if (remodel.doIt) {
 	     nextChartData = _.values(remodel.plan);
-	     console.log("nextChartData", nextChartData);
+	     // console.log("nextChartData", nextChartData);
 	 } else {
 	     nextChartData = dichotomizeOrBin(nextChartData, transforms, rows, remodel);
 	 }
     } // if transforms
 
-    console.log("step 5b",  Date.now() - ST, ChartDocument.chartData);
+    // console.log("step 5b",  Date.now() - ST, ChartDocument.chartData);
 
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
@@ -586,7 +586,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	       return true;
 	    }
 	});
-    console.log("step 6a",  Date.now() - ST, ChartDocument.pivotTableConfig, ChartDocument.chartData);
+    // console.log("step 6a",  Date.now() - ST, ChartDocument.pivotTableConfig, ChartDocument.chartData);
 
 
 
@@ -638,7 +638,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
        return something;
     });
 
-    console.log("step 6b",  Date.now() - ST, ChartDocument.chartData);
+    // console.log("step 6b",  Date.now() - ST, ChartDocument.chartData);
 
     // Step Final. We are done. Store the result back in the database and let the client take it from here.
     // console.log("renderChartData", chartData.length);
@@ -655,7 +655,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     // console.log("step 6b2",  Date.now() - ST);
 
 
-    console.log("step 6b3",  Date.now() - ST);
+    // console.log("step 6b3",  Date.now() - ST);
 
     var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 

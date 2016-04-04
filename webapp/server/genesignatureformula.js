@@ -27,12 +27,12 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
 	.match(/\w+/g)
 	.filter(function(word) { return isNaN(word)});
 
-    console.log("allGeneFields", allGeneFields);
+    // console.log("allGeneFields", allGeneFields);
 
     var program = lines.map(function(line) { 
         var lhs = line.replace(/=.*/, "");
 	return "try {" + line + "} catch (err) {" + lhs + "='N/A'};" }).join("\n");
-    console.log("program", program);
+    // console.log("program", program);
     var script = new vm.Script(program);
 
 
@@ -43,7 +43,7 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
 	study_label: {$in: chart.studies},
 	gene_label: {$in: allGeneFields}
     }).forEach(function(gene) {
-       console.log("expression3", chart.studies, allGeneFields, gene.study_label, gene.gene_label);
+       // console.log("expression3", chart.studies, allGeneFields, gene.study_label, gene.gene_label);
        geneCache[gene.study_label + gene.gene_label] = gene;
     });
 
@@ -64,12 +64,12 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
 	});
 
 	script.runInNewContext(sandbox);
-	console.log("after sandbox",sandbox, program);
+	// console.log("after sandbox",sandbox, program);
 
 	resultFields.map(function (field) {
 	    elem[field] = sandbox[field];
 	});
-	console.log("elem", elem);
+	// console.log("elem", elem);
     });
 
     resultFields.map(function(field_label){
