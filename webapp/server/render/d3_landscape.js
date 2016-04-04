@@ -1,7 +1,7 @@
 /*
  * this file has the landscape visualizaton.
  */
-var colors = ["rgb(179,100,200)", "rgb(100,200,146)", "rgb(200,50,50)", "rgb(100,225,250)", "#ffbdb5", "#835de7", "#00b6ff", "#00fadb", "#ee6900", "#acb20e", "#f898e8", "#f87859", "#ffad33", "#d0ecb2", "#00def7", "#de6d8a", "#00cb2d", "#901500", "#ccccff"];
+var colors = ["rgba(179,100,200,0.3)", "rgba(100,200,146,0.3)", "rgba(200,50,50,0.3)", "rgba(100,225,250,0.3)", "#ffbdb5", "#835de7", "#00b6ff", "#00fadb", "#ee6900", "#acb20e", "#f898e8", "#f87859", "#ffad33", "#d0ecb2", "#00def7", "#de6d8a", "#00cb2d", "#901500", "#ccccff"];
 
 var Prototype_gene_panel =  [ 
     {name:"Important", feature_list: ["AR", "TP53", "PTEN"]},
@@ -29,9 +29,12 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var maxLabel = 0;
     for (var j = 0; j < gene_panel.length; j++)  {
          var l  = gene_panel[j].name.length;
-	 if (maxLabel < l) maxLabel = l;
+	 for (var k = 0; j < gene_panel[j].feature_list.length; j++)  {
+	     var ll = 2 + l + gene_panel[j].feature_list[k].length;
+	     if (maxLabel < ll) maxLabel = ll;
+	 }
     }
-    var leftLabel =  2 * l * mark_unit_width;
+    var leftLabel = maxLabel * mark_unit_width;
 
 
     var WIDTH = (leftLabel + (chartDocument.chartData.length * mark_unit_width)) + "px";
@@ -134,7 +137,6 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	var viz = window.$("<div id='viz' >").css({ 
 	    "display": collapse ? "display" : "none", // display collapsed by default
-	    "background-color" : background_color,
 	    "margin-bottom": "2px",
 	    width: WIDTH,
 	    height: height + "px" }).appendTo(wrapper);
@@ -158,7 +160,15 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	   .append("g")
 	   .attr("transform", "translate(" + 0 +  "," + ((0.5)*mark_unit_height) + ")");
 
-	 var feature_list_height = (mark_unit_height * feature_list.length) -5;
+	var feature_list_height = (mark_unit_height * feature_list.length) -5;
+	g.append("rect")
+	  .attr("x", x)
+	  .attr("y", y)
+	  .attr("class", "Toggle")
+	  .attr("height", feature_list_height)
+	  .attr("width", 2000)
+	  .attr("fill", background_color)
+
 
 	 var bunch_label_toggle = g.append("rect")
 	    .attr("class", "Toggle")
@@ -276,6 +286,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	   .attr("transform", "translate(" + 0 +  "," + ((0.5+k)*mark_unit_height) + ")");
 
 	function rect(i, j, pvalue, label, text2, text3, color) {
+	    if (i == null) return;
+	    if (j == null) return;
 	    var x = leftLabel + (i*mark_unit_width);
 	    var y = (j*mark_unit_height) + 10;
 	    var rectangle = svg.append("rect")
