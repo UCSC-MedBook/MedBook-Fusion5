@@ -25,6 +25,8 @@ D3Timescape = function(window, chartDocument) {
 		Days_on_Study: total,
 		events: []
 	    };
+	    Object.keys(ci).map(function(key) { patient[key] = ci[key]; });
+
 	    patients[ci.Patient_ID] = patient;
 	    aggregated.push(patient);
 	 } else /* seen already */ {
@@ -102,11 +104,14 @@ D3Timescape = function(window, chartDocument) {
 
     chartDocument.chartData = aggregated;
 
+    /*
     var spin =["Patient_ID"];
     chartDocument.selectedFieldNames = spin;
     chartDocument.dataFieldNames = spin;
     chartDocument.pivotTableConfig.rows = spin;
     chartDocument.pivotTableConfig.cols = [];
+    */
+
     chartDocument.elapsed = { min: min, max: max };
 
     console.log("D3Timescape", max, min, chartDocument.chartData.length);
