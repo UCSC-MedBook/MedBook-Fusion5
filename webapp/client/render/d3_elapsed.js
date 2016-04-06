@@ -6,10 +6,21 @@ window.D3Timescape = function(theChart, opts) {
     Meteor.subscribe("TheChartData", theChart._id);
     if (theChart.chartData.length == 0) return "<div>Loading ... </div>";
 
+    var n = theChart.chartData.length;
+
 
     theChart.chartData.sort(function(a,b) { return b.Days_on_Study - a.Days_on_Study; });
 
-    var wrapper = "<div id='wrapper' style='width " + totalHeight + ";height:" + totalHeight + " ;'><div id='viz' style='margin-top:20p;'></div><div id='stat' class='stat' title='two-tail P-value' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
+    var col1 = window.makeHandsontable(theChart, opts, n * 12);
+    var col2 = "<div id='wrapper' style='width " + totalHeight + ";height:" + totalHeight + " ;'><div id='viz' style='margin-top:20p;'></div><div id='stat' class='stat' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
+
+    var wrapper = '<div style="width: 100%; overflow: hidden;"> <div style="width: 600px; float: left;"> '
+    	+ col1 +
+	' </div> <div style="margin-left: 620px;">'
+    	+ col2 +
+	'</div></div>';
+
+    debugger
 
     setTimeout(function() {
         $('#viz').empty();
