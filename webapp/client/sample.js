@@ -1,4 +1,4 @@
-TheChartID = null;
+heChartID = null;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -251,6 +251,7 @@ Template.Controls.helpers({
        rest   = rest.sort(ss);
 
        coll = mine.concat(others).concat(rest);
+       var additionalQueries = CurrentChart("additionalQueries");
 
        coll.map(function(vv) {
            var collName = vv.name;
@@ -271,9 +272,9 @@ Template.Controls.helpers({
 		   s: vv.study
                };
                var value = escape(JSON.stringify(meta));
-                 
+	       var selected = _.contains(additionalQueries, value) ? "selected" : "";
 
-               html += '    <option value="'+ value + '">'+collName + ":" +fieldName+'</option>';
+               html += '    <option value="'+ value + '" ' + selected + '>'+collName + ':' +fieldName+'</option>';
            });
 
            html += '</optGroup>\n';
