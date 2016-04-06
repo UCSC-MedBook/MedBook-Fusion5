@@ -1,11 +1,10 @@
-
-
 Meteor.publish('FusionFeatures', function() {
     var cursor = Collections.FusionFeatures.find();
     console.log("FusionFeatures publish", cursor.count());
     return cursor;
 });
 
+/*
 Meteor.publish('Chart', function(_id) {
     var q;
     if (_id != null) {
@@ -37,6 +36,7 @@ Meteor.publish('Chart', function(_id) {
     console.log("Chart", q, cursor.count());
     return cursor;
 });
+*/
 
 Charts.allow({
   insert: function (userId, doc) { return true; }, 
@@ -147,7 +147,7 @@ Meteor.publish('CRFs', function(studies, crfs) {
 	studyQuery.id = {$in: studies};
     }
 
-    var crfsQuery = {CRF: {$in: crfs}};
+    var crfsQuery = Array.isArray(crfs) ? {CRF: {$in: crfs}} : crfs;
 
     if (metadata.study == "common") {
 	var study_ids = Collections.studies.find(
@@ -186,6 +186,7 @@ Meteor.publish('QuickR', function(_id) {
     return null;
 });
 
+
 Meteor.publish('MyCharts', function(_id) {
     var q;
     if (_id != null) {
@@ -223,12 +224,23 @@ Meteor.publish('MyCharts', function(_id) {
     return cursor;
 });
 
+
+
+// var fields = {fields: { "_id":1, "updatedAt":1, "userId":1, "pivotTableConfig":1, "selectedFieldNames":1,"studies":1,"gene_list: "exclusions":1, "html":1 }};
+/*
 Meteor.publish('TheChart', function(_id) {
-    var cursor = Charts.find({_id: _id});
+    var cursor = Charts.find({_id: _id}, fields);
     console.log("TheChart", _id, cursor.count());
     return cursor;
 });
+*/
 
+Meteor.publish('TheChart', function(_id) {
+    var cursor = Charts.find({_id: _id}, {fields: { chartData:0 }});
+    return cursor;
+});
 
-
-
+Meteor.publish('TheChartData', function(_id, n, m) {
+    var cursor = Charts.find({_id: _id}, {fields: { chartData:1 }});
+    return cursor;
+});

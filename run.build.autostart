@@ -1,0 +1,13 @@
+# export NODE_OPTIONS='--debug'
+export MEDBOOK_SCRIPTS=`pwd`/scripts/
+export MEDBOOK_WORKSPACE=`pwd`/workspace/
+echo MEDBOOK_WORKSPACE is $MEDBOOK_WORKSPACE
+
+cd build/bundle
+
+export MONGO_URL=mongodb://localhost:27017/MedBook
+export ROOT_URL=https://su2c.ucsc.edu/fusion/
+echo $MONGO_URL $ROOT_URL 
+# export PORT=10011
+
+node main.js --port $PORT >& "../../logs/log.fusion.$$"

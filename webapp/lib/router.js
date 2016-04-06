@@ -1,12 +1,4 @@
 
-/*
-Meteor.startup(function() {
-  if (Meteor.isServer) {
-     Expression._ensureIndex( {gene:1, studies:1});
-     Expression_Isoform._ensureIndex( {gene:1, studies:1});
-  }
-});
-*/
 
 /*
 Router.onBeforeAction(function () {
@@ -57,7 +49,6 @@ function data() {
 	theChart = Charts.findOne({_id: id});
     } else {
 	theChart = Charts.find(defaultQ, {sort: {updatedAt: -1}, limit:1}).fetch()[0]
-	debugger
 	if (theChart) {  // needs to be == never ===
 	    Meteor.subscribe("TheChart", theChart._id);
 	    var url = Router.current().url;
@@ -205,9 +196,9 @@ Router.map(function() {
 });
 
 Router.map(function() {
-  this.route('GeneFusion', {
-    template: "GeneFusion",
-    path: '/fusion/gene/',
+  this.route('DIPSC', {
+    template: "DIPSC",
+    path: '/fusion/DIPSC/',
     data: data,
     waitOn: function() {
        return [
@@ -241,111 +232,131 @@ function parseCookies (request) {
     return list;
 }
 
-function genomicDataMutations(coll, samplesAllowed, studiesFiltered, response)  {
-  var Hugo_Symbol = null;
-
-  var cursor = coll.find(
-      {
-	  Study_ID: {$in: studiesFiltered},
-	  sample: {$in: samplesAllowed},
-	  "MA_FImpact": {$in: ["medium", "high"]},
-      },
-      {sort:{Hugo_Symbol:1, sample:1}});
+function genomicDataMutations(coll, samplesAllowed, study, response)  {
+  var cursor = coll.find( { study_label: study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+  cursor.forEach(function(doc) { response.write(JSON.stringify(doc)); });
+}
 
 
+function genomicDataMutationsRectangle(coll, samplesAllowed, study, stream)  {
+  var cursor = coll.find( { study_label: study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+  var gene_label = null;
   var bucket = {};
   function flush(symbol) {
-      response.write(symbol);
+      stream.write(symbol);
       samplesAllowed.map(function(sample) {
-	  response.write("\t");
+	  stream.write("\t");
 	  if (sample in bucket)
-	      response.write("1");
+	      stream.write("1");
 	  else
-	      response.write("0");
+	      stream.write("0");
       });
-      response.write("\n");
+      stream.write("\n");
       bucket = {};
   }
 
   cursor.forEach(function(doc) {
-      if (Hugo_Symbol != doc.Hugo_Symbol) {
-	  Hugo_Symbol = doc.Hugo_Symbol;
-	  flush(Hugo_Symbol);
-      }
-      bucket[doc.sample] = 1;
+      if (gene_label != null && gene_label != doc.gene_label)
+	  flush(gene_label);
+      gene_label = doc.gene_label;
+      bucket[doc.sample_label] = 1;
   });
-  flush(Hugo_Symbol);
+  flush(gene_label);
 }
 
+function genomicDataSamples3(coll, study, response)  {
+      var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
+	  return study.gene_expression_index[sample_id];
+      })
 
-function genomicDataSamples(coll, samplesAllowed, studiesFiltered, response)  {
-  coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
-      var line = doc.gene;
-      if ('transcript' in doc) // for isoforms
-         line  += ' '+ doc.transcript;
-      var any_got_rsem = false;
-      samplesAllowed.map(function(sample_label) {
-          line += "\t";
-          var value_container = doc.samples[sample_label];
-          if (value_container && "rsem_quan_log2" in value_container) {
-              any_got_rsem = true;
-              line += String(value_container.rsem_quan_log2);
-          }
+      var cursor = Expression3.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      cursor.forEach(function(doc) {
+          var line = doc.gene_label;
+	  sort_order.map(function(i, j) {
+	     line += "\t" + String(doc.rsem_quan_log2[i]);
+	  });
+	  line += "\n";
+	  response.write(line);
       });
-      line += "\n";
-      if (any_got_rsem)
-          response.write(line);
-  });
 }
 
-function clinical(coll, samplesAllowed, studiesFiltered, response)  {
-  coll.find({Study_ID: {$in: studiesFiltered}}, {sort:{gene:1, studies:1}}).forEach(function(doc) {
-      var line = doc.gene;
-      if ('transcript' in doc) // for isoforms
-         line  += ' '+ doc.transcript;
-      var any_got_rsem = false;
-      samplesAllowed.map(function(sample_label) {
-          line += "\t";
-          var value_container = doc.samples[sample_label];
-          if (value_container && "rsem_quan_log2" in value_container) {
-              any_got_rsem = true;
-              line += String(value_container.rsem_quan_log2);
-          }
-      });
-      line += "\n";
-      if (any_got_rsem)
-          response.write(line);
-  });
+
+function clinical(coll, samplesAllowed, study_label, response)  {
+  coll.find(
+	  {Study_ID: study_label},
+	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
+	      var line = doc.gene;
+	      if ('transcript' in doc) // for isoforms
+		 line  += ' '+ doc.transcript;
+	      var any_got_rsem = false;
+	      samplesAllowed.map(function(sample_label) {
+		  line += "\t";
+		  var value_container = doc.samples[sample_label];
+		  if (value_container && "rsem_quan_log2" in value_container) {
+		      any_got_rsem = true;
+		      line += String(value_container.rsem_quan_log2);
+		  }
+	      });
+	      line += "\n";
+	      if (any_got_rsem)
+		  response.write(line);
+	  });
 }
 
-Meteor.startup(function() {
-    var keys = Object.keys(DomainCollections);
-    keys.map(function(key) {
-        console.log("Ensuring index ", key);
-        if (key == "ExpressionIsoform")
-            DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 , "transcript" : 1})
-        else
-            DomainCollections[key]._ensureIndex({ "gene" : 1, "studies" : 1 })
-    })
-});
+if (Meteor.isServer) {
+    Meteor.startup(function() {
+	GeneLikeDataDomainsPrototype.map(function(domain) {
+	    if (domain.index) {
+	        console.log("Ensuring index ", domain.collection);
+		DomainCollections[domain.collection]._ensureIndex(domain.index);
+	    }
+	})
+    });
+};
+
+
+function loginMLT(request, params) {
+  // First Security Check, is the user logged in?
+  var cookies = parseCookies(request);
+  var mlt = cookies.meteor_login_token;
+  if (mlt == null) {
+      mlt = params.query.mlt
+      console.log("params mlt", mlt);
+  } else
+      console.log("cookies mlt", mlt);
+  var user = null;
+  if (mlt) {
+      var hash_mlt =  Accounts._hashLoginToken(mlt);
+      user =  Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+  }
+  if (user === null) throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
+  return user;
+}
 
 
 exportData = function() {
-  // First Security Check, is the user logged in?
-  var cookies = parseCookies(this.request);
-  var mlt = cookies.meteor_login_token;
-  var user = Meteor.users.findOne({username: "ted"}); // hack for debugging
-  if (mlt) {
-      var hash_mlt =  Accounts._hashLoginToken(mlt);
-      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+  console.log("request", this.request.headers);
+
+  var isLocal =  this.request.headers ['x-forwarded-for'] == '127.0.0.1';
+  var collaborations  = [];
+  if (!isLocal) {
+      var user = loginMLT(this.request, this.params);
+      if (user == null)
+          return;
+      if (user.collaborations)
+	  collaborations = user.collaborations;
   }
-  if (user === null)
-      throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
 
   // Kind parameter
   var kind = 'genomic';
+  var local = null;
+
+
   if (this.params && this.params.query && this.params.query.kind) {
       kind = this.params.query.kind;
+  }
+  if (this.params && this.params.query && this.params.query.local) {
+      local = this.params.query.local;
   }
 
 
@@ -355,76 +366,86 @@ exportData = function() {
       table = this.params.query.table;
   }
 
+  // Studies requsted parameter, default to prad_wcdt for now
+  var study_query = { }
+  if (this.params && this.params.query && this.params.query.study & this.params.query.study.length > 0)
+      study_query.id = this.params.query.study;
+  else
+      study_query.id = "prad_wcdt";
+
   // Filename parameter
-  var attachmentFilename = 'filename.txt';
+  var attachmentFilename = table + '_' + study_query.id + '.txt';
   if (this.params && this.params.query && this.params.query.filename)
       attachmentFilename = this.params.query.filename;
 
 
-  // Studies requsted parameter, default to prad_wcdt for now
-  var studiesRequested;
-  if (this.params && this.params.query && this.params.query.study)
-      studiesRequested = [this.params.query.study];
-  else if (this.params && this.params.query && this.params.query.studies)
-      studiesRequested = this.params.query.studies;
-  else
-      studiesRequested = ["prad_wcdt"];
-
-
   // Filter studies to only thosea allowed by collaborations
-  var studiesFiltered = [];
-  var samplesAllowed = [];
-  Collections.studies.find( {
-        id: {$in: studiesRequested},
-        collaborations: {$in: ["public"].concat(user.profile.collaborations)}
-      },
-      {fields: {id:1, Sample_IDs: 1}}
-  ).forEach( function(doc) {
-      studiesFiltered.push(doc.id);
-      samplesAllowed = _.union(samplesAllowed, doc.Sample_IDs);
-  });
+  if (!isLocal) 
+      study_query.collaborations = {$in: ["public"].concat(collaborations)};
 
-  // Last Security check
-  if (studiesFiltered.length === 0 || samplesAllowed.length === 0)
-      throw new Error("must specify studies that your collaborations are allowed to use");
+  study = Collections.studies.findOne( study_query );
+
+  if (study == null) {
+     console.log("No Study Found", study_query);
+     response.end();
+     return;
+  }
 
 
   var response = this.response;
-  response.writeHead(200, {
-    // 'Content-Type': 'text/tab-separated-values',
-    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
-  });
+  var outstream;
 
-  samplesAllowed = samplesAllowed.sort();
+  if (local != null) {
+      console.log("local", local);
+      outstream = fs.createWriteStream(local, {encoding: "utf8"});
+
+  } else {
+      response.writeHead(200, {
+	// 'Content-Type': 'text/tab-separated-values',
+	'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+	'Cache-Control': 'no-cache, no-store, must-revalidate',
+	'Pragma': 'no-cache',
+	'Expires': '0',
+      });
+      outstream = response;
+  }
 
   if (kind == "genomic") {
-      response.write("Gene");
-      samplesAllowed.map(function(sample_label) {
-	  response.write("\t");
-	  response.write(sample_label);
+      outstream.write("Gene");
+      study.Sample_IDs.map(function(sample_label) {
+	  outstream.write("\t");
+	  outstream.write(sample_label);
       });
-      response.write("\n");
+      outstream.write("\n");
       var coll =  DomainCollections[table];
       if (table == "Mutations")
-	  genomicDataMutations(coll, samplesAllowed, studiesFiltered, response);
-      else
-	  genomicDataSamples(coll, samplesAllowed, studiesFiltered, response);
+	  genomicDataMutations(coll, study.Sample_IDs, study, outstream);
+      else 
+	  genomicDataSamples3(Expression3, study, outstream);
 
   } else if (kind == "clinical") {
       var meta = Collections.Metadata.findOne({name: table});
-      var data = Collections.CRFs.find({CRF: table, Study_ID: {$in: studiesFiltered}}, {sort: {Sample_ID:1}}).fetch();
+      var q = {
+	      CRF: table,
+	      Study_ID: study.id,
+	  };
+      console.log("q", q);
+
+      var data = Collections.CRFs.find(q, {sort: {Sample_ID:1}}).fetch();
+
       data.map(function(row,i) {
 	  Object.keys(row).map(function(key) {
 	      if (Array.isArray(row[key]))
 		  row[key] = row[key].join(";");
 	  });
       });
-      response.write(ConvertToTSV(data, meta.fieldOrder));
+      outstream.write(ConvertToTSV(data, meta.fieldOrder));
   }
 
-  response.end();
+  outstream.end();
+  if (isLocal)
+     response.end();
 };
-
 
 Router.map(function() {
   this.route('export', {
@@ -435,16 +456,16 @@ Router.map(function() {
 
 exportChart = function() {
   // First Security Check, is the user logged in?
-  var cookies = parseCookies(this.request);
-  var mlt = cookies["meteor_login_token"];
-  var user = null;
-  if (mlt) {
-      var hash_mlt =  Accounts._hashLoginToken(mlt);
-      user = Meteor.users.findOne({"services.resume.loginTokens.hashedToken": hash_mlt});
+
+  var isLocal =  this.request.headers ['x-forwarded-for'] ==  '127.0.0.1';
+  var collaborations  = [];
+  if (!isLocal) {
+      var user = loginMLT(this.request, this.params);
+      if (user == null)
+          return;
+      if (user.collaborations)
+	  collaborations = user.collaborations;
   }
-  if (user == null)
-      // throw new Error("user must be logged in. Cookies=" + JSON.stringify(cookies));
-      console.log("user should be logged in. Cookies=" + JSON.stringify(cookies));
 
   // Filename parameter
   var attachmentFilename = 'filename.txt';

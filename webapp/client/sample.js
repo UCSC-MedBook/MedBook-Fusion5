@@ -55,7 +55,7 @@ Template.Controls.helpers({
 	      html = func(TheChart, {});
 	  }
        } else {
-	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0)
+	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0 || TheChart.pivotTableConfig.rendererName.indexOf("Landscape") >= 0)
 	      setTimeout(d3_tooltip_boxplot, 1000);
        }
        return html;
@@ -293,20 +293,25 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+
   'click .element' : function(e) {
        var field =  $(e.target).data("field");
        var TheChart = CurrentChart();
        var analysis = analyze(TheChart.chartData, [field])[field];
        var exclusions = _.clone(TheChart.pivotTableConfig.exclusions);
-       var values = ["N/A"];
-       try {
-	   var md = TheChart.metadata[field];
-	   if (md.type == "String" && md.allowedValues)
-	       values = TheChart.metadata[field].allowedValues;
-       } catch (err) {
-           debugger;
-       }
-       Overlay("Element", { theChart: TheChart, field: field, values: values, exclusions: exclusions });
+       var type = TheChart.metadata[field].type;
+
+       var bin = null;
+       var binTransform = _.find(TheChart.transforms, function(obj) { return obj.op == "bin" && obj.field == field; });
+       if (binTransform) bin = binTransform.value;
+
+       Overlay("Element", { 
+	   theChart: TheChart,
+	   field: field, 
+	   type: type,
+	   exclusions: exclusions,
+	   bin: bin
+       });
   }, 
   'change #previousCharts' : function(e) {
 	var _id = $(e.target).val();
@@ -346,14 +351,15 @@ Template.Controls.events({
         });
        // BUG the sort changes this into an object:
        // transforms = transforms.sort(function(a,b) { return a.precedence - b.precedence; })
-       UpdateCurrentChart("Transforms", transforms);
+       UpdateCurrentChart("transforms", transforms);
    },
    'change .geneLikeDataDomains' : function(evt, tmpl) {
        var $checkbox = $(evt.target)
        var field = $checkbox.data('field');
+       var checkBoxName = $checkbox.prop("name");
        var collection = $checkbox.data('collection');
        GeneLikeDataDomainsPrototype.map(function(domain) {
-           if ( domain.field == field && domain.collection == collection ) {
+           if ( domain.checkBoxName == checkBoxName && domain.collection == collection ) {
               domain.state = $checkbox.prop("checked");
               // update
           }
@@ -513,7 +519,9 @@ Template.Controls.events({
 
 function initializeHtmlElements(document) {
 
-    $('.pvtRenderer').val(document.pivotTableConfig.rendererName)
+    $('.pvtRenderer').find("option[value='"+
+	document.pivotTableConfig.rendererName
+	+"']").attr("selected",true);
 
     if (document & document.samplelist)
          $("#samplelist").val(document.samplelist);
@@ -553,13 +561,19 @@ function initializeJQuerySelect2(document) {
      } );
 
      var $genelist = $("#genelist");
+     if (document.genelist)
+	 $genelist.val(document.genelist.join(" "));
+     else
+	 $genelist.val("");
+
      var httpGenesUrl = "/fusion/genes";
      var httpGeneListPreciseUrl = "/fusion/geneListPrecise";
      $genelist.select2({
           initSelection : function (element, callback) {
             var prev = document;
             if (prev && prev.genelist)
-                callback( prev.genelist.map(function(g) { return { id: g, text: g }}) );
+                callback( prev.genelist.map(function(g) { 
+		    return { id: g, text: g }}) );
           },
           multiple: true,
           ajax: {
@@ -616,7 +630,6 @@ Template.Transforms.helpers({
 
 st = new Date();
 
-console.log("onstartup");
 
 cc = null;
 
@@ -679,8 +692,10 @@ renderChart = function() {
 Template.Controls.rendered = function(){
    var TheChart = CurrentChart();
    initializeHtmlElements(TheChart);
-   initializeJQuerySelect2(TheChart);
-   initializeJQuerySortable(TheChart);
+   setTimeout(function() {
+       initializeJQuerySelect2(TheChart);
+       initializeJQuerySortable(TheChart);
+   }, 5000);
 };
 
 /*

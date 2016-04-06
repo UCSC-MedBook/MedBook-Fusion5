@@ -23,8 +23,9 @@ function WrapScript(name, script) {
 	fs.writeFileSync(cwd + infilename1, output);
 
 	var args = [ chartDocument._id, infilename1, outfilename1, outfilename2  ];
-	var cmd = "'" + [ script, chartDocument._id, infilename1, outfilename1, outfilename2  ].join(" ") + "'";
+	var cmd =[ script, chartDocument._id, infilename1, outfilename1, outfilename2  ].join(" ");
 	fs.writeFileSync(cwd + "cmd", cmd);
+	cmd = "'" + cmd + "'";
 
 
 	var shlurp = spawn(script, args,
@@ -53,16 +54,28 @@ function WrapScript(name, script) {
 	    try {outfile2 = fs.readFileSync(cwd + outfilename2, 'utf8'); } catch (err) {};
 
 	    Fiber(function() {
-	    /*
 		console.log('Script', script, exit_code, cmd, new Date() - start, outfile1 ? outfile1.length : null, outfile2 ? outfile2.len : null, out, err);
+		/*
 		if (whendone)
 		    whendone(exit_code, out, err, outfile1, outfile2);
-	    */
+		*/
 
-	    html = "<div class='selectable'><div>" + outfile1 + "</div><div>CWD:<code>" + cwd + "</code></div><div>CMD:<code>" + cmd + "</code></div>" 
+	    var figure = "<div class='selectable'><div>" + outfile1 + "</div>";
+	    
+	    var info = "<div>CWD:<code>" + cwd + "</code></div><div>CMD:<code>" + cmd + "</code></div>" 
 	    + "<div>EXIT CODE:<code>" + exit_code + "</code></div>"
 	    + "<div>STDOUT:<code>" + out + "</code></div>"
 	    + "<div>STDERR:<code>" + err + "</code></div></div>";
+
+	    var hideinfo = '<summary><details>'
+	    + info
+	    + '</details> </summary>';
+
+	    var html =  "<div class='script_panel'><div class='script_panel'>" 
+		+ figure + 
+	    "</div><div class='script_panel'>"
+		+  hideinfo + 
+	    "</div></div>";
 
 	    Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
 
@@ -81,7 +94,7 @@ Meteor.startup(function() {
 	var data = fs.readdir(dir, function(err, data) {
 	    data.map(function(filename) {
 		var niceName = filename.replace(/_/g, " ");
-		ChartTypeMap[niceName] = WrapScript(niceName, dir + filename);
+		ChartTypeMap[niceName] = { type: 2, func: WrapScript(niceName, dir + filename)};
 	    });
 	    Fiber(SyncChartTypesWithFusionFeaturesDB).run();
 	});

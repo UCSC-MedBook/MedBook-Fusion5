@@ -174,7 +174,6 @@ makeSelectableBoxPlot = function(backdrops) {
                 try {
                     return a.Patient.localeCompare(b.Patient)
                 } catch (err) {
-                    debugger
                     return 0;
                 }
         });

@@ -41,15 +41,18 @@ window.makeReactiveTable = function(theChart, extraOptions) {
     return result.html();
 }
 
-var hot;
+hot = null;
 
 window.makeHandsontable = function(theChart, extraOptions) {
 
-    setTimeout(function() {
+    Meteor.subscribe("TheChartData", theChart._id);
+    function dataTable() {
         var fields = theChart.pivotTableConfig.rows.concat(theChart.pivotTableConfig.cols);
 	var columns = fields.map(function(field, i) { return {data: field}});
 	if (hot)
-	    hot.destroy();
+	   try { hot.destroy(); } catch (err) {};
+
+
 	hot = new Handsontable(document.getElementById('ChartWrapper'), { 
 	     minSpareRows: 1,
 	     rowHeaders: true,
@@ -57,9 +60,13 @@ window.makeHandsontable = function(theChart, extraOptions) {
 	     contextMenu: true,
 	     colHeaders: fields,
 	     columns: columns,
-	     data: theChart.chartData
+	     data: theChart.chartData,
+	     height: 1200
 
 	});
-    }, 250);
+    }
+    
+    setTimeout(dataTable, 250);
     return "<div id='ChartWrapper' style='min-width:800px;min-height:600px;'></div>"
 }
+

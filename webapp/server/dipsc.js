@@ -1,3 +1,128 @@
+fss = Npm.require('fs-extra');
+
+Meteor.startup(function() {
+    Expression3._ensureIndex({study_label: 1});
+    GeneStatistics._ensureIndex({study_label: 1});
+    Expression3._ensureIndex({gene_label:1,  study_label: 1});
+    GeneStatistics._ensureIndex({gene_label:1, study_label: 1});
+});
+
+Meteor.methods({
+
+
+    expressionVariance: function(study_label) {
+	var data = GeneStatistics.aggregate([
+            { $match: { study_label: study_label}},
+            { $sort: {variance: -1}},
+            { $project:
+                { _id: 0,
+                 gene_label: "$gene_label",
+                 value: "$variance.rsem_quan_log2",
+                }
+            }]);
+	console.log("expressionVariance", study_label, data.length);
+	return data;
+    },
+    prepareGeneStatistics: function(study_label) {
+        return;
+	console.log("prepareGeneStatistics", study_label);
+
+        var study = Collections.studies.findOne({id: study_label});
+	var index = study.cohort.map(function(sample) { return study.gene_expression_index[sample]});
+	var i = 0;
+	var start = Date.now();
+
+	if (Expression3.find({study_label: study_label}).count() > GeneExpression.find({study_label: study_label}).count()) {
+	    Expression3.find({study_label: study_label}).forEach(function(ge) {
+		if ((++i % 1000) == 0)
+		    console.log(i, ge.gene_label, (Date.now() - start) / 1000);
+		var data = index.map(function(i) { return ge.rsem_quan_log2[i] });
+		if (data.length > 2) {
+		    var variance = ss.variance(data);
+		    var mean = ss.mean(data);
+
+		    GeneStatistics.upsert(
+			{ 
+			  study_label: study_label,
+			  gene_label: ge.gene_label
+			},
+			
+			{$set: {
+			    study_label: study_label,
+			    gene_label: ge.gene_label,
+			    mean: mean,
+			    variance: variance
+			}});
+		}
+	    });
+	}
+	console.log("prepareGeneStatistics done", i, Date.now() - start);
+    },
+
+    prepareDIPSC: function(study_label, genelist) {
+
+        var directory = process.env.MEDBOOK_WORKSPACE + "bridge/" + "DIPSC" + "/";
+	fss.mkdirsSync(directory);
+	var filename = directory + 'data.txt';
+	var fd = fss.openSync(filename, 'w' );
+
+	var headerline;
+	var dataline = "";
+	var gene = null;
+	var line = [];
+	var firstline = true;
+
+	var before = Date.now();
+
+	function flush() {
+	   if (firstline) {
+	       firstline = false;
+	       var buf =  study_label;
+	       line.map(function(elem) {
+		   buf += "\t";
+		   buf +=  String(elem.sample_label);
+	       });
+               buf += '\n';
+	       fss.writeSync(fd, buf);
+	       headerline = line;
+	   }
+           var buf = line[0].gene_label;
+	   line.map(function(elem, i) {
+	       buf += "\t";
+
+	       if (elem.sample_label != line[i].sample_label)
+	          throw new Error("Unaligned samples: " + elem.sample_label + " != " + line[i].sample_label);
+	       if (typeof elem.values.quantile_counts_log != "number")
+	          throw new Error("Not a number: " + elem.sample_label + " " +  elem.gene_label);
+
+	       buf +=  String(elem.values.quantile_counts_log);
+	   });
+           buf += '\n';
+	   fss.writeSync(fd, buf);
+	   line = [];
+	}
+
+	var cursor = GeneExpression.find({study_label: study_label, gene_label: {$in: genelist}  }, {
+	   fields: {gene_label:1, sample_label:1, "values.quantile_counts_log": 1},
+	   sort: {gene_label:1, sample_label: 1},
+	});
+
+	console.log("total genelist", genelist.length, "cursor",  cursor.count());
+	cursor.forEach(function(doc) {
+	   if (gene == null)
+	       gene = doc.gene_label;
+	   if (gene != doc.gene_label)  {
+	       gene = doc.gene_label;
+	       flush();
+	   }
+	   line.push(doc);
+	});
+
+        flush();
+	fss.closeSync(fd)
+	return filename;
+    }
+});
 
 HTTP.methods({
  hello: function(data){
@@ -297,39 +422,39 @@ SAM_adapter = function(chart_id, phenotype, phenotypeMap, sampleList, geneList,e
 
        var dir = process.env.MEDBOOK_WORKSPACE + "SAM/";
        try {
-           var m = fs.mkdirSync(dir);
+           var m = fss.mkdirSync(dir);
        } catch (err) {};
 
        dir +=  dipsc_id + "/";
-       var m = fs.mkdirSync(dir);
+       var m = fss.mkdirSync(dir);
        var samInputFileName = dir + "sam.input";
        var samOutputFileName = dir + "sam.output";
        var samErrorFileName = dir + "sam.error";
 
-       var fd = fs.openSync(samInputFileName, "w");
+       var fd = fss.openSync(samInputFileName, "w");
        var positiveN = 0;
        var negativeN = 0;
        sampleList.map(function(sample) {
            if (phenotypeMap[sample]) {
-               fs.writeSync(fd, "\t1");
+               fss.writeSync(fd, "\t1");
                positiveN++;
            } else {
-               fs.writeSync(fd, "\t0");
+               fss.writeSync(fd, "\t0");
                negativeN++;
            }
        });
        // console.log("positiveN", positiveN, "negativeN", negativeN);
 
 
-       fs.writeSync(fd, "\n");
+       fss.writeSync(fd, "\n");
        expressionData.map(function(expr) {
-           fs.writeSync(fd, expr.gene);
+           fss.writeSync(fd, expr.gene);
            sampleList.map(function(sample) {
-               fs.writeSync(fd, "\t"+expr[sample]);
+               fss.writeSync(fd, "\t"+expr[sample]);
            });
-           fs.writeSync(fd, "\n");
+           fss.writeSync(fd, "\n");
        });
-       fs.close(fd);
+       fss.close(fd);
 
 
        var  argArray = [process.env.MEDBOOK_SCRIPTS + "fileSAM.R", samInputFileName ];
@@ -340,8 +465,8 @@ SAM_adapter = function(chart_id, phenotype, phenotypeMap, sampleList, geneList,e
        var shlurp = spawn("/bin/env", argArray, {
           stdio: [
               0, // use parents stdin for child
-              fs.openSync(samOutputFileName, "w"),
-              fs.openSync(samErrorFileName, "w")
+              fss.openSync(samOutputFileName, "w"),
+              fss.openSync(samErrorFileName, "w")
        ]});
 
 
@@ -532,5 +657,8 @@ correlateDscore = function(a, b) {
 
 
 // Meteor.startup(DIPSCtest);
+Meteor.startup(function() {
+    // Meteor.call("prepareGeneStatistics", "prad_wcdt");
+});
 
 

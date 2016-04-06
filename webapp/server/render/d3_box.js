@@ -189,50 +189,52 @@ Meteor.startup(function() {
 	  // Update samples.
 	  var gg = g.append("g").attr("class", "gg");
 
-	  var sample = gg.selectAll("circle.sample")
-	      .data(full)
+	  debugger
+          if (full.length < 500) {
+              var sample = gg.selectAll("circle.sample") .data(full)
 
-	  function L(d) {
-	      return d.Label ? d.Label.replace("-", "") : "";
-	  }
+              function L(d) {
+                  return d.Label ? d.Label.replace("-", "") : "";
+              }
 
-	  sample.enter().insert("circle", "text")
-	      .attr("class", function(d) { return d.ValueClass; })
-	      .attr("text", function(d) { return d.Label})
-	      .attr("cx", function(d) { 
-		  var x = JitterSeedless(d.Label);
-		  return d.cx + (x-0.5)*(width*.90); 
-	       })
-	      .attr("cy", function(d) { return d.cy; })
-	      .attr("r", function(d) { return d.r; })
-	      .style("opacity", 0.2)
-	      .style("fill", function(d) { return d.ValueColor });
-
-
-	  /*
-	  sample.forEach(function(formula,i) {
-	      formula.forEach(function(sample,j) {
-
-		  var label = dataSet[1][j].Label;
-		  var x = 0;
-		  if (label != null)
-		      x = JitterSeedless(label);
-		  sample.cx.baseVal.value += (x-0.5)*(width*.90); // Robert wants noise!
-	      });
-	  });
-	  */
+              sample.enter().insert("circle", "text")
+                  .attr("class", function(d) { return d.ValueClass; })
+                  .attr("text", function(d) { return d.Label})
+                  .attr("cx", function(d) { 
+                      var x = JitterSeedless(d.Label);
+                      return d.cx + (x-0.5)*(width*.90); 
+                   })
+                  .attr("cy", function(d) { return d.cy; })
+                  .attr("r", function(d) { return d.r; })
+                  .style("opacity", 0.2)
+                  .style("fill", function(d) { return d.ValueColor });
 
 
-	  sample.transition()
-	      .duration(duration)
-	      .attr("cy", function(d) { return x1(d.Value); })
-	      .style("opacity", 1);
+              /*
+              sample.forEach(function(formula,i) {
+                  formula.forEach(function(sample,j) {
 
-	  sample.exit().transition()
-	      .duration(duration)
-	      .attr("cy", function(d) { return x1(d.Value); })
-	      .style("opacity", 1e-6)
-	      .remove();
+                      var label = dataSet[1][j].Label;
+                      var x = 0;
+                      if (label != null)
+                          x = JitterSeedless(label);
+                      sample.cx.baseVal.value += (x-0.5)*(width*.90); // Robert wants noise!
+                  });
+              });
+              */
+
+
+              sample.transition()
+                  .duration(duration)
+                  .attr("cy", function(d) { return x1(d.Value); })
+                  .style("opacity", 1);
+
+              sample.exit().transition()
+                  .duration(duration)
+                  .attr("cy", function(d) { return x1(d.Value); })
+                  .style("opacity", 1e-6)
+                  .remove();
+              }
 
 	  // Compute the tick format.
 	  var format = tickFormat || x1.tickFormat(8);

@@ -7,23 +7,53 @@ Collections.FusionFeatures = new Meteor.Collection("FusionFeatures");
 DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
 Expression = new Meteor.Collection('expression2');
+Expression3 = new Meteor.Collection('expression3');
 ExpressionIsoform = new Meteor.Collection('expression_isoform');
 Mutations = new Meteor.Collection('mutations');
-SignatureScores = new Meteor.Collection('signature_score2');
+SignatureScores = new Meteor.Collection('signature_scores');
 GeneSets = new Meteor.Collection('gene_sets');
+GeneExpression = new Meteor.Collection("gene_expression");
+
+Meteor.startup(function() {
+    FeaturePanels = new Meteor.Collection("FeaturePanels");
+
+    FeaturePanelsSchema = new SimpleSchema({
+	categories: {
+	    type: [Object]
+	},
+	"categories.$.name": {
+	    type: String
+	},
+	"categories.$.features": {
+	    type: [Object]
+	},
+	"categories.$.features.$.name": {
+	    type: String
+	},
+	"categories.$.features.$.kind": {
+	    type: String
+	},
+    });
+    FeaturePanels.attachSchema( FeaturePanelsSchema );
+});
+
+
+
 
 DomainCollections = {
   'Expression' : Expression,
+  'Expression3' : Expression3,
   'ExpressionIsoform' : ExpressionIsoform,
   'Mutations' : Mutations,
-  'SignatureScores' : SignatureScores
+  'SignatureScores' : SignatureScores,
+  'GeneExpression' : GeneExpression
 };
 
 MinimalChart = {
    pivotTableConfig: {
        rows: [],
        cols: [],
-       rendererName: "table",
+       rendererName: "Table",
    },
    exclusions: [],
    chartData: []

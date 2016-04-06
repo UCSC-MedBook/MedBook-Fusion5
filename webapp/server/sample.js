@@ -36,8 +36,8 @@ function Transform_Clinical_Info(f) {
     delete f["_id"];
     // delete f["Sample_ID"];
     // delete f["Patient_ID"];
-    delete f["On_Study_Date"];
-    delete f["Off_Study_Date"];
+    // delete f["On_Study_Date"];
+    // delete f["Off_Study_Date"];
 
     /*
     var on = f["On_Study_Date"];
@@ -153,7 +153,6 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                         Mean: e.mean.rsem_quan_log2
                       }
                    });
-    // console.log("big",big.length);
 
      Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
@@ -164,13 +163,124 @@ function GeneJoin(userId, ChartDocument, fieldNames) {
                }});
 }
 
+function buildRemodelPlan(chartData, transforms, rows, cols) {
+ var remodel = { doIt: false, plan: {} };
+
+ transforms
+ .filter(function(transform) {return _.contains(rows, transform.field) || _.contains(cols, transform.field) })
+ .map(function(transform) {
+    // console.log("transform", transform);
+    switch (transform.op) {
+
+    case "dichot-mean":
+    case "dichot-median":
+    case "cluster-median":
+    case "cluster-mean": {
+	    remodel.doIt = true;
+
+	    var clusters = {};
+	    chartData.map(function(elem) {
+		var context = _.pick(elem, rows);
+		var key = JSON.stringify(context).replace(/[,{}"']/g, "");
+		if (!(key in clusters)) clusters[key] = { 
+		    key: key,
+		    context: context,
+		    count: 0,
+		    total: 0.0,
+		    min: Number.MAX_VALUE,
+		    max: Number.MIN_VALUE,
+		    mean: 0,
+		    median: 0,
+		};
+
+		value = elem[transform.field];
+		if (!isNaN(value)) {
+		    clusters[key].total = value + clusters[key].count ;
+		    clusters[key].count = 1 + clusters[key].count ;
+		    if (clusters[key].min > value)
+			clusters[key].min = value;
+		    if (clusters[key].max < value)
+			clusters[key].max = value;
+		}
+	    });
+
+	    Object.keys(clusters).map(function(clusterKey) {
+		 var cluster = clusters[clusterKey];
+
+		 try {
+		     cluster.median = (cluster.max + cluster.min) / 2;
+		     cluster.mean = cluster.total / cluster.count;
+		 } catch (err) {
+		 }
+
+		if (!(clusterKey in remodel.plan)) remodel.plan[clusterKey] = _.clone(cluster.context);
+		switch (transform.op) {
+		case "cluster-mean":
+		    remodel.plan[clusterKey][transform.field] = cluster.mean;
+		    break;
+		case "cluster-median":
+		    remodel.plan[clusterKey][transform.field] = cluster.median;
+		    break;
+		}
+	    });
+	}
+	break;
+    }
+ });
+ return remodel
+}
+
+function dichotomizeOrBin(chartData, transforms, rows, remodel) {
+     chartData.map(function transformer(datum) {
+	 transforms.map(function(transform) {
+	     if (transform.field in datum) {
+		switch (transform.op) {
+		case "dichot-median":
+		case "dichot-mean": {
+		     var dataValue = parseFloat(datum[transform.field]);
+		     if (!isNaN(dataValue)) {
+			 var context = _.pick(datum, rows);
+			 var key = JSON.stringify(context).replace(/[,{}"']/g, "");
+			 var cluster = remodel.plan[key];
+			 if (transform.op == "dichot-median")
+			     datum[transform.field] = cluster.median > dataValue ? 1 : -1;
+			 else
+			     datum[transform.field] = cluster.mean > dataValue ? 1 : -1;
+			 // console.log( dataValue, transform, cluster );
+		     } // else  console.log("isNan false", dataValue, typeof(dataValue));
+		};
+		break;
+
+		case "bin": {
+		     var dataValue = parseFloat(datum[transform.field]);
+		     var binValue = parseFloat(transform.value);
+		     if (!isNaN(dataValue) && !isNaN(binValue)) {
+			var flooredValue = Math.floor(dataValue / binValue);
+			datum[transform.field] = flooredValue * binValue;
+		     }
+		 }
+		 break;
+		 case "rename": {
+		    // console.log("rename", transform.value,"<-", transform.field);
+		    datum[transform.value] = datum[transform.field];
+		    delete datum[transform.field];
+		 }
+		 break;
+	     } // switch 
+	   } // if
+	 });
+    });
+    return chartData;
+}
+
+
 // Do the heavy lifting for Joining Samples.
 function SampleJoin(userId, ChartDocument, fieldNames) {
-    // console.log(userId, ChartDocument._id, "fieldNames", fieldNames);
+    ST = Date.now();
+
     // Step 0 alidate params
     var b = new Date();
     if (ChartDocument.studies == null || ChartDocument.length == 0) {
-      // console.log("No studies selected");
       return { dataFieldNames: [], chartData: []};
     }
 
@@ -182,10 +292,11 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     q.CRF = "Clinical_Info";
 
     var chartData = Collections.CRFs.find(q).fetch();
-    // console.log("chartData CRFs length", q, chartData.length);
 
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
+   if (typeof(metadata) == "string")
+       metadata = JSON.parse(metadata);
     Object.keys(metadata).map(function(f) {
 	metadata[f].collection = "CRF";
 	metadata[f].crf = "Clinical_Info";
@@ -194,9 +305,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.map(function(cd) {  
        delete cd["CRF"];
     })
-    // console.log(q, "chartData length", chartData.length);
 
 
+    // console.log("step 1",  Date.now() - ST);
     // Step 2. Build Map and other bookkeeping 
     var chartDataMap = {};
     chartData.map(function (cd) { 
@@ -206,47 +317,92 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = chartData.map(function(ci) { return ci.Sample_ID })
 
+    // console.log("step 2",  Date.now() - ST);
 
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
-    var gl  = ChartDocument.genelist;
-    var gld = ChartDocument.geneLikeDataDomain;
 
-    if (gld && gl && gld.length > 0 && gl.length > 0)  {
+    if (ChartDocument.geneLikeDataDomain && ChartDocument.genelist && ChartDocument.geneLikeDataDomain.length > 0 && ChartDocument.genelist.length > 0)  {
 
-        gld
+        ChartDocument.geneLikeDataDomain
           .filter(function(domain) {return domain.state})
           .map(function(domain) {
-            var query = {Study_ID:{$in: ChartDocument.studies}};
-            var qf = domain.label == "Mutations" ? "Hugo_Symbol" : "gene";
-            query[qf] = {$in: gl};
+            var query = {};
+            if (domain.study_label_name)
+                query[domain.study_label_name] = {$in: ChartDocument.studies};
+
+            if (domain.regex_genenames)
+                query[domain.gene_label_name]  = {$in: ChartDocument.genelist.map(function(d) { return new RegExp("^" + d + "_.*", "i");})}
+            else
+                query[domain.gene_label_name]  = {$in: ChartDocument.genelist};
 
             var cursor = DomainCollections[domain.collection].find(query);
-            // console.log("GeneLikeDomain", ChartDocument._id, domain.label, domain.collection, query, cursor.count());
+            // console.log("find", domain.collection, query, cursor.count(), domain);
 	    
-            cursor.forEach(function(geneData) {
-                // Mutations are organized differently than Expression
-                if (geneData.Hugo_Symbol) { 
-                    var geneName = geneData.Hugo_Symbol;
-                    var label = geneName + ' ' + domain.labelItem;
+	    if (domain.format_type == 4) {
+	        var studyCache = {};
 
-                    var sampleID = geneData.sample;
+		cursor.forEach(function(geneData) {
+		    if (!(geneData.study_label in studyCache)) 
+		        studyCache[geneData.study_label] = Collections.studies.findOne({id: geneData.study_label})
 
+		    var study = studyCache[geneData.study_label];
+		    var field_label = geneData.gene_label + ' ' + domain.labelItem;
+		    ChartDocument.samplelist.map(function(sample_label) {
+			chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
+		    });
+		    if (metadata[field_label] == null)
+			metadata[field_label] = { 
+			    collection: domain.collection,
+			    crf: null, 
+			    label: field_label,
+			    type: domain.field_type
+			};
+		    // console.log("format_type 4", geneData.gene_label);
+		})
+
+	    } else cursor.forEach(function(geneData) {
+
+                var sampleID = geneData[domain.sample_label_name];
+                var geneName = geneData[domain.gene_label_name];
+                var label = geneName + ' ' + domain.labelItem;
+
+                if (domain.format_type == 3) {  // signature scores
                     if (sampleID in chartDataMap) {
-                        chartDataMap[sampleID][label] = geneData.Variant_Type;
+                        var obj = geneData;
+                        var fields = domain.field.split('.');
+                        fields.map(function(field){ obj = obj[field]; });
 
+                        // console.log("found", label, geneName, sampleID, obj, fields, geneData);
+                        chartDataMap[sampleID][label] = obj;
+			if (metadata[label] == null)
+			    metadata[label] = { 
+				collection: domain.collection,
+				crf: null, 
+				label: label,
+				type: domain.field_type
+			    };
+                    }
+
+                } else if (domain.format_type == 2) {  // sample names are stored as attributes
+                    if (sampleID in chartDataMap) {
+                        var obj = geneData;
+                        var fields = domain.field.split('.');
+                        fields.map(function(field){ obj = obj[field]; });
+
+                        // console.log("found", label, geneName, sampleID, obj);
+                        chartDataMap[sampleID][label] = obj;
+			debugger
 			if (metadata[label] == null)
 			    metadata[label] = { 
 				collection: domain.collection,
 				crf: null, 
 				label: label,
 				max: 200,
-				type: "String"
+				type: domain.field_type
 			    };
                     }
-                } else if (geneData.gene) {
-
-                    var geneName = geneData.gene;
+                } else if (domain.format_type == 1) {  // sample names are stored as labels
                     var label = ('transcript' in geneData) 
                         ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
                         : geneName + ' ' + domain.labelItem
@@ -257,7 +413,12 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
                     samplelist.map(function (sampleID) {
-                        var f = parseFloat(geneData.samples[sampleID][domain.field]);
+                        var fields = domain.field.split('.');
+
+                        var obj = geneData.samples[sampleID];
+                        fields.map(function(field){ obj = obj[field]; });
+
+                        var f = parseFloat(obj);
                         if (!isNaN(f)) {
                             if (sampleID in chartDataMap) {
                                 chartDataMap[sampleID][label] = f;
@@ -267,7 +428,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 					collection: domain.collection,
 					crf: null, 
 					label: label,
-					type: "Number"
+					type: domain.field_type
 				    };
                             }
                         }
@@ -277,7 +438,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
             //  Samples without mutations need to have a wt
             if (domain.label == "Mutations") {
-                var labels  = gl.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
+                var labels  = ChartDocument.genelist.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
                 ChartDocument.samplelist.map(function (sampleID) {
                     var datum = chartDataMap[sampleID];
                     labels.map(function(label) {
@@ -287,7 +448,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                 });
             }
           }); // .map 
-    } // if gld 
+    } // if ChartDocument.geneLikeDataDomain 
+
+    console.log("step 3a",  Date.now() - ST);
 
     var mapPatient_ID_to_Sample_ID = {};
     chartData.map(function(cd) {
@@ -298,6 +461,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
 
+    console.log("step 3b",  Date.now() - ST);
     // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
@@ -319,6 +483,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     	return;
 	     }
 	     var ms = m.schema;  
+	     if (typeof(ms) == "string")
+	       ms = JSON.parse(ms);
 	     var msf = ms[fieldName];
 
 	     if (msf == null) {
@@ -327,13 +493,15 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
-	     // console.log("META QUERY", label, msf);
+	     console.log("META QUERY", label, msf);
 	     metadata[label] = msf;
 
              var fl = {};
              fl[fieldName] = 1;
 	     fl.Sample_ID = 1;
 	     fl.Patient_ID = 1;
+
+	     // the following query needs study_id and perhaps sample_list
              Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
 
 
@@ -346,13 +514,14 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
                              chartDataMap[sample_ID][label] = doc[fieldName];
                          });
-			 // console.log("joined through Patient_ID", doc);
+			  // console.log("joined through Patient_ID", doc);
 		     } 
-			 // else console.log("addQ", crfName, fieldName, doc);
+			  // else console.log("addQ", crfName, fieldName, doc);
                 } // else
              }); // forEach
 
         }); //  ChartDocument.additionalQueries.map
+    console.log("step 4",  Date.now() - ST);
 
 
     // Step 5. Transform any data.
@@ -361,35 +530,38 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
 
+    console.log("step 5a",  Date.now() - ST);
+
     var dataFieldNames =  Object.keys(keyUnion);
+    var cols = [];
+    var rows = [];
+    if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)
+	cols = _.without(ChartDocument.pivotTableConfig.cols, null);
+    if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
+	rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
-    var selectedFieldNames = 
-    ChartDocument.pivotTableConfig ?
-      _.without(_.union( ChartDocument.pivotTableConfig.cols, ChartDocument.pivotTableConfig.rows ),null)     : [];
+    cols = _.intersection(cols, dataFieldNames);
+    rows = _.intersection(rows, dataFieldNames);
 
+    var selectedFieldNames = _.union(rows, cols);
 
+    // normalize records
     chartData = chartData.map(Transform_Clinical_Info, keyUnion);
 
     var transforms = ChartDocument.transforms;
-    if (transforms)
-         chartData.map(function transformer(datum) {
-             transforms.map(function(transform) {
-                 if (transform.field in datum) {
-                    if (transform.op == "bin") {
-                         var dataValue = parseFloat(datum[transform.field]);
-                         var binValue = parseFloat(transform.value);
-                         if (!isNaN(dataValue) && !isNaN(binValue)) {
-                            var flooredValue = Math.floor(dataValue / binValue);
-                            datum[transform.field] = flooredValue * binValue;
-                         }
-                     } else if (transform.op == "rename") {
-                        // console.log("rename", transform.value,"<-", transform.field);
-                        datum[transform.value] = datum[transform.field];
-                        delete datum[transform.field];
-                     }
-                 } 
-             });
-        });
+    if (transforms && transforms.length > 0) {
+         var remodel = buildRemodelPlan(chartData, transforms, rows, cols);
+	 console.log("remodel", remodel);
+
+	 if (remodel.doIt) {
+	     chartData = _.values(remodel.plan);
+	     console.log("chartData", chartData);
+	 } else {
+	     chartData = dichotomizeOrBin(chartData, transforms, rows, remodel);
+	 }
+    } // if transforms
+
+    console.log("step 5b",  Date.now() - ST);
 
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
@@ -399,27 +571,53 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	chartData =  chartData.filter(function(elem) {
 	    for (var i = 0; i < excludedKeys.length; i++) {
 	       var key = excludedKeys[i];
-	       if (key in elem && exclusions[key].indexOf(elem[key]) >= 0)
+	       if (key in elem && exclusions[key].indexOf(String(elem[key])) >= 0)
 		   return false;
 	       return true;
 	    }
 	});
-    chartData = chartData.sort(function(a,b) { 
+    console.log("step 6a",  Date.now() - ST);
+
+    chartData = chartData.sort(function(a,b) {  // sort by field order
         var something = 0;
         for (var i = 0; i < selectedFieldNames.length; i++) {
-	   var key = selectedFieldNames[i];
-	   if (key in a && key in b) {
-	       return naturalSort(a[key], b[key]);
-	   /*
-	       if (a[key] < b[key])
-		   return -1;
-	       if (a[key] > b[key])
-		   return 1;
-	   */
+	   var field = selectedFieldNames[i];
+
+	   // If this field is a list of allowedValues in the schema, then use that order
+	   var meta = ChartDocument && ChartDocument.metadata && ChartDocument.metadata[field];
+	   var order = null;
+	   var order_n = 0;
+
+	   if (meta && meta.allowedValues) { 
+	       order = {};
+	       meta.allowedValues.map(function(value, i) { order[value] = order_n = i });
+	       order_n++;
+	   }
+
+	   if (field in a && field in b) {
+	       if (a[field] == "N/A" && b[field] == "N/A")
+	           continue;
+	       else if (a[field] != "N/A" && b[field] == "N/A")
+	           return -1;
+	       else if (a[field] == "N/A" && b[field] != "N/A")
+	           return 1;
+
+	       var a_value = a[field];
+	       var b_value = b[field];
+
+	       if (order) {
+	           a_value = a_value in order ? order[a_value] : order_n;
+	           b_value = b_value in order ? order[b_value] : order_n;
+	       }
+
+	       var x =  naturalSort(a_value, b_value);
+	       
+	       if (x != 0)
+	           return x;
 	   } else {
-	       if (key in a)
+	       if (field in a)
 		   something = 1;
-	       else if (key in b)
+	       else if (field in b)
 		   something = -1;
 	       else 
 		   something = 0;
@@ -428,26 +626,43 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
        return something;
     });
 
+    console.log("step 6b",  Date.now() - ST);
+
     // Step Final. We are done. Store the result back in the database and let the client take it from here.
     // console.log("renderChartData", chartData.length);
+
+    ChartDocument.chartData = chartData;
+    ChartDocument.dataFieldNames = dataFieldNames;
+    ChartDocument.selectedFieldNames = selectedFieldNames;
+    ChartDocument.metadata = metadata;
+
+    var html = renderJSdom(ChartDocument);
+
     var ret = Charts.direct.update({ _id : ChartDocument._id }, 
           {$set: 
               {
-                dataFieldNames: dataFieldNames,
-                selectedFieldNames: selectedFieldNames,
-		metadata: metadata,
-                chartData: chartData,
-		html: renderJSdom(ChartDocument) // render may start a thread or a unix process  and update the document later
+                dataFieldNames: ChartDocument.dataFieldNames,
+                selectedFieldNames: ChartDocument.selectedFieldNames,
+                elapsed: ChartDocument.elapsed,
+		metadata: ChartDocument.metadata,
+                chartData: ChartDocument.chartData,
+		html: html,
+		"pivotTableConfig.rows": rows, 
+		"pivotTableConfig.cols": cols, 
                }});
 
 
 
-    // console.log("done", ret);
+    console.log("step 6c - done",  Date.now() - ST);
+    console.log("done", ret);
 } 
 
 
 Meteor.startup(function() {
     Charts.after.update( function(userId, ChartDocument, fieldNames) {
+	if (_.difference(fieldNames,["html","updatedAt"]).length == 0)
+	     return; // prevent infinite loops
+
         ensureMinimalChart(ChartDocument);
   
         // console.log("Join", ChartDocument.Join)
