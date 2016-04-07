@@ -9,7 +9,7 @@ window.D3Timescape = function(theChart, opts) {
     var n = theChart.chartData.length;
 
 
-    theChart.chartData.sort(function(a,b) { return b.Days_on_Study - a.Days_on_Study; });
+    // theChart.chartData.sort(function(a,b) { return b.Days_on_Study - a.Days_on_Study; });
 
     var col1 = window.makeHandsontable(theChart, opts, n * 12);
     var col2 = "<div id='wrapper' style='width " + totalHeight + ";height:" + totalHeight + " ;'><div id='viz' style='margin-top:20p;'></div><div id='stat' class='stat' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
@@ -19,8 +19,6 @@ window.D3Timescape = function(theChart, opts) {
 	' </div> <div style="margin-left: 620px;">'
     	+ col2 +
 	'</div></div>';
-
-    debugger
 
     setTimeout(function() {
         $('#viz').empty();
@@ -82,7 +80,7 @@ window.D3Timescape = function(theChart, opts) {
 	    .attr('transform', function (d, i) {
 		return 'translate(0,' + String(i*(bandheight + bandgap)) + ')';
 	    })
-	    .attr("class", function(d) { return d.Patient_ID + " patient"; })
+	    .attr("class", function(d) { return "Patient_ID_" + d.Patient_ID + " patient"; })
 
 	gs
 	    .append('rect')
@@ -95,7 +93,7 @@ window.D3Timescape = function(theChart, opts) {
 		return x1 - x0;
 	     })
 	    .attr("class", "epoch")
-	    .style('fill', 'yellow')
+	    .style('fill', 'hsla(59, 83%, 52%, 1)') // yellowish
 	    .on('click', function (d) { 
 	    	Overlay("Report", function() {
 		    return {data: JSON.stringify(d, null, 2)}
@@ -126,7 +124,7 @@ window.D3Timescape = function(theChart, opts) {
 
 
 	 patients.map(function(patient) {
-	    var patientG = d3.select("." + patient.Patient_ID);
+	    var patientG = d3.select(".Patient_ID_" + patient.Patient_ID);
 	    patient.events.map(function(event, k) {
 	        if (event.on == null || event.off == null || isNaN(event.on) || isNaN(event.off) || event.on < -2000)
 		   return;

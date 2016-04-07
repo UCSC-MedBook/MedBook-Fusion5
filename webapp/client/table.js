@@ -69,7 +69,23 @@ window.makeHandsontable = function(theChart, extraOptions, length, column) {
 	     columns: columns,
 	     data: theChart.chartData,
 	     width:  "100%",
-	     height: length == null ? "100%" : length
+	     height: length == null ? "100%" : length,
+
+             cells: function (row, col, prop) {
+
+                  var src = this.instance.getSourceDataAtRow(row)
+                  var className = "Row_Patient Row_Patient_ID_"  + src.Patient_ID;
+		  if (src.Sample_ID)
+		      className += " " + src.Sample_ID;
+
+                  var cellProperties = {className: className};
+ 
+                  // cellProperties.renderer = "negativeValueRenderer"; // uses lookup map
+ 
+                  return cellProperties;
+            }
+ 
+
 	 });
     }
 
