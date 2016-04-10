@@ -165,6 +165,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	  .attr("x", x)
 	  .attr("y", y)
 	  .attr("class", "Toggle")
+	  .attr("data-klass", klass)
+	  .attr("onClick", "Toggle(event)")
 	  .attr("height", feature_list_height)
 	  .attr("width", 2000)
 	  .attr("fill", background_color)
@@ -172,6 +174,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	 var bunch_label_toggle = g.append("rect")
 	    .attr("class", "Toggle")
+	    .attr("onClick", "Toggle(event)")
 	    .attr("x", 0)
 	    .attr("y", 0)
 	    .attr("rx", collapse ? 3 : 5)
@@ -192,6 +195,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	    .attr("text-anchor",collapse ? "end" : "middle")
 	    .attr("font-weight","bold")
 	    .attr("class", "Toggle")
+	    .attr("onClick", "Toggle(event)")
 	    .attr("data-klass", klass)
 
 	if (feature_list.length > 2) {

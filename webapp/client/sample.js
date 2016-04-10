@@ -55,6 +55,7 @@ Template.Controls.helpers({
 	      html = func(TheChart, {});
 	  }
        } 
+       html = html.replace(/onclick/g, "onClick");
        setTimeout(d3_tooltip_boxplot, 5000);
        return html;
    },
