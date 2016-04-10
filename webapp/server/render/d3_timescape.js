@@ -38,7 +38,6 @@ D3Timescape = function(window, chartDocument) {
 	       ; // don't care
 
 	    else if (patients[ci.Patient_ID].On_Study_Date != ci.On_Study_Date) {
-	       console.log("patients[ci.Patient_ID=", ci.Patient_ID, "].On_Study_Date", patients[ci.Patient_ID].On_Study_Date, ci.On_Study_Date);
 	       throw new Error("patients[ci.Patient_ID=", ci.Patient_ID, "].On_Study_Date", patients[ci.Patient_ID].On_Study_Date, ci.On_Study_Date);
 
 	    } else // both null
@@ -81,8 +80,8 @@ D3Timescape = function(window, chartDocument) {
 
 		  if (patient.min > onTreatment) patient.min = onTreatment;
 		  if (patient.max < offTreatment) patient.max = offTreatment;
-	      } else 
-		  console.log("bad treatment", treatment);
+	      } 
+	      // else console.log("bad treatment", treatment);
 
 	      if (treatment.Reason_for_Stopping_Treatment) {
 		   patient.events.push({
@@ -97,7 +96,7 @@ D3Timescape = function(window, chartDocument) {
     aggregate("SU2C_Prior_TX_V3");
     aggregate("SU2C_Subsequent_Treatment_V1");
 
-    console.log("chart min max", min, max);
+    // console.log("chart min max", min, max);
     Object.keys(patients).sort().map(function(k) {
        console.log(k, patients[k]);
     })
@@ -114,6 +113,6 @@ D3Timescape = function(window, chartDocument) {
 
     chartDocument.elapsed = { min: min, max: max };
 
-    console.log("D3Timescape", max, min, chartDocument.chartData.length);
+    // console.log("D3Timescape", max, min, chartDocument.chartData.length);
     return "D3Timescape";
 }

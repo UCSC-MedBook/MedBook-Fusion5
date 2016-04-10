@@ -590,7 +590,15 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
 
-    nextChartData = nextChartData.sort(function(a,b) {  // sort by field order
+    nextChartData = nextChartData.map(function(elem) {
+        for (var i = 0; i < selectedFieldNames.length; i++) {
+	    var field = selectedFieldNames[i];
+	    if (!(field in elem)) {
+		elem[field] = "N/A";
+	    }
+	}
+	return elem;
+    }).sort(function(a,b) {  // sort by field order
         var something = 0;
         for (var i = 0; i < selectedFieldNames.length; i++) {
 	   var field = selectedFieldNames[i];
@@ -621,11 +629,16 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	           a_value = a_value in order ? order[a_value] : order_n;
 	           b_value = b_value in order ? order[b_value] : order_n;
 	       }
+	       if (a_value < b_value) return -1;
+	       if (a_value > b_value) return 1;
+
+/*
 
 	       var x =  naturalSort(a_value, b_value);
 	       
 	       if (x != 0)
 	           return x;
+*/
 	   } else {
 	       if (field in a)
 		   something = 1;
@@ -637,6 +650,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
        }
        return something;
     });
+    nextChartData.map(function(a,i) { console.log(i,a.Reason_for_Stopping_Treatment)})
+
 
     // console.log("step 6b",  Date.now() - ST, ChartDocument.chartData);
 

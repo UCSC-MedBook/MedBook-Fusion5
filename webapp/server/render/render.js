@@ -34,6 +34,7 @@ renderJSdom = function(ChartDocument) {
     var chartType = ChartDocument.pivotTableConfig.rendererName;
     console.log("chartType", chartType);
 
+
     if (chartType == null) 
 	chartType = "Table";
 
@@ -53,7 +54,7 @@ renderJSdom = function(ChartDocument) {
 			    html = ct.func(window, ChartDocument, null, []);
 			} catch (err) {
 			    html = "<B><font color='red'>" + err.message + "</font><B>";
-			    console.log("exception", err.message, err.stack);
+			    // console.log("exception", err.message, err.stack);
 			}
 			html = html ? 
 			    (typeof(html) == "string" 

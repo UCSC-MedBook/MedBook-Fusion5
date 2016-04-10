@@ -85,20 +85,43 @@ window.D3Timescape = function(theChart, opts) {
 	gs
 	    .append('rect')
 	    .attr('x', function (d) { return xScale(d.min); })
-	    .attr('y', function (d, i) { return 0; })
+	    .attr('y', 0)
 	    .attr('height', function (d) { return bandheight; })
 	    .attr('width', function (d) { 
 		var x0 = xScale(d.min);
 		var x1 = xScale(d.max);
+		d.end = x1;
 		return x1 - x0;
 	     })
 	    .attr("class", "epoch")
-	    .style('fill', 'hsla(59, 83%, 52%, 1)') // yellowish
+	    .style('fill', 'hsla(59, 83%, 52%, 1)') // mustardy yellow
 	    .on('click', function (d) { 
 	    	Overlay("Report", function() {
 		    return {data: JSON.stringify(d, null, 2)}
 		});
 	    })
+
+
+	 gs
+	    .append("text")
+	    .attr("class", "Reason_for_Stopping_Treatment")
+	    .text(function(d) {
+	        console.log( d.Reason_for_Stopping_Treatment) ;
+	        return d.Reason_for_Stopping_Treatment;
+	    })
+	    .attr('x', function(d) { return d.end})
+	    .attr('y', bandheight)
+
+
+	    /*
+	    var letter = event.description[0];
+	    var x = rect.attr("x") + rect.attr("width");
+	    var y = rect.attr("y");
+	    append("text")
+		.attr('x', x)
+		.attr('y', y)
+		.style("text-anchor", "end")
+	    */
 
  	gs.append("line")
 	 .attr("x1", xScale(0))
@@ -126,9 +149,25 @@ window.D3Timescape = function(theChart, opts) {
 	 patients.map(function(patient) {
 	    var patientG = d3.select(".Patient_ID_" + patient.Patient_ID);
 	    patient.events.map(function(event, k) {
-	        if (event.on == null || event.off == null || isNaN(event.on) || isNaN(event.off) || event.on < -2000)
+	        if (event.on == null || isNaN(event.on) || isNaN(event.off) || event.on < -2000)
 		   return;
-		patientG
+		if (event.off == null) {
+		   if (event.description == "Progressive Disease" || event.description == "Adverse Event") {
+		      patientG.append("text")
+			.attr("class", "Reason_for_Stopping_Treatment")
+			.text(event.description[0])
+			.attr('x', function() { 
+			   var val =  xScale(event.on);
+			   return val;
+		  	 })
+	                .attr("y", bandheight*0.8)
+		    } else {
+		        console.log("event", event);
+		    }
+		    return;
+		}
+
+		var rect = patientG
 		    .append("rect")
 		    .attr("k", k)
 		    .attr("class", "event")
