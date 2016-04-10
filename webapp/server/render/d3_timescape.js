@@ -53,6 +53,8 @@ D3Timescape = function(window, chartDocument) {
 	Collections.CRFs.find({CRF: crf, Study_ID: "prad_wcdt"}, {sort: {Patient_ID:1, Sample_ID:1}})
 	   .forEach(function(treatment) {
 	       var patient = patients[treatment.Patient_ID];
+	       if (patient == null)
+	           return
 
 	       var onTreatment = parseInt((treatment.Start_Date - patient.On_Study_Date) / milliSecondsPerDay);
 

@@ -46,7 +46,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var h = _.clone(chartDocument.pivotTableConfig.cols);
 
     var xk = Object.keys(exclusions);
-    var data = chartDocument.chartData.filter(function(elem) {
+    chartDocument.chartData = chartDocument.chartData.filter(function(elem) {
         for (var i = 0; i < xk.length; i++) {
             var k = xk[i];
             var v = exclusions[k];
@@ -55,7 +55,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
         }
         return true;
     });
-    // Session.set("ChartDataFinal", data);
+    // Session.set("ChartDataFinal", chartDocument.chartData);
 
     var analysis = analyze(chartDocument.chartData, h.concat(v));;
     function numbers(field) {
@@ -70,7 +70,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
     function unique(attribute) { 
         var values = new Object();
-        data.map(function(elem) { values[elem[attribute]] = 1; }); 
+        chartDocument.chartData.map(function(elem) { values[elem[attribute]] = 1; }); 
         return Object.keys(values).map(function(value)  { return [ attribute, value] });
     }
 
