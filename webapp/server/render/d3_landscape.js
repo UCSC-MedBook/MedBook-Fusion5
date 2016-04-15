@@ -367,7 +367,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	addViz("k" + j, false, background_color);
     }
 
-    // console.log("elapsed time", Date.now() - start);
+    console.log("landscape elapsed time", Date.now() - start, wrapper);
 
     return wrapper;
 } // D3Landscape()
