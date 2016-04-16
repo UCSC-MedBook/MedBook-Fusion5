@@ -19,6 +19,7 @@ var Prototype_gene_panel =  [
 var mark_unit_width=10, mark_unit_height=20;
 
 D3Landscape = function(window, chartDocument, opts, exclusions) {
+    console.log("landscape chartDocument.length", chartDocument.chartData.length);
     var start = Date.now();
 
     var gene_panel = chartDocument.genePanel || Prototype_gene_panel;
@@ -77,25 +78,24 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var predicates = cartesianProductOf(h.concat(v).map(unique));
 
     var gene_labels = _.union.apply(null, _.pluck(gene_panel, "feature_list"));
-    var sample_labels = querySampleLabels(chartDocument, gene_labels);
+    console.log("gene_labels", gene_labels);
 
-    function querySampleLabels(chartDocument, gene_list) {
-       var study_label = chartDocument.studies[0];
-       var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
-	   study_label: study_label,
-	   gene_label: {$in: gene_list}
-	   // sample_label: {$in: chartDocument.sample_list}
-       }).fetch();
-       sample_labels = _.union(gene_data.map(function (gd) { return gd.sample_label  }).sort());
-       // console.log("number of samples which contain mutations", sample_labels.length);
-       return sample_labels;
-    }
+    var sample_labels = _.pluck(chartDocument.chartData, "Sample_ID");
+    console.log("sample_labels", sample_labels.sort());
+    var study_labels = chartDocument.studies;
+    var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
+	   study_label: {$in: study_labels},
+	   gene_label: {$in: gene_labels},
+	   sample_label: {$in: sample_labels}
+    }).fetch();
+    sample_labels = _.unique(gene_data.map(function (gd) { return gd.sample_label  }).sort());
+    console.log("number of samples which contain mutations", sample_labels.length);
+    console.log("sample_labels", sample_labels.sort());
 
     function query(chartDocument, gene_list) {
-       var study_label = chartDocument.studies[0];
-       var study = Collections.studies.findOne({id: study_label});
+       var study_labels = chartDocument.studies;
        var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
-	   study_label: study_label,
+	   study_label: {$in: study_labels},
 	   gene_label: {$in: gene_list}
 	   // sample_label: {$in: chartDocument.sample_list}
        }).fetch();
@@ -103,7 +103,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
        var gene_labels = gene_data.map(function(doc) { return doc.gene_label; });
        var counts = _.countBy(gene_labels);
        gene_labels = _.uniq(gene_labels);
-       return { study: study, gene_data: gene_data, gene_labels: gene_labels, sample_labels: sample_labels};
+       return {  gene_data: gene_data, gene_labels: gene_labels, sample_labels: sample_labels};
     }
 
     var margin = {top: 50, right: 00, bottom: 40, left: 10, leftMost: 10};
@@ -120,6 +120,9 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
     function addViz(klass, collapse, background_color) {
 	var geneDataBundle = query(chartDocument, bunch.feature_list);
+
+	if ( geneDataBundle.gene_labels.length == 0) // no mutations matching the criteris found;
+	    return 0;
 
 	if (collapse) {
 	    geneDataBundle.gene_labels = [""];
@@ -216,6 +219,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	}
 
 	function rect(i, j, pvalue, label, text2, text3, color) {
+	    if (i == null || j == null)
+	        return
 	    var x = leftLabel + (i*mark_unit_width);
 	    var y = (j*mark_unit_height) + 10;
 	    var rectangle = svg.append("rect")
@@ -263,8 +268,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	    rect(i, j, doc.chasm_driver_p_value, label, text2, text3);
 	});
 
-
-
+        return geneDataBundle.gene_labels.length
     }
 
     function addFields() {
@@ -367,7 +371,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	addViz("k" + j, false, background_color);
     }
 
-    console.log("landscape elapsed time", Date.now() - start, wrapper);
+    console.log("landscape elapsed time", Date.now() - start);
 
     return wrapper;
 } // D3Landscape()
