@@ -525,7 +525,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     ChartDocument.metadata = metadata;
     try {
-	if (ChartDocument.geneSignatureFormula)
+	if (ChartDocument.gene_signatures)
 	    ProcessGeneSignatureFormula(ChartDocument, nextChartData);
     } catch (err) {
         console.log("ERROR", err);

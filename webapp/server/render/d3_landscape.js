@@ -165,8 +165,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 
 	var feature_list_height = (mark_unit_height * feature_list.length) -5;
 	g.append("rect")
-	  .attr("x", x)
-	  .attr("y", y)
+	  .attr("x", 0)
+	  .attr("y", 0)
 	  .attr("class", "Toggle")
 	  .attr("data-klass", klass)
 	  .attr("onClick", "Toggle(event)")

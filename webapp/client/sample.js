@@ -300,12 +300,14 @@ Template.Controls.events({
 
   'click .geneSignatureFormula' : function(e) {
        var TheChart = CurrentChart();
-       var geneSignatureFormula = TheChart.geneSignatureFormula;
 
-       var text = geneSignatureFormula == null ? "Upreg = 2*TP53 + AR + RB" : geneSignatureFormula;
-       Overlay("GeneSignatureFormula", { 
-	   theChart: TheChart,
-	   text: text
+       Overlay("SimpleDataBrowser", { 
+	   name: "Gene Signatures",
+	   data: TheChart.gene_signatures || [[1,2,3],[4,5,6]],
+	   save: function(data) {
+	      debugger
+	      UpdateCurrentChart("gene_signatures", data);
+	   }
        });
   }, 
 

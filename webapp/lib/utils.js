@@ -16,7 +16,9 @@ ConvertToTSV = function (data, keys) {
             var obj = array[i];
             if (line != '') line += '\t'
             if (key in obj) {
-                line += String(obj[key]).replace(/[\t\n\r]/g, " ");
+	        var value = obj[key];
+		if (value != null)
+		    line += String(value).replace(/[\t\n\r]/g, " ");
             }
         });
 

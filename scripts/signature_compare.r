@@ -20,6 +20,9 @@ read_matrix <- function(in_file){
 	data_matrix.df <- read.delim(in_file, header=TRUE, row.names=NULL, stringsAsFactors=FALSE, na.strings="NA", check.names=FALSE)
 	data_matrix <- as.matrix(data_matrix.df[,cl.cols])
 	rownames(data_matrix) <- data_matrix.df[,1]
+	header <- unlist(header);
+	header <- header[2:length(header)];
+	colnames(data_matrix) <- header
 	return(data_matrix)
 }
 
@@ -80,7 +83,8 @@ dot_two_matrices <- function(matrix1, matrix2, cmp_type){
 	#going to end up with matrix1 column names as column names of the output matrix and
 	#column names of matrix2 as row names of the output matrix:
 	
-	return(apply(matrix1, 2, dot_vector_with_matrix, vect_matrix=matrix2, cmp_type=cmp_type));
+	data = (apply(matrix1, 2, dot_vector_with_matrix, vect_matrix=matrix2, cmp_type=cmp_type));
+	return(data);
 }
 
 main <- function(argv) {  
@@ -116,10 +120,15 @@ main <- function(argv) {
 	data_matrix2 <- read_matrix(input_file2)
 	
 	#select only the intersection of the rows between the two matrices:
-	data_matrix1 <- data_matrix1[rownames(data_matrix1) %in% rownames(data_matrix2),]
-	data_matrix2 <- data_matrix2[rownames(data_matrix2) %in% rownames(data_matrix1),]
-	data_matrix1 <- data_matrix1[order(rownames(data_matrix1)),]
-	data_matrix2 <- data_matrix2[order(rownames(data_matrix2)),]
+	cn1 = colnames(data_matrix1)
+	cn2 = colnames(data_matrix2)
+	data_matrix1 <- as.matrix(data_matrix1[rownames(data_matrix1) %in% rownames(data_matrix2),])
+	data_matrix2 <- as.matrix(data_matrix2[rownames(data_matrix2) %in% rownames(data_matrix1),])
+	data_matrix1 <- as.matrix(data_matrix1[order(rownames(data_matrix1)),])
+	data_matrix2 <- as.matrix(data_matrix2[order(rownames(data_matrix2)),])
+
+	colnames(data_matrix1) <- cn1;
+	colnames(data_matrix2) <- cn2;
 	
 	result_matrix <- dot_two_matrices(data_matrix1,data_matrix2, cmp_type)	
 	write_matrix(result_matrix)
