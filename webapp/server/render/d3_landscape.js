@@ -219,8 +219,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	}
 
 	function rect(i, j, pvalue, label, text2, text3, color) {
-	    if (i == null || j == null)
-	        return
+	    if (i == null) i = 0;
+	    if (j == null) j = 0;
 	    var x = leftLabel + (i*mark_unit_width);
 	    var y = (j*mark_unit_height) + 10;
 	    var rectangle = svg.append("rect")
