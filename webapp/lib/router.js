@@ -283,8 +283,12 @@ function genomicDataSamples3(coll, study, response)  {
       var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
 	  return study.gene_expression_index[sample_id];
       })
+      var st = Date.now();
 
-      var cursor = Expression3.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var cursor = Expression3.find({ study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var count = cursor.count();
+      console.log("download", count);
+      response.setTimeout(20000 * 60 * 1000);
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
@@ -292,7 +296,11 @@ function genomicDataSamples3(coll, study, response)  {
 	  });
 	  line += "\n";
 	  response.write(line);
+          if ((count % 1000) == 0)
+	      console.log("download", count, Date.now() - st);
+          --count;
       });
+      console.log("cursor download",count, "response.finished", response.finished );
 }
 
 
