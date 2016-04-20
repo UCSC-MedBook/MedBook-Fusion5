@@ -47,24 +47,22 @@ Template.Element.helpers({
     values: function() {
        var TheChart = Charts.findOne({_id: TheChartID}); // even though we have this.theChart, we want the dependency tracker to update when TheChart changes. So we need to get TheChart ourselves from the database.
        var values = ["N/A"];
-       try {
-	   var md = TheChart.metadata[this.field];
+       var md = TheChart.metadata[this.field];
 
-	   if (md.type == "String" && md.allowedValues)
-	       values = TheChart.metadata[this.field].allowedValues;
-	   else {
-	       var excludedValues = this.field in TheChart.pivotTableConfig ? TheChart.pivotTableConfig.exclusions[this.field]  : [];
-	       values = _.uniq(_.union(excludedValues, _.pluck(TheChart.chartData, this.field))).map(function(n) {
-	          try {
-		     return Number(n);
-		  } catch (err) {
-		     return n;
-		  }
-	       }).sort(function(a,b) {return a- b});
-	   }
-       } catch (err) {
-           debugger;
+       if (md.type == "String" && md.allowedValues)
+	   values = TheChart.metadata[this.field].allowedValues;
+       else {
+	   var excludedValues = this.field in TheChart.pivotTableConfig ? TheChart.pivotTableConfig.exclusions[this.field]  : [];
+	   values = _.uniq(_.union(excludedValues, _.pluck(TheChart.chartData, this.field))).map(function(n) {
+	      try {
+		 return Number(n);
+	      } catch (err) {
+		 return n;
+	      }
+	   }).sort(function(a,b) {return a- b});
        }
+       if (!_.contains(values,"N/A"))
+	   values.push("N/A");
        return values;
     }
 });
@@ -121,14 +119,19 @@ Template.Element.events({
 	    });
        var val = Charts.update(TheChart._id, {$set: { "transforms":  transforms}});
     },
-    'click input': function(evt, tpl) {
+
+    'click .OK' : function(evt, tpl) {
 	var value = String(this);
-	var field = Template.currentData().field;
 	var TheChart = Template.currentData().theChart;
 	var exclusions = Template.currentData().exclusions;
+	if (exclusions == null || exclusions.length == 0)
+	   exclusions = {};
 
-	if (exclusions) {
-	    if (!evt.target.checked) {
+	$(".exclusions").each(function(i, e) {
+	    var field = $(e).data("field");
+	    var value = $(e).data("value");
+
+	    if (!e.checked) {
 		if ( !(field in exclusions))
 		    exclusions[field] = [];
 		if (!(_.contains(exclusions[field], value)))
@@ -141,11 +144,8 @@ Template.Element.events({
 			delete exclusions[field];
 		}
 	    }
-    	}
-    },
-    'click .OK' : function() {
-	var exclusions = Template.currentData().exclusions;
-	var TheChart   = Template.currentData().theChart;
+    	})
+	debugger;
 	UpdateCurrentChart("pivotTableConfig.exclusions", exclusions);
 	OverlayClose();
     }

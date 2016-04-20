@@ -21,7 +21,8 @@ analyze = function(chartData, dataFieldNames) {
      function allNumbers(values) {
          if (values.length == 0)
             return false;
-         return values.map(function(v) { return v == "N/A" || !isNaN(v)} ).reduce(and);
+         var vv = values.map(function(v) { return v == "NaN" || v == "N/A" || !isNaN(v)} );
+	 return vv.reduce(and);
      }
      function extract(key) {
          var v = unique(_.pluck(chartData, key)); // .filter(function(v) { return v != "N/A" }));

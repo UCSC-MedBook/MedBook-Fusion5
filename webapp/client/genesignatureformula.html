@@ -1,0 +1,22 @@
+<template name="GeneSignatureFormula">
+ <div >
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3>Gene Formula</h3><br>
+
+Example:
+<code>
+MPI = 5*SLC2A1 + 4*(MAD2L1 + GINS1 + KRT6A) - 5 *(FCGRT + TNIK+BCAM + KDM6A) - 6*FAIM3 
+</code>
+      </div>
+      <textarea class="genePanelText" style="margin:30px; border-width:1px;" rows=25 cols=105 >
+	  {{text}}
+      </textarea>
+
+      <center>
+      <p><button class="OK" type="button">OK</button></p>
+      </center>
+
+    </div>
+ </div>
+</template>
+

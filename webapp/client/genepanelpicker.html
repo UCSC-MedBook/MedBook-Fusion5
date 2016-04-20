@@ -1,0 +1,19 @@
+<template name="GenePanelPicker">
+ <div class="GenePanelPickerDiv">
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3>Gene Panel</h3>format is name  colon, comma separated list. You can also have a comment with a hash mark until the end of line. E.g.<br>
+
+      KEGG_MAPK_SIGNALING_PATHWAY
+      </div>
+      <textarea class="genePanelText" style="margin:30px; border-width:1px;" rows=25 cols=105 >
+	  {{text}}
+      </textarea>
+
+      <center>
+      <p><button class="OK" type="button">OK</button></p>
+      </center>
+
+    </div>
+ </div>
+</template>
+

@@ -1,12 +1,25 @@
 
-window.makeD3Elapsed = function(theChart, opts) {
+window.D3Timescape = function(theChart, opts) {
     var totalWidth = 2000;
     var totalHeight = 2000;
-    
 
-    theChart.chartData.sort(function(a,b) { return b.Days_on_Study - a.Days_on_Study; });
+    Meteor.subscribe("TheChartData", theChart._id);
+    if (theChart.chartData.length == 0) return "<div>Loading ... </div>";
 
-    var wrapper = "<div id='wrapper' style='width " + totalHeight + ";height:" + totalHeight + " ;'><div id='viz' style='margin-top:20p;'></div><div id='stat' class='stat' title='two-tail P-value' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
+    var n = theChart.chartData.length;
+
+
+    // theChart.chartData.sort(function(a,b) { return b.Days_on_Study - a.Days_on_Study; });
+
+    var col1 = window.makeHandsontable(theChart, opts, n * 12);
+    var col2 = "<div id='wrapper' style='width " + totalHeight + ";height:" + totalHeight + " ;'><div id='viz' style='margin-top:20p;'></div><div id='stat' class='stat' style='width:100%;height:50;'> </div> <div id='legend' class='legend' style='float:left;margin:50px;'> </div></div>"; 
+
+    var wrapper = '<div style="width: 100%; overflow: hidden;"> <div style="width: 600px; float: left;"> '
+    	+ col1 +
+	' </div> <div style="margin-left: 620px;">'
+    	+ col2 +
+	'</div></div>';
+
     setTimeout(function() {
         $('#viz').empty();
         $('#stat').empty();
@@ -67,25 +80,48 @@ window.makeD3Elapsed = function(theChart, opts) {
 	    .attr('transform', function (d, i) {
 		return 'translate(0,' + String(i*(bandheight + bandgap)) + ')';
 	    })
-	    .attr("class", function(d) { return d.Patient_ID + " patient"; })
+	    .attr("class", function(d) { return "Patient_ID_" + d.Patient_ID + " patient"; })
 
 	gs
 	    .append('rect')
 	    .attr('x', function (d) { return xScale(d.min); })
-	    .attr('y', function (d, i) { return 0; })
+	    .attr('y', 0)
 	    .attr('height', function (d) { return bandheight; })
 	    .attr('width', function (d) { 
 		var x0 = xScale(d.min);
 		var x1 = xScale(d.max);
+		d.end = x1;
 		return x1 - x0;
 	     })
 	    .attr("class", "epoch")
-	    .style('fill', 'yellow')
+	    .style('fill', 'hsla(59, 83%, 52%, 1)') // mustardy yellow
 	    .on('click', function (d) { 
 	    	Overlay("Report", function() {
 		    return {data: JSON.stringify(d, null, 2)}
 		});
 	    })
+
+
+	 gs
+	    .append("text")
+	    .attr("class", "Reason_for_Stopping_Treatment")
+	    .text(function(d) {
+	        console.log( d.Reason_for_Stopping_Treatment) ;
+	        return d.Reason_for_Stopping_Treatment;
+	    })
+	    .attr('x', function(d) { return d.end})
+	    .attr('y', bandheight)
+
+
+	    /*
+	    var letter = event.description[0];
+	    var x = rect.attr("x") + rect.attr("width");
+	    var y = rect.attr("y");
+	    append("text")
+		.attr('x', x)
+		.attr('y', y)
+		.style("text-anchor", "end")
+	    */
 
  	gs.append("line")
 	 .attr("x1", xScale(0))
@@ -111,11 +147,27 @@ window.makeD3Elapsed = function(theChart, opts) {
 
 
 	 patients.map(function(patient) {
-	    var patientG = d3.select("." + patient.Patient_ID);
+	    var patientG = d3.select(".Patient_ID_" + patient.Patient_ID);
 	    patient.events.map(function(event, k) {
-	        if (event.on == null || event.off == null || isNaN(event.on) || isNaN(event.off) || event.on < -2000)
+	        if (event.on == null || isNaN(event.on) || isNaN(event.off) || event.on < -2000)
 		   return;
-		patientG
+		if (event.off == null) {
+		   if (event.description == "Progressive Disease" || event.description == "Adverse Event") {
+		      patientG.append("text")
+			.attr("class", "Reason_for_Stopping_Treatment")
+			.text(event.description[0])
+			.attr('x', function() { 
+			   var val =  xScale(event.on);
+			   return val;
+		  	 })
+	                .attr("y", bandheight*0.8)
+		    } else {
+		        console.log("event", event);
+		    }
+		    return;
+		}
+
+		var rect = patientG
 		    .append("rect")
 		    .attr("k", k)
 		    .attr("class", "event")

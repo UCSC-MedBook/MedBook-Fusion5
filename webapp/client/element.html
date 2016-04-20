@@ -39,12 +39,12 @@
 		        {{/if}}
 		    {{/if}}
 		    {{#if $.Session.equals "dichot" "none" }}
-		         Exclude values:
+		         Included values (check to include):
 			 <div style="margin:5px;border-radius:5px;border-style:dotted;border-width:1px;overflow:scroll;height:200px;">
 			     {{#each values}}
-				 <div style="margin:15px;">
+				 <div style="margin:3px;">
 				     {{this}}
-				     <input class="exclusions" data-value="{{this}}" type="checkbox" checked={{checked}} />
+				     <input class="exclusions" data-field="{{../field}}" data-value="{{this}}" type="checkbox" checked={{checked}} />
 				 </div>
 			     {{/each}}
 			 </div>

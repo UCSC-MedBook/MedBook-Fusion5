@@ -10,6 +10,7 @@ D3BoxPlot = function(window, pivotData, opts, exclusions) {
     var chvk = BoxPlotCategorical(pivotData, exclusions);
     var n = 9;
 
+
     plotWidth = Math.max(150, ChartWidthMax/ n);
     width = plotWidth - margin.left - margin.right,
     height = PlotHeight - margin.top - margin.bottom;
@@ -232,6 +233,5 @@ function displayBoxPlots(window, plotDataSets, h, v, svgContainer, plotWidth, ro
 	  }
       }
       */
-
 };
 

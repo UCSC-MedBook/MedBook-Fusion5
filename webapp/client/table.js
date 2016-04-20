@@ -30,8 +30,13 @@ function TableData(theChart, exclusions) {
 window.makeReactiveTable = function(theChart, extraOptions) {
 
     var result = $("<div class='ChartWrapper' >").css({
+
+      /*
       "min-width": "800px",
       "min-height": "600px"
+      */
+      width: "100%",
+      height: "100%"
     });
 
     var data =  TableData(theChart, {});
@@ -42,18 +47,20 @@ window.makeReactiveTable = function(theChart, extraOptions) {
 }
 
 hot = null;
+hotSet = null;
 
-window.makeHandsontable = function(theChart, extraOptions) {
+window.makeHandsontable = function(theChart, extraOptions, length, column) {
 
     Meteor.subscribe("TheChartData", theChart._id);
-    function dataTable() {
+
+    window.hotSet = function() {
         var fields = theChart.pivotTableConfig.rows.concat(theChart.pivotTableConfig.cols);
 	var columns = fields.map(function(field, i) { return {data: field}});
+	if (column)
+	   columns.push(column);
 	if (hot)
 	   try { hot.destroy(); } catch (err) {};
-
-
-	hot = new Handsontable(document.getElementById('ChartWrapper'), { 
+	window.hot = new Handsontable(document.getElementById('ChartWrapper'), { 
 	     minSpareRows: 1,
 	     rowHeaders: true,
 	     colHeaders: true,
@@ -61,12 +68,28 @@ window.makeHandsontable = function(theChart, extraOptions) {
 	     colHeaders: fields,
 	     columns: columns,
 	     data: theChart.chartData,
-	     height: 1200
+	     width:  "100%",
+	     height: length == null ? "100%" : length,
 
-	});
+             cells: function (row, col, prop) {
+
+                  var src = this.instance.getSourceDataAtRow(row)
+                  var className = "Row_Patient Row_Patient_ID_"  + src.Patient_ID;
+		  if (src.Sample_ID)
+		      className += " " + src.Sample_ID;
+
+                  var cellProperties = {className: className};
+ 
+                  // cellProperties.renderer = "negativeValueRenderer"; // uses lookup map
+ 
+                  return cellProperties;
+            }
+ 
+
+	 });
     }
-    
-    setTimeout(dataTable, 250);
+
+    setTimeout(function() { window.hotSet(1200, length == null ? 1200 : length); }, 250);
     return "<div id='ChartWrapper' style='min-width:800px;min-height:600px;'></div>"
 }
 
