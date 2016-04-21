@@ -376,7 +376,7 @@ exportData = function() {
 
   // Studies requsted parameter, default to prad_wcdt for now
   var study_query = { }
-  if (this.params && this.params.query && this.params.query.study & this.params.query.study.length > 0)
+  if (this.params && this.params.query && this.params.query.study && this.params.query.study.length > 0)
       study_query.id = this.params.query.study;
   else
       study_query.id = "prad_wcdt";
