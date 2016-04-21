@@ -25,7 +25,6 @@ function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  
       ]
     });
 
-
     var cmd = "sh -c " +  argArray.join(" ");
 
     var start = new Date();
