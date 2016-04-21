@@ -314,7 +314,7 @@ Meteor.startup(function() {
 	      .attr("y1", x1)
 	      .attr("y2", x1);
 	});
-	d3.timer.flush();
+	// d3.timer.flush();
       }
 
       box.width = function(x) {

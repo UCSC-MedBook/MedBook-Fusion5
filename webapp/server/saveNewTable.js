@@ -94,7 +94,6 @@ Meteor.methods( {
 
 	var n = 0;
 	for (var j = 1; j < source_data.length; j++) {
-	    debugger;
 	    var source_doc = source_data[j];
 	    var target_doc = { Study_ID: studyForNewTable, CRF: target_name};
 	    for (var i = 0; i < fields.length; i++) {

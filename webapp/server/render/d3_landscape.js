@@ -19,7 +19,7 @@ var Prototype_gene_panel =  [
 var mark_unit_width=10, mark_unit_height=20;
 
 D3Landscape = function(window, chartDocument, opts, exclusions) {
-    console.log("landscape chartDocument.length", chartDocument.chartData.length);
+    // console.log("landscape chartDocument.length", chartDocument.chartData.length);
     var start = Date.now();
 
     var gene_panel = chartDocument.genePanel || Prototype_gene_panel;
@@ -78,10 +78,10 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var predicates = cartesianProductOf(h.concat(v).map(unique));
 
     var gene_labels = _.union.apply(null, _.pluck(gene_panel, "feature_list"));
-    console.log("gene_labels", gene_labels);
+    // console.log("gene_labels", gene_labels);
 
     var sample_labels = _.pluck(chartDocument.chartData, "Sample_ID");
-    console.log("sample_labels", sample_labels.sort());
+    // console.log("sample_labels", sample_labels.sort());
     var study_labels = chartDocument.studies;
     var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
 	   study_label: {$in: study_labels},
@@ -89,8 +89,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	   sample_label: {$in: sample_labels}
     }).fetch();
     sample_labels = _.unique(gene_data.map(function (gd) { return gd.sample_label  }).sort());
-    console.log("number of samples which contain mutations", sample_labels.length);
-    console.log("sample_labels", sample_labels.sort());
+    // console.log("number of samples which contain mutations", sample_labels.length);
+    // console.log("sample_labels", sample_labels.sort());
 
     function query(chartDocument, gene_list) {
        var study_labels = chartDocument.studies;
@@ -371,7 +371,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	addViz("k" + j, false, background_color);
     }
 
-    console.log("landscape elapsed time", Date.now() - start);
+    // console.log("landscape elapsed time", Date.now() - start);
 
     return wrapper;
 } // D3Landscape()

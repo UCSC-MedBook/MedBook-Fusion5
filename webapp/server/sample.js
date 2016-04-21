@@ -274,26 +274,14 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
 }
 
 
-// Do the heavy lifting for Joining Samples.
-function SampleJoin(userId, ChartDocument, fieldNames) {
-    ST = Date.now();
-
-    // Step 0 validate params
-    // console.log("step 0",  ChartDocument.pivotTableConfig);
-    var b = new Date();
-    if (ChartDocument.studies == null || ChartDocument.length == 0) {
-      return { dataFieldNames: [], chartData: []};
-    }
-
-    // var ChartDocument = Charts.findOne(_id == null ? { userId : Meteor.userId() } : { _id:_id});
+function makeNextChartDataPart1(ChartDocument) {
     var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
 
     // Step 1. Use Clinical_Info as primary key
     q.Study_ID = {$in:ChartDocument.studies}; 
     q.CRF = "Clinical_Info";
 
-    var nextChartData = Collections.CRFs.find(q).fetch();
-
+    ChartDocument.chartData = Collections.CRFs.find(q).fetch();
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
    if (typeof(metadata) == "string")
@@ -303,22 +291,19 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	metadata[f].crf = "Clinical_Info";
     });
 
-    nextChartData.map(function(cd) {  
+    ChartDocument.chartData.map(function(cd) {  
        delete cd["CRF"];
     })
 
 
-    // console.log("step 1",  Date.now() - ST);
     // Step 2. Build Map and other bookkeeping 
     var chartDataMap = {};
-    nextChartData.map(function (cd) { 
+    ChartDocument.chartData.map(function (cd) { 
         delete cd["_id"];
         chartDataMap[cd.Sample_ID] = cd;
     });
-    nextChartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
-    ChartDocument.samplelist = nextChartData.map(function(ci) { return ci.Sample_ID })
-
-    // console.log("step 2",  Date.now() - ST);
+    ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
+    ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { return ci.Sample_ID })
 
     // Step 3. 
     // Join all the Gene like information into the samples into the ChartDataMap table
@@ -450,10 +435,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
           }); // .map 
     } // if ChartDocument.geneLikeDataDomain 
 
-    // console.log("step 3a",  Date.now() - ST);
 
     var mapPatient_ID_to_Sample_ID = {};
-    nextChartData.map(function(cd) {
+    ChartDocument.chartData.map(function(cd) {
 	 if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
 	     mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
 	 else
@@ -461,7 +445,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     });
 
 
-    // console.log("step 3b",  Date.now() - ST);
     // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
@@ -521,26 +504,19 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
              }); // forEach
 
         }); //  ChartDocument.additionalQueries.map
-    // console.log("step 4",  Date.now() - ST);
 
     ChartDocument.metadata = metadata;
-    try {
-	if (ChartDocument.gene_signatures)
-	    ProcessGeneSignatureFormula(ChartDocument, nextChartData);
-    } catch (err) {
-        console.log("ERROR", err);
-    }
+}
 
+function makeNextChartDataPart2(ChartDocument) {
 
     // Step 5. Transform any data.
     var keyUnion = {};  
-    nextChartData.map(function(datum) { 
-        Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
+    ChartDocument.chartData.map(function(datum) { 
+	Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
 
-    // console.log("step 5a",  Date.now() - ST, ChartDocument.pivotTableConfig,  ChartDocument.chartData);
-
-    var dataFieldNames =  Object.keys(keyUnion);
+    ChartDocument.dataFieldNames =  Object.keys(keyUnion);
     var cols = [];
     var rows = [];
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)
@@ -548,37 +524,33 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
 	rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
-    /*
-    cols = _.intersection(cols, dataFieldNames);
-    rows = _.intersection(rows, dataFieldNames);
-    */
-
-    var selectedFieldNames = _.union(rows, cols);
 
     // normalize records
-    nextChartData = nextChartData.map(Transform_Clinical_Info, keyUnion);
+    ChartDocument.chartData = ChartDocument.chartData.map(Transform_Clinical_Info, keyUnion);
 
     var transforms = ChartDocument.transforms;
     if (transforms && transforms.length > 0) {
-         var remodel = buildRemodelPlan(nextChartData, transforms, rows, cols);
+	 var remodel = buildRemodelPlan(ChartDocument.chartData, transforms, rows, cols);
 	 // console.log("remodel", remodel);
 
 	 if (remodel.doIt) {
-	     nextChartData = _.values(remodel.plan);
-	     // console.log("nextChartData", nextChartData);
+	     ChartDocument.chartData = _.values(remodel.plan);
+	     // console.log("ChartDocument.chartData", ChartDocument.chartData);
 	 } else {
-	     nextChartData = dichotomizeOrBin(nextChartData, transforms, rows, remodel);
+	     ChartDocument.chartData = dichotomizeOrBin(ChartDocument.chartData, transforms, rows, remodel);
 	 }
     } // if transforms
 
-    // console.log("step 5b",  Date.now() - ST, ChartDocument.chartData);
 
     // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
     if (exclusions == null) exclusions = [];
+    var selectedFieldNames = _.union(rows, cols);
+
+    ChartDocument.selectedFieldNames = selectedFieldNames;
     var excludedKeys = _.intersection(Object.keys(exclusions), selectedFieldNames); // only those names that are engaged.
     if (excludedKeys.length > 0)
-	nextChartData =  nextChartData.filter(function(elem) {
+	ChartDocument.chartData =  ChartDocument.chartData.filter(function(elem) {
 	    for (var i = 0; i < excludedKeys.length; i++) {
 	       var key = excludedKeys[i];
 	       if (key in elem && exclusions[key].indexOf(String(elem[key])) >= 0)
@@ -586,12 +558,9 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	       return true;
 	    }
 	});
-    // console.log("step 6a",  Date.now() - ST, ChartDocument.pivotTableConfig, ChartDocument.chartData);
 
-
-
-    nextChartData = nextChartData.map(function(elem) {
-        for (var i = 0; i < selectedFieldNames.length; i++) {
+    ChartDocument.chartData = ChartDocument.chartData.map(function(elem) {
+	for (var i = 0; i < selectedFieldNames.length; i++) {
 	    var field = selectedFieldNames[i];
 	    if (!(field in elem)) {
 		elem[field] = "N/A";
@@ -599,8 +568,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	}
 	return elem;
     }).sort(function(a,b) {  // sort by field order
-        var something = 0;
-        for (var i = 0; i < selectedFieldNames.length; i++) {
+	var something = 0;
+	for (var i = 0; i < selectedFieldNames.length; i++) {
 	   var field = selectedFieldNames[i];
 
 	   // If this field is a list of allowedValues in the schema, then use that order
@@ -616,18 +585,18 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 	   if (field in a && field in b) {
 	       if (a[field] == "N/A" && b[field] == "N/A")
-	           continue;
+		   continue;
 	       else if (a[field] != "N/A" && b[field] == "N/A")
-	           return -1;
+		   return -1;
 	       else if (a[field] == "N/A" && b[field] != "N/A")
-	           return 1;
+		   return 1;
 
 	       var a_value = a[field];
 	       var b_value = b[field];
 
 	       if (order) {
-	           a_value = a_value in order ? order[a_value] : order_n;
-	           b_value = b_value in order ? order[b_value] : order_n;
+		   a_value = a_value in order ? order[a_value] : order_n;
+		   b_value = b_value in order ? order[b_value] : order_n;
 	       }
 	       if (a_value < b_value) return -1;
 	       if (a_value > b_value) return 1;
@@ -637,7 +606,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	       var x =  naturalSort(a_value, b_value);
 	       
 	       if (x != 0)
-	           return x;
+		   return x;
 */
 	   } else {
 	       if (field in a)
@@ -650,43 +619,40 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
        }
        return something;
     });
-    nextChartData.map(function(a,i) { console.log(i,a.Reason_for_Stopping_Treatment)})
+}
 
 
-    // console.log("step 6b",  Date.now() - ST, ChartDocument.chartData);
+// Do the heavy lifting for Joining Samples.
+function SampleJoin(userId, ChartDocument, fieldNames) {
+    ST = Date.now();
 
-    // Step Final. We are done. Store the result back in the database and let the client take it from here.
-    // console.log("renderChartData", chartData.length);
+    if (ChartDocument.studies == null || ChartDocument.length == 0)
+      return { dataFieldNames: [], chartData: []};
 
-    ChartDocument.chartData = nextChartData;
-    ChartDocument.dataFieldNames = dataFieldNames;
-    ChartDocument.selectedFieldNames = selectedFieldNames;
-    ChartDocument.metadata = metadata;
+    if (ChartDocument.chartData == null || _.intersection(fieldNames, ["additionalQueries", "geneLikeDataDomain", "genelist", "samplelist", "studies"]).length > 0)
+	makeNextChartDataPart1(ChartDocument);
 
-    // console.log("step 6b1",  Date.now() - ST);
+    // if (_.intersection(fieldNames, ["gene_signatures"]).length > 0)
+    try {
+	ProcessGeneSignatureFormula(ChartDocument);
 
-    var html = renderJSdom(ChartDocument);
-
-    // console.log("step 6b2",  Date.now() - ST);
-
-
-    // console.log("step 6b3",  Date.now() - ST);
-
-    var ret = Charts.direct.update({ _id : ChartDocument._id }, 
-          {$set: 
-              {
-                dataFieldNames: ChartDocument.dataFieldNames,
-                selectedFieldNames: ChartDocument.selectedFieldNames,
-                elapsed: ChartDocument.elapsed,
-		metadata: ChartDocument.metadata,
-                chartData: ChartDocument.chartData,
-		html: html,
-		"pivotTableConfig.rows": rows, 
-		"pivotTableConfig.cols": cols, 
-               }});
-
-    // console.log("step 6c - done",  Date.now() - ST);
-    // console.log("done", ret);
+	makeNextChartDataPart2(ChartDocument);
+	debugger
+	var html = renderJSdom(ChartDocument);
+	var ret = Charts.direct.update({ _id : ChartDocument._id }, 
+	      {$set: 
+		  {
+		    dataFieldNames: ChartDocument.dataFieldNames,
+		    selectedFieldNames: ChartDocument.selectedFieldNames,
+		    elapsed: ChartDocument.elapsed,
+		    metadata: ChartDocument.metadata,
+		    chartData: ChartDocument.chartData,
+		    html: html,
+		   }});
+    } catch (err) {
+        console.log("ProcessGeneSignatureFormula", err);
+	debugger
+    }
 } 
 
 

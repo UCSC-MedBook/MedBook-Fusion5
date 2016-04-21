@@ -73,8 +73,10 @@ Meteor.startup(function() {
 
 });
 
-ProcessGeneSignatureFormula = function(chart, nextChartData) {
-    debugger
+ProcessGeneSignatureFormula = function(chart) {
+    if (chart.gene_signatures == null)
+       return
+
     var ST = Date.now();
 
     var sig_data = chart.gene_signatures.slice(1);
@@ -83,7 +85,7 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
 
     chart.gene_signatures[0].map(function(score_label, i) { 
 	if (i > 0 && score_label.match(/[A-Za-z]/)) {
-	    score_label = score_label.replace(/[\.-]/g, "_");
+	    score_label = score_label.replace(/[\.-]/g, "_").trim();
 	    sig_labels.push(score_label);
 	    sig_indices.push(i);
 	}
@@ -94,6 +96,7 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
     sig_data.map(function(row) {
 	 var gene_label = row[0];
 	 if (gene_label && gene_label.length > 0) {
+	     gene_label = gene_label.trim();
 	     var box = { "gene_label": gene_label};
 	     sig_indices.map(function(i) {
 	         box[sig_labels[i]] = row[i]; 
@@ -105,13 +108,14 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
 
 
     var geneCache = {};
-    Expression3.find({
+    var q = {
 	study_label: {$in: chart.studies},
 	gene_label: {$in: gene_labels}
-    }).forEach(function(gene) {
-       // console.log("expression3", chart.studies, gene_labels, gene.study_label, gene.gene_label);
+    } 
+    Expression3.find(q).forEach(function(gene) {
        geneCache[gene.study_label + gene.gene_label] = gene;
     });
+
 
 
     var studiesCache = {};
@@ -129,7 +133,7 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
 
     gene_labels.map(function(gene_label) {
 	var sandbox = {gene_label: gene_label};
-	nextChartData.map(function(elem) {
+	chart.chartData.map(function(elem) {
 	    // Tricky join.
 	    var study = studiesCache[elem.Study_ID];
 	    var gene = geneCache[ elem.Study_ID + gene_label ]; 
@@ -143,32 +147,36 @@ ProcessGeneSignatureFormula = function(chart, nextChartData) {
     var sig_gene_labels =  sig_labels;
 
     signature_compare(chart, sample_gene_labels, sig_gene_labels, gene_sandbox, sig_sandbox, "dot",
-	function (scores)
-	{
+	function whenDone(scores, err) {
+	    if (scores == null)
+	        debugger;
 
-        var score_map = {};
-	scores.map(function(score) { score_map[score.sample_label] = score; });
+	    var score_map = {};
+	    scores.map(function(score) { score_map[score.sample_label] = score; });
 
-	nextChartData.map(function(elem) {
-	    var score = score_map[elem.Sample_ID];
-	    if (score)
-	       Object.keys(score).map(function(score_label) {
-	           elem[score_label] = score[score_label];
-	       });
-	});
+	    chart.chartData.map(function(elem) {
+		var score = score_map[elem.Sample_ID];
+		if (score)
+		   Object.keys(score).map(function(score_label) {
+		       elem[score_label] = Number(score[score_label]);
+		   });
+	    });
 
-	sig_labels.map(function(sig_label, j){
-	    if  (j > 0) {
-		chart.metadata[sig_label] = {
-		    collection: null,
-		    crf: null, 
-		    label: sig_label,
-		    type: "Number"
-		};
-		chart.dataFieldNames = _.union(chart.dataFieldNames, sig_label);
-	    }
-	});
-    } // whenDone
+	    sig_labels.map(function(sig_label, j){
+		if  (j > 0) {
+		    chart.metadata[sig_label] = {
+			collection: null,
+			crf: null, 
+			label: sig_label,
+			type: "Number"
+		    };
+		    chart.dataFieldNames = _.union(chart.dataFieldNames, sig_label);
+		}
+	    });
+
+	    Charts.direct.update({_id: chart._id}, {$set: chart});
+
+	} // whenDone
     );
 }
 
