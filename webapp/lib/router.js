@@ -232,41 +232,26 @@ function parseCookies (request) {
     return list;
 }
 
-function genomicDataMutations(coll, samplesAllowed, study_label, response)  {
-
-  /*
-  var yyy =  db.mutations.aggregate( [ 
-        { $group:
-	    {
-		_id: "$gene_label",
-		samples: { $push:  "$sample_label" },
-		size: {$sum:1},
-	    }
-	}, 
-	{ $sort: { size:-1 } }
-
-    ]);
-  */
+function genomicDataMutations(coll, samplesAllowed, study, response)  {
+  var cursor = coll.find( { study_label: study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+  cursor.forEach(function(doc) { response.write(JSON.stringify(doc)); });
+}
 
 
-  var cursor = coll.find(
-      {
-	  study_label: study_label,
-      },
-      {sort:{gene_label:1, sample_label:1, study_label:1}});
-
+function genomicDataMutationsRectangle(coll, samplesAllowed, study, stream)  {
+  var cursor = coll.find( { study_label: study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
   var gene_label = null;
   var bucket = {};
   function flush(symbol) {
-      response.write(symbol);
+      stream.write(symbol);
       samplesAllowed.map(function(sample) {
-	  response.write("\t");
+	  stream.write("\t");
 	  if (sample in bucket)
-	      response.write("1");
+	      stream.write("1");
 	  else
-	      response.write("0");
+	      stream.write("0");
       });
-      response.write("\n");
+      stream.write("\n");
       bucket = {};
   }
 
@@ -283,8 +268,12 @@ function genomicDataSamples3(coll, study, response)  {
       var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
 	  return study.gene_expression_index[sample_id];
       })
+      var st = Date.now();
 
-      var cursor = Expression3.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var cursor = Expression3.find({ study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var count = cursor.count();
+      console.log("download", count);
+      response.setTimeout(20000 * 60 * 1000);
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
@@ -292,67 +281,13 @@ function genomicDataSamples3(coll, study, response)  {
 	  });
 	  line += "\n";
 	  response.write(line);
+          if ((count % 1000) == 0)
+	      console.log("download", count, Date.now() - st);
+          --count;
       });
+      console.log("cursor download",count, "response.finished", response.finished );
 }
 
-
-/*
-function genomicDataSamples2(coll, samplesAllowed, study_label, response)  {
-     var cursor = coll.find(
-	  {
-	      study_label:  study_label,
-	      sample_label: {$in: samplesAllowed},
-	  },
-	  {sort:{gene_label:1, sample_label:1, study_label:1}});
-
-
-
-      var bucket = {};
-      function flush(symbol) {
-	  response.write(symbol);
-	  samplesAllowed.map(function(sample) {
-	      response.write("\t");
-	      if (sample in bucket)
-		  response.write(String(bucket[sample]));
-	  });
-	  response.write("\n");
-	  bucket = {};
-      }
-
-      var gene_label = null;
-      cursor.forEach(function(doc) {
-	  if (gene_label != null && gene_label != doc.gene_label) {
-	      flush(gene_label);
-	  }
-	  gene_label = doc.gene_label;
-	  bucket[doc.sample_label] = doc.values.quantile_counts_log;
-      });
-      flush(gene_label);
-}
-
-function genomicDataSamples1(coll, samplesAllowed, study_label, response)  {
-  coll.find(
-	  {Study_ID: study_label},
-	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
-
-      var line = doc.gene;
-      if ('transcript' in doc) // for isoforms
-         line  += ' '+ doc.transcript;
-      var any_got_rsem = false;
-      samplesAllowed.map(function(sample_label) {
-          line += "\t";
-          var value_container = doc.samples[sample_label];
-          if (value_container && "rsem_quan_log2" in value_container) {
-              any_got_rsem = true;
-              line += String(value_container.rsem_quan_log2);
-          }
-      });
-      line += "\n";
-      if (any_got_rsem)
-          response.write(line);
-  });
-}
-*/
 
 function clinical(coll, samplesAllowed, study_label, response)  {
   coll.find(
@@ -410,11 +345,10 @@ function loginMLT(request, params) {
 exportData = function() {
   console.log("request", this.request.headers);
 
-  var isLocal = this.request.headers ['x-forwarded-for'] ==  '127.0.0.1';
+  var isLocal =  this.request.headers ['x-forwarded-for'] == '127.0.0.1';
   var collaborations  = [];
-
   if (!isLocal) {
-      user = loginMLT(this.request, this.params);
+      var user = loginMLT(this.request, this.params);
       if (user == null)
           return;
       if (user.collaborations)
@@ -440,18 +374,17 @@ exportData = function() {
       table = this.params.query.table;
   }
 
-  // Filename parameter
-  var attachmentFilename = 'filename.txt';
-  if (this.params && this.params.query && this.params.query.filename)
-      attachmentFilename = this.params.query.filename;
-
-
   // Studies requsted parameter, default to prad_wcdt for now
   var study_query = { }
-  if (this.params && this.params.query && this.params.query.study)
+  if (this.params && this.params.query && this.params.query.study && this.params.query.study.length > 0)
       study_query.id = this.params.query.study;
   else
       study_query.id = "prad_wcdt";
+
+  // Filename parameter
+  var attachmentFilename = table + '_' + study_query.id + '.txt';
+  if (this.params && this.params.query && this.params.query.filename)
+      attachmentFilename = this.params.query.filename;
 
 
   // Filter studies to only thosea allowed by collaborations
@@ -494,7 +427,7 @@ exportData = function() {
       outstream.write("\n");
       var coll =  DomainCollections[table];
       if (table == "Mutations")
-	  genomicDataMutations(coll, study, outstream);
+	  genomicDataMutations(coll, study.Sample_IDs, study, outstream);
       else 
 	  genomicDataSamples3(Expression3, study, outstream);
 
@@ -531,7 +464,16 @@ Router.map(function() {
 
 exportChart = function() {
   // First Security Check, is the user logged in?
-  var user = loginMLT(this.request, this.params);
+
+  var isLocal =  this.request.headers ['x-forwarded-for'] ==  '127.0.0.1';
+  var collaborations  = [];
+  if (!isLocal) {
+      var user = loginMLT(this.request, this.params);
+      if (user == null)
+          return;
+      if (user.collaborations)
+	  collaborations = user.collaborations;
+  }
 
   // Filename parameter
   var attachmentFilename = 'filename.txt';

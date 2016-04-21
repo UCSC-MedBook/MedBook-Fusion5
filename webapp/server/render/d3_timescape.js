@@ -25,6 +25,8 @@ D3Timescape = function(window, chartDocument) {
 		Days_on_Study: total,
 		events: []
 	    };
+	    Object.keys(ci).map(function(key) { patient[key] = ci[key]; });
+
 	    patients[ci.Patient_ID] = patient;
 	    aggregated.push(patient);
 	 } else /* seen already */ {
@@ -36,7 +38,6 @@ D3Timescape = function(window, chartDocument) {
 	       ; // don't care
 
 	    else if (patients[ci.Patient_ID].On_Study_Date != ci.On_Study_Date) {
-	       console.log("patients[ci.Patient_ID=", ci.Patient_ID, "].On_Study_Date", patients[ci.Patient_ID].On_Study_Date, ci.On_Study_Date);
 	       throw new Error("patients[ci.Patient_ID=", ci.Patient_ID, "].On_Study_Date", patients[ci.Patient_ID].On_Study_Date, ci.On_Study_Date);
 
 	    } else // both null
@@ -52,6 +53,8 @@ D3Timescape = function(window, chartDocument) {
 	Collections.CRFs.find({CRF: crf, Study_ID: "prad_wcdt"}, {sort: {Patient_ID:1, Sample_ID:1}})
 	   .forEach(function(treatment) {
 	       var patient = patients[treatment.Patient_ID];
+	       if (patient == null)
+	           return
 
 	       var onTreatment = parseInt((treatment.Start_Date - patient.On_Study_Date) / milliSecondsPerDay);
 
@@ -79,8 +82,8 @@ D3Timescape = function(window, chartDocument) {
 
 		  if (patient.min > onTreatment) patient.min = onTreatment;
 		  if (patient.max < offTreatment) patient.max = offTreatment;
-	      } else 
-		  console.log("bad treatment", treatment);
+	      } 
+	      // else console.log("bad treatment", treatment);
 
 	      if (treatment.Reason_for_Stopping_Treatment) {
 		   patient.events.push({
@@ -95,20 +98,23 @@ D3Timescape = function(window, chartDocument) {
     aggregate("SU2C_Prior_TX_V3");
     aggregate("SU2C_Subsequent_Treatment_V1");
 
-    console.log("chart min max", min, max);
+    // console.log("chart min max", min, max);
     Object.keys(patients).sort().map(function(k) {
        console.log(k, patients[k]);
     })
 
     chartDocument.chartData = aggregated;
 
+    /*
     var spin =["Patient_ID"];
     chartDocument.selectedFieldNames = spin;
     chartDocument.dataFieldNames = spin;
     chartDocument.pivotTableConfig.rows = spin;
     chartDocument.pivotTableConfig.cols = [];
+    */
+
     chartDocument.elapsed = { min: min, max: max };
 
-    console.log("D3Timescape", max, min, chartDocument.chartData.length);
+    // console.log("D3Timescape", max, min, chartDocument.chartData.length);
     return "D3Timescape";
 }
