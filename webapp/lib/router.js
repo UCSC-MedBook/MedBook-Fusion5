@@ -268,23 +268,65 @@ function genomicDataSamples3(coll, study, response)  {
       var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
 	  return study.gene_expression_index[sample_id];
       })
-      var st = Date.now();
+      var tick = Date.now();
 
       var cursor = Expression3.find({ study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
       var count = cursor.count();
       console.log("download", count);
-      response.setTimeout(20000 * 60 * 1000);
-      cursor.forEach(function(doc) {
-          var line = doc.gene_label;
-	  sort_order.map(function(i, j) {
-	     line += "\t" + String(doc.rsem_quan_log2[i]);
-	  });
-	  line += "\n";
-	  response.write(line);
-          if ((count % 1000) == 0)
-	      console.log("download", count, Date.now() - st);
-          --count;
-      });
+      if (response.setTimeout)
+          response.setTimeout(7*24*60*60*1000,function() {
+              console.log("timeout", arguments);
+          }); // a week
+
+
+      var cancel = false;
+      response.on("close", function() {
+          console.log("premature termination", count);
+          cancel = true;
+      })
+      try {
+          var buffer = "";
+          var n = 0;
+          cursor.forEach(function(doc) {
+             if (cancel)
+                 throw new Error("canceled");
+
+              buffer += doc.gene_label;
+              sort_order.map(function(i, j) {
+                 var v = doc.rsem_quan_log2[i]
+                 if (v == null)
+                     buffer += "\t"
+                 else
+                     buffer += "\t" + String(v);
+              });
+              buffer += "\n";
+              ++n;
+              if ((count % 1000) == 0) {
+                  // response.write(buffer);
+                  buffer = "";
+                  var tock = Date.now();
+                  var span = tock-tick;
+                  var speed = span / n; 
+                  var estimate = (count * speed);
+                  estimate = String(new Date(tock+ estimate));
+
+                  console.log("download", count, speed, estimate, n);
+                  tick = tock;
+                  n = 0;
+              }
+
+              if ((count % 10000) == 0) {
+                  console.log("progress", count);
+              }
+              --count;
+          });
+          response.write(buffer);
+      } catch (err) {
+          console.log("canceled?", err);
+          return
+      }
+
+      response.end();
       console.log("cursor download",count, "response.finished", response.finished );
 }
 
@@ -319,6 +361,9 @@ if (Meteor.isServer) {
 		DomainCollections[domain.collection]._ensureIndex(domain.index);
 	    }
 	})
+        Expression3._ensureIndex( {study_label: 1} );
+        Expression3._ensureIndex( {gene_label:1, sample_label:1, study_label:1});
+        Expression3._ensureIndex( {study_label:1, gene_label:1, sample_label:1, study_label:1});
     });
 };
 
