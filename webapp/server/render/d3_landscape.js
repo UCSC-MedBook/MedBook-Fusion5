@@ -75,7 +75,6 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
         return Object.keys(values).map(function(value)  { return [ attribute, value] });
     }
 
-    var predicates = cartesianProductOf(h.concat(v).map(unique));
 
     var gene_labels = _.union.apply(null, _.pluck(gene_panel, "feature_list"));
     // console.log("gene_labels", gene_labels);
