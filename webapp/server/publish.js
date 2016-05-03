@@ -210,7 +210,7 @@ Meteor.publish('MyCharts', function(_id) {
         return [];
 
     var cursor = Charts.find(q, {
-	    fields: {_id:1, updatedAt:1, post: 1, userId: 1},
+	    fields: {_id:1, updatedAt:1, post: 1, userId: 1, chartData:1},
 	    
 	    sort:{lastupdated:  -1}
     });

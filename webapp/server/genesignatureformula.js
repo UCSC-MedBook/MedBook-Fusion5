@@ -10,6 +10,7 @@ function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  
     var stderr = dirs +  "/stderr";
 
     var sigs = dirs +  "/sigs";
+    var cmdf = dirs +  "/cmd";
     var genes = dirs +  "/genes";
     var script = "signature_compare.r";
 
@@ -26,6 +27,7 @@ function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  
     });
 
     var cmd = "sh -c " +  argArray.join(" ");
+    fs.writeFileSync(cmdf,  cmd);
 
     var start = new Date();
     console.log( "signature_compare running ", cmd );
@@ -33,6 +35,8 @@ function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  
     shlurp.on('close', function(return_code) {
 	var out = fs.readFileSync(stdout, 'utf8');
 	var err = fs.readFileSync(stderr, 'utf8');
+	if (err && err.length < 5)
+	   err = null;
 
 	Fiber(function() {
 	    var results = null;
@@ -136,7 +140,9 @@ ProcessGeneSignatureFormula = function(chart) {
 	    // Tricky join.
 	    var study = studiesCache[elem.Study_ID];
 	    var gene = geneCache[ elem.Study_ID + gene_label ]; 
-	    var n = gene ?  gene.rsem_quan_log2[study.gene_expression_index[ elem.Sample_ID]] : 0.0;
+	    var n = gene ?  gene.rsem_quan_log2[study.gene_expression_index[ elem.Sample_ID]] : "NA"
+	    if (n == null) 
+	    	n = "NA";
 	    sandbox[elem.Sample_ID] = n;
 	});
 	gene_sandbox.push(sandbox);
@@ -147,8 +153,19 @@ ProcessGeneSignatureFormula = function(chart) {
 
     signature_compare(chart, sample_gene_labels, sig_gene_labels, gene_sandbox, sig_sandbox, "dot",
 	function whenDone(scores, err) {
-	    if (scores == null)
-	        debugger;
+	    if (err != null && err.length > 2) {
+		 debugger
+		 var html = "<B><font color='red'>" + String(err) + "</font><B>";
+		 console.log("signature_compare", err);
+		 Charts.direct.update({_id: chart._id}, {$set: {html: html}});
+		 return;
+	    }
+
+	    if (scores == null) {
+		 var html = "<B><font color='red'>Scores is null</font><B>";
+		 Charts.direct.update({_id: chart._id}, {$set: {html: html}});
+		 return;
+	    }
 
 	    var score_map = {};
 	    scores.map(function(score) { score_map[score.sample_label] = score; });
