@@ -63,7 +63,7 @@ renderJSdom = function(ChartDocument) {
 				: serializeDocument(html))
 			    : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 
-			console.log(html); // do no remove
+			// console.log(html); // keep,  do no remove
 		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
