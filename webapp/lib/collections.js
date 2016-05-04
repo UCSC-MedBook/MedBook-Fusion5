@@ -1,18 +1,18 @@
 Collections = {};
-Collections.studies = new Meteor.Collection('studies');
+Collections.studies = MedBook.collections.Studies;
 Collections.Metadata = new Meteor.Collection("Metadata");
-Collections.CRFs = new Meteor.Collection("CRFs");
+Collections.CRFs = MedBook.collections.CRFs;
 Collections.FusionFeatures = new Meteor.Collection("FusionFeatures");
 
 DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
-Expression = new Meteor.Collection('expression2');
-Expression3 = new Meteor.Collection('expression3');
+Expression = MedBook.collections.Expression2;
+// Expression3 = MedBook.collections.Expression3;
 ExpressionIsoform = new Meteor.Collection('expression_isoform');
-Mutations = new Meteor.Collection('mutations');
-SignatureScores = new Meteor.Collection('signature_scores');
-GeneSets = new Meteor.Collection('gene_sets');
-GeneExpression = new Meteor.Collection("gene_expression");
+// Mutations = new Meteor.Collection('mutations');
+// SignatureScores = new Meteor.Collection('signature_scores');
+// GeneSets = MedBook.collections.GeneSets
+// GeneExpression = new Meteor.Collection("gene_expression");
 
 Meteor.startup(function() {
     FeaturePanels = new Meteor.Collection("FeaturePanels");
@@ -87,4 +87,3 @@ Charts.before.update(function (userId, doc, fieldNames, modifier, options) {
 QuickR = new Meteor.Collection('QuickR');
 Contrast = new Meteor.Collection('contrast');
 Summaries = new Meteor.Collection("Summaries");
-

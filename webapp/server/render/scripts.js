@@ -32,7 +32,7 @@ function WrapScript(name, script) {
 	{
 	    cwd: cwd,
 	    stdio: [
-	      0, 
+	      0,
 	      fs.openSync(cwd + stdout, 'w'),
 	      fs.openSync(cwd + stderr, 'w')
 	  ]
@@ -61,8 +61,8 @@ function WrapScript(name, script) {
 		*/
 
 	    var figure = "<div class='selectable'><div>" + outfile1 + "</div>";
-	    
-	    var info = "<div>CWD:<code>" + cwd + "</code></div><div>CMD:<code>" + cmd + "</code></div>" 
+
+	    var info = "<div>CWD:<code>" + cwd + "</code></div><div>CMD:<code>" + cmd + "</code></div>"
 	    + "<div>EXIT CODE:<code>" + exit_code + "</code></div>"
 	    + "<div>STDOUT:<code>" + out + "</code></div>"
 	    + "<div>STDERR:<code>" + err + "</code></div></div>";
@@ -71,34 +71,34 @@ function WrapScript(name, script) {
 	    + info
 	    + '</details> </summary>';
 
-	    var html =  "<div class='script_panel'><div class='script_panel'>" 
-		+ figure + 
+	    var html =  "<div class='script_panel'><div class='script_panel'>"
+		+ figure +
 	    "</div><div class='script_panel'>"
-		+  hideinfo + 
+		+  hideinfo +
 	    "</div></div>";
 
 	    Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
 
-	    }).run();  
+	    }).run();
 	});
 	return html;
     }
 }
 
-
-Meteor.startup(function() {
-
-    var dir = "/scripts/viz/"
-
-    function readDirUpdateDB() {
-	var data = fs.readdir(dir, function(err, data) {
-	    data.map(function(filename) {
-		var niceName = filename.replace(/_/g, " ");
-		ChartTypeMap[niceName] = { type: 2, func: WrapScript(niceName, dir + filename)};
-	    });
-	    Fiber(SyncChartTypesWithFusionFeaturesDB).run();
-	});
-    }
-    readDirUpdateDB();
-    fs.watch(dir, readDirUpdateDB);
-});
+// Won't work on non-Ted computer
+// Meteor.startup(function() {
+//
+//     var dir = process.env.MEDBOOK_SCRIPTS + "viz/"
+//
+//     function readDirUpdateDB() {
+// 	var data = fs.readdir(dir, function(err, data) {
+// 	    data.map(function(filename) {
+// 		var niceName = filename.replace(/_/g, " ");
+// 		ChartTypeMap[niceName] = { type: 2, func: WrapScript(niceName, dir + filename)};
+// 	    });
+// 	    Fiber(SyncChartTypesWithFusionFeaturesDB).run();
+// 	});
+//     }
+//     readDirUpdateDB();
+//     fs.watch(dir, readDirUpdateDB);
+// });
