@@ -5,7 +5,7 @@ function arrayDoc(array) {
     if (typeof(array[0]) == "string")
         if (array[0][0] == '<')
             return array.join(""); // its html just return it.
-        else 
+        else
             return array.join("; ");
 
     return array.map(function(element) {
@@ -91,13 +91,13 @@ Template.TableBrowser.helpers({
        var studies = Session.get("BrowseStudies");
 
        if (studies != null && table != null) {
-          Meteor.subscribe("CRFs", studies, [table]);
+          Meteor.subscribe("CRFs", studies[0], table);
           var data = Collections.CRFs.find({CRF: table/*, Study_ID: {$in: studies} */}).fetch();
 	  data.map(function(row,i) {
 	      Object.keys(row).map(function(key) {
 	          if (Array.isArray(row[key]))
 		      row[key] = new Spacebars.SafeString("<span>" + arrayDoc(row[key]) + "</span>");
-	    
+
 	      });
 	  });
           Session.set("BrowseTableData", data);
@@ -112,7 +112,7 @@ Template.TableBrowser.helpers({
       return {
         rowsPerPage: 10,
         showFilter: true,
-        fields: browseTableFields().map(function(fieldName) { 
+        fields: browseTableFields().map(function(fieldName) {
 	    return { key: fieldName, label: fieldName, fn: fn };
 	})
       };
@@ -122,7 +122,7 @@ Template.TableBrowser.helpers({
       return {
         rowsPerPage: 10,
         showFilter: true,
-        fields: [ 
+        fields: [
 	   { key: "study", label: "Study",
 	     headerClass: 'col-md1'
 	   },
@@ -152,7 +152,7 @@ Template.TableBrowser.events({
 
  'click .selectable' : function(evt, tmpl) {
      var data;
-     if (evt.target.data) 
+     if (evt.target.data)
         data = evt.target.data;
      else if (evt.target.parentNode.data)
         data = evt.target.parentNode.data;
@@ -189,4 +189,3 @@ Template.TableBrowser.events({
 
 Template.TableBrowser.rendered = function() {
 };
-

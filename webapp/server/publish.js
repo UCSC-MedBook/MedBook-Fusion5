@@ -1,14 +1,14 @@
 Meteor.publish('FusionFeatures', function() {
-    var cursor = Collections.FusionFeatures.find();
-    console.log("FusionFeatures publish", cursor.count());
-    return cursor;
+  var cursor = Collections.FusionFeatures.find();
+  console.log("FusionFeatures publish", cursor.count());
+  return cursor;
 });
 
 /*
 Meteor.publish('Chart', function(_id) {
     var q;
     if (_id != null) {
-        q = { $or: 
+        q = { $or:
             [
                 {
                     _id: _id
@@ -39,41 +39,39 @@ Meteor.publish('Chart', function(_id) {
 */
 
 Charts.allow({
-  insert: function (userId, doc) { return true; }, 
+  insert: function (userId, doc) { return true; },
   update: function (userId, doc, fieldNames, modifier) { return true; },
   remove: function (userId, doc) { return true; }
 });
-Charts.deny({
-  insert: function (userId, doc) { return false; }, 
-  update: function (userId, doc, fieldNames, modifier) { return false; }, 
-  remove: function (userId, doc) { return true; }
-});
 
+// Charts.deny({
+//   insert: function (userId, doc) { return false; },
+//   update: function (userId, doc, fieldNames, modifier) { return false; },
+//   remove: function (userId, doc) { return true; }
+// });
+
+// 0 security. Not okay.
 Meteor.publish('Contrast', function() {
     return Contrast.find({});
 });
 
 Contrast.allow({
-  insert: function (userId, doc) { return true; }, 
+  insert: function (userId, doc) { return true; },
   update: function (userId, doc, fieldNames, modifier) { return true; },
   remove: function (userId, doc) { return true; }
 });
 Contrast.deny({
-  insert: function (userId, doc) { return false; }, 
-  update: function (userId, doc, fieldNames, modifier) { return false; }, 
+  insert: function (userId, doc) { return false; },
+  update: function (userId, doc, fieldNames, modifier) { return false; },
   remove: function (userId, doc) { return false; }
 });
 
-Meteor.publish('studies', function()  {
-    var collaborations = ["public"]
-    if (this.userId) {
-        var user_record = Meteor.users.findOne({_id:this.userId}, {_id:0,'profile.collaborations':1})
-        // console.log('concat',user_record.profile.collaborations)
-        collaborations = collaborations.concat(user_record.profile.collaborations)
-    }
-    var cnt = Collections.studies.find({collaborations: {$in: collaborations}}).count();
-    // console.log ('member of',cnt, 'study based on ',collaborations)
-    return Collections.studies.find({collaborations: {$in: collaborations}});
+Meteor.publish("studies", function() {
+  var user = MedBook.ensureUser(this.userId);
+
+  return Studies.find({
+    collaborations: { $in: user.getCollaborations() },
+  });
 });
 
 Meteor.publish('GeneExpression', function(studies, genes) {
@@ -115,60 +113,45 @@ Meteor.publish('GeneSets', function() {
 });
 
 Meteor.publish('Metadata', function() {
-    var cursor =  Collections.Metadata.find({}, { sort: {"name":1}});
-    // console.log("Metadata publish", cursor.count());
-    return cursor;
+  var user = MedBook.ensureUser(this.userId);
+
+  var studies = MedBook.collections.Studies.find({
+    collaborations: { $in: user.getCollaborations() }
+  }, { fields: { id: 1 } }).fetch();
+
+  var studyLabels = _.pluck(studies, "id");
+
+  return Collections.Metadata.find({
+    study: { $in: studyLabels }
+  });
 });
-Meteor.publish('CRFs', function(studies, crfs) {
-    // console.log("this.userId", this.userId);
 
-    var user_record = Meteor.users.findOne({_id:this.userId}, {fields: {'profile.collaborations':1}});
-    // console.log("user_record", user_record);
-    var collaborations = ["public"];
+Meteor.publish('CRFs', function(study_label, crfName) {
+  check(study_label, String);
+  check(crfName, String);
 
-    collaborations = _.union(collaborations, user_record.profile.collaborations);
-    studies = _.union(studies, "user:" + user_record.username);
+  console.log("study_label:", study_label);
+  console.log("crfName:", crfName);
 
-    // console.log("collaborations", collaborations);
-    // console.log("studies", studies);
-    // console.log("crfs", crfs);
+  var user = MedBook.ensureUser(this.userId);
+  user.ensureAccess(Studies.findOne({id: study_label}));
 
-    var metadata = Collections.Metadata.findOne({name: {$in: crfs}}, { sort: {"name":1}});
-    if (metadata == null) {
-	// console.log("no metadata for", crfs);
-        return [];
-    }
+  // We could check the Metadata as an extra security for crfName, but
+  // we shouldn't be adding anything to the database that isn't in the
+  // Metadata collection, so I don't think it's necessary.
+  // Perhaps this should be done to maintain referential integrity (kind of)
+  // between Metadata and CRFs?
 
-    var studyQuery = {
-	collaborations: {$in: collaborations}
-    };
-
-    if (!_.contains(studies, "common")) {
-	studyQuery.id = {$in: studies};
-    }
-
-    var crfsQuery = Array.isArray(crfs) ? {CRF: {$in: crfs}} : crfs;
-
-    if (metadata.study == "common") {
-	var study_ids = Collections.studies.find(
-	    studyQuery, 
-	    {fields:{id:1}}
-	).map(function(study){ return study.id});
-
-	if (study_ids.length == 0)  // The user is not a collaborator in any of the selected studies
-	    return [];
-	else
-	    crfsQuery.Study_ID = {$in: study_ids};
-    }
-
-    var cursor =  Collections.CRFs.find(crfsQuery, { sort: {"name":1}});
-
-    // console.log("CRFs publish", crfs, studies, study_ids, cursor.count());
-    return cursor;
+  // NOTE: not hardcoding "common" study here: users may choose to join or leave
+  // that as they please.
+  return CRFs.find({
+    Study_ID: study_label,
+    CRF: crfName,
+  });
 });
 
 QuickR.allow({
-  insert: function (userId, doc) { return userId != null; }, 
+  insert: function (userId, doc) { return userId != null; },
   update: function (userId, doc, fieldNames, modifier) { return userId != null; },
   remove: function (userId, doc) { return true; }
 });
@@ -190,7 +173,7 @@ Meteor.publish('QuickR', function(_id) {
 Meteor.publish('MyCharts', function(_id) {
     var q;
     if (_id != null) {
-        q = { $or: 
+        q = { $or:
             [
                 {
                     _id: _id
@@ -211,7 +194,7 @@ Meteor.publish('MyCharts', function(_id) {
 
     var cursor = Charts.find(q, {
 	    fields: {_id:1, updatedAt:1, post: 1, userId: 1},
-	    
+
 	    sort:{lastupdated:  -1}
     });
 
