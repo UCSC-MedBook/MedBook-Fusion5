@@ -95,15 +95,17 @@
 
     <div class="panel panel-default">
       <div class="panel-heading">
-          <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Filter to these Patients or Samples (optional)</h3>
+          <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Focus on these Patients or Samples (optional)</h3>
        </div>
        <div id="p4" class="panel-body collapse">
-	      <!--
+	      Highlight these samples:
+              <input style="width:100%;" id="focuslist" placeholder="Enter PatientID or Sample ID">
+
+	      <div style="margin:20px"></div>
+
+	      Show only these samples:
               <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
-	      -->
-
 	      <div id="builder"></div>
-
         </div>
     </div>
 
@@ -113,6 +115,15 @@
        </div>
        <div id="p5" class="panel-body collapse">
             {{> Transforms }}
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+          <h3 class="panel-title"  data-toggle="collapse" data-target="#p6" >6. Data Enrichment </h3>
+       </div>
+       <div id="p6" class="panel-body collapse">
+	  <button type="button" id="GeneSignatureFormula" style="margin:10px;" class="btn btn-default geneSignatureFormula">Gene Signature Formulas</button>
         </div>
     </div>
 
@@ -178,9 +189,13 @@
 		  </div>
 		  <div style="margin:30px">
 		      <span>
+			  <button type="button" onclick="printButton()" style="margin:10px;" class="btn btn-default">Print</button>
 			  <button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>
 			  <a target="_blank" id="DownloadButton" href="/fusion/exportChart/?id={{this._id}}" style="margin:10px;" class="btn btn-default">Download</a>
 			  <button type="button" id="TableBrowser" style="margin:10px;" class="btn btn-default">New Table</button>
+
+			  <button type="button" id="GenePanelPicker" style="margin:10px;" class="btn btn-default genePanelPicker">Gene Panel Picker</button>
+
 		      </span>
 		  </div>
 		</td>

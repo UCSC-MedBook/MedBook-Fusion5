@@ -1,4 +1,3 @@
-var jsdom, serializeDocument;
 
 Meteor.startup(function() {
     jsdom = Meteor.npmRequire("node-jsdom");
@@ -32,9 +31,9 @@ SyncChartTypesWithFusionFeaturesDB = function() {
 Meteor.startup(SyncChartTypesWithFusionFeaturesDB);
 
 renderJSdom = function(ChartDocument) {
-    debugger
     var chartType = ChartDocument.pivotTableConfig.rendererName;
     console.log("chartType", chartType);
+
 
     if (chartType == null) 
 	chartType = "Table";
@@ -55,15 +54,16 @@ renderJSdom = function(ChartDocument) {
 			    html = ct.func(window, ChartDocument, null, []);
 			} catch (err) {
 			    html = "<B><font color='red'>" + err.message + "</font><B>";
-			    console.log("exception", err.message, err.stack);
+			    // console.log("exception", err.message, err.stack);
 			}
 			html = html ? 
 			    (typeof(html) == "string" 
 				? html
 				: serializeDocument(html))
 			    : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
-			    // console.log("updating html", html);
-		        Charts.update({_id: ChartDocument._id}, {$set: {html: html}});
+
+			console.log(html); // do no remove
+		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}
 	    }) // end jsdom.env

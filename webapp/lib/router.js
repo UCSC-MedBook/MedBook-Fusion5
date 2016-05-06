@@ -268,8 +268,12 @@ function genomicDataSamples3(coll, study, response)  {
       var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
 	  return study.gene_expression_index[sample_id];
       })
+      var st = Date.now();
 
-      var cursor = Expression3.find( { study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var cursor = Expression3.find({ study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var count = cursor.count();
+      console.log("download", count);
+      response.setTimeout(20000 * 60 * 1000);
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
@@ -277,7 +281,11 @@ function genomicDataSamples3(coll, study, response)  {
 	  });
 	  line += "\n";
 	  response.write(line);
+          if ((count % 1000) == 0)
+	      console.log("download", count, Date.now() - st);
+          --count;
       });
+      console.log("cursor download",count, "response.finished", response.finished );
 }
 
 
@@ -368,7 +376,7 @@ exportData = function() {
 
   // Studies requsted parameter, default to prad_wcdt for now
   var study_query = { }
-  if (this.params && this.params.query && this.params.query.study & this.params.query.study.length > 0)
+  if (this.params && this.params.query && this.params.query.study && this.params.query.study.length > 0)
       study_query.id = this.params.query.study;
   else
       study_query.id = "prad_wcdt";
@@ -398,19 +406,39 @@ exportData = function() {
   if (local != null) {
       console.log("local", local);
       outstream = fs.createWriteStream(local, {encoding: "utf8"});
-
   } else {
-      response.writeHead(200, {
-	// 'Content-Type': 'text/tab-separated-values',
-	'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
-	'Cache-Control': 'no-cache, no-store, must-revalidate',
-	'Pragma': 'no-cache',
-	'Expires': '0',
-      });
-      outstream = response;
+
+
+      // Fill from cache
+      var path = process.env.MEDBOOK_WORKSPACE +"/cache/" + attachmentFilename;
+      if (fs.existsSync(path)) {
+          console.log("Filling from cache", path);
+          var stat = fs.statSync(path)
+	  response.writeHead(200, {
+	    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+	    'Content-Length': String(stat.size),
+	    'Cache-Control': 'no-cache, no-store, must-revalidate',
+	    'Pragma': 'no-cache',
+	    'Expires': '0',
+	  });
+	  var readStream = fs.createReadStream(path);
+	  readStream.pipe(response);
+	  return;
+
+      } else {
+ 
+	  response.writeHead(200, {
+	    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+	    'Cache-Control': 'no-cache, no-store, must-revalidate',
+	    'Pragma': 'no-cache',
+	    'Expires': '0',
+	  });
+	  outstream = response;
+      }
   }
 
   if (kind == "genomic") {
+
       outstream.write("Gene");
       study.Sample_IDs.map(function(sample_label) {
 	  outstream.write("\t");

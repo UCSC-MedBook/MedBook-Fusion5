@@ -27,13 +27,15 @@ d3_tooltip_boxplot = function () {
       }
     };
 
+
+
     $(".BoxPlotToolTipHover")
     .on("mouseover", function(event) {
-        
+	
 	if (SuppressRollover)
 	   return;
 
-        var d = event.target;
+	var d = event.target;
 	if (Count == null)
 	  Count = 1;
 	else
@@ -71,7 +73,11 @@ d3_tooltip_boxplot = function () {
     .on("mouseout", function(event) {       
 	if (SuppressRollover)
 	   return;
-      setTimeout(function() {bye(event.target)}, 1000);
-    }
-    );
+	setTimeout(function() {bye(event.target)}, 1000);
+    })
+}
+
+Toggle = function(event) {
+    var klass = $(event.target).data("klass");
+    $("."+klass).toggle();
 }

@@ -1,4 +1,4 @@
-TheChartID = null;
+heChartID = null;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -54,10 +54,9 @@ Template.Controls.helpers({
 	  if (func) {
 	      html = func(TheChart, {});
 	  }
-       } else {
-	  if (TheChart.pivotTableConfig.rendererName.indexOf("Box Plot") >= 0 || TheChart.pivotTableConfig.rendererName.indexOf("Landscape") >= 0)
-	      setTimeout(d3_tooltip_boxplot, 1000);
-       }
+       } 
+       html = html.replace(/onclick/g, "onClick");
+       setTimeout(d3_tooltip_boxplot, 5000);
        return html;
    },
 
@@ -235,20 +234,25 @@ Template.Controls.helpers({
 	      rest.push(c);
        });
        function ss(a, b){
-          var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
-	  if (studyA < studyB) return -1 
-	  if (studyA > studyB) return 1
+          try {
+	      var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
+	      if (studyA < studyB) return -1 
+	      if (studyA > studyB) return 1
 
-          var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
-	  if (nameA < nameB) return -1 
-	  if (nameA > nameB) return 1
-	  return 0 //default return value (no sorting)
+	      var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
+	      if (nameA < nameB) return -1 
+	      if (nameA > nameB) return 1
+	      return 0 //default return value (no sorting)
+	  } catch (err) {
+	      return 0;
+	  }
        };
        mine   = mine.sort(ss);
        others = others.sort(ss);
        rest   = rest.sort(ss);
 
        coll = mine.concat(others).concat(rest);
+       var additionalQueries = CurrentChart("additionalQueries");
 
        coll.map(function(vv) {
            var collName = vv.name;
@@ -269,9 +273,9 @@ Template.Controls.helpers({
 		   s: vv.study
                };
                var value = escape(JSON.stringify(meta));
-                 
+	       var selected = _.contains(additionalQueries, value) ? "selected" : "";
 
-               html += '    <option value="'+ value + '">'+collName + ":" +fieldName+'</option>';
+               html += '    <option value="'+ value + '" ' + selected + '>'+collName + ':' +fieldName+'</option>';
            });
 
            html += '</optGroup>\n';
@@ -293,6 +297,31 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+
+  'click .geneSignatureFormula' : function(e) {
+       var TheChart = CurrentChart();
+       var geneSignatureFormula = TheChart.geneSignatureFormula;
+
+       var text = geneSignatureFormula == null ? "Upreg = 2*TP53 + AR + RB" : geneSignatureFormula;
+       Overlay("GeneSignatureFormula", { 
+	   theChart: TheChart,
+	   text: text
+       });
+  }, 
+
+
+  'click .genePanelPicker' : function(e) {
+       var TheChart = CurrentChart();
+       var genePanel = TheChart.genePanel;
+
+       var text = genePanel == null ? "example:feature1,feature2,feature3" : genePanel.map(function(row) {
+           return row.name + ":" + row.feature_list.join(",");
+       }).join("\n");
+       Overlay("GenePanelPicker", { 
+	   theChart: TheChart,
+	   text: text
+       });
+  }, 
 
   'click .element' : function(e) {
        var field =  $(e.target).data("field");
@@ -547,6 +576,8 @@ function initializeHtmlElements(document) {
 	  });
 
      $('.studiesSelectedTable th').hide();
+
+     $(".dataExplorerControlPanel").resizable().resize(window.hotSet);
 }
 
 function initializeJQuerySelect2(document) {
@@ -691,11 +722,11 @@ renderChart = function() {
 
 Template.Controls.rendered = function(){
    var TheChart = CurrentChart();
-   initializeHtmlElements(TheChart);
    setTimeout(function() {
+       initializeHtmlElements(TheChart);
        initializeJQuerySelect2(TheChart);
        initializeJQuerySortable(TheChart);
-   }, 5000);
+   }, 1000);
 };
 
 /*
