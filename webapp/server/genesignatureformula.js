@@ -190,7 +190,13 @@ ProcessGeneSignatureFormula = function(chart) {
 		}
 	    });
 
-	    Charts.direct.update({_id: chart._id}, {$set: chart});
+	    Charts.update({_id: chart._id}, {$set: 
+                {
+                    chartData: chart.chartData,
+                    dataFieldNames: chart.dataFieldNames,
+                    metadata: chart.metadata,
+                }
+            });
 
 	} // whenDone
     );

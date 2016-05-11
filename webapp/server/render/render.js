@@ -64,7 +64,6 @@ renderJSdom = function(ChartDocument) {
 			    : "<bold>Bug in Charts " + chartType + " " + ChartDocument._id +"</bold>";
 
 			// console.log("renderJSdom", html); // keep,  do no remove
-			debugger
 		        Charts.direct.update({_id: ChartDocument._id}, {$set: {html: html}});
 		    }).run();
 		}

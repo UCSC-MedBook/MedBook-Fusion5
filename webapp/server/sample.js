@@ -1,5 +1,41 @@
 var extend = Meteor.npmRequire('node.extend');
 
+
+
+// SampleJoin is the most important function in Fusion.
+// Does the heavy lifting for Joining Samples.
+// This is the central Joinalgoritm. 
+
+function SampleJoin(userId, ChartDocument, fieldNames) {
+    ChartDocument.fieldNames = fieldNames;
+
+    try {
+        SeedDataFromClincialInfo(ChartDocument);
+        JoinAllGeneLikeInformation(ChartDocument);
+        MergeCRFs(ChartDocument);
+        ProcessGeneSignatureFormula(ChartDocument);
+        TransformLabelsAndData(ChartDocument);
+        Remove_Excluded_Samples_and_Sort(ChartDocument);
+
+	var html = renderJSdom(ChartDocument);
+	Charts.direct.update({ _id : ChartDocument._id }, 
+	      {$set: 
+		  {
+		    dataFieldNames: ChartDocument.dataFieldNames,
+		    selectedFieldNames: ChartDocument.selectedFieldNames,
+		    metadata: ChartDocument.metadata,
+		    chartData: ChartDocument.chartData,
+                    elapsed: ChartDocument.elapsed,
+                    samplelist: ChartDocument.samplelist,
+		    html: html,
+		   }});
+
+    } catch (err) {
+        console.log("SampleJoin", err, err.stack);
+	debugger
+    }
+} 
+
 Meteor.startup( 
     function CleanupLostCharts() {
         var posts = new Meteor.Collection("posts");
@@ -273,43 +309,55 @@ function dichotomizeOrBin(chartData, transforms, rows, remodel) {
     return chartData;
 }
 
+unchanged = function(ChartDocument, fields) {
+    return _.intersection(ChartDocument.fieldNames, fields) == 0;
+}
 
-function makeNextChartDataPart1(ChartDocument) {
+change = function(ChartDocument, fields) {
+    ChartDocument.fieldNames = _.union(ChartDocument.fieldNames, fields);
+}
+
+
+// Step 1. Use Clinical_Info as primary key
+// IN: samplelist, studies 
+// OUT: chartData, samplelist, metadata
+function SeedDataFromClincialInfo(ChartDocument) {
+    if (ChartDocument.samplelist != null && unchanged(ChartDocument, ["samplelist", "studies"]))
+        return;
+    change(ChartDocument, [ "samplelist", "metadata"]);
+
     var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
-
-    // Step 1. Use Clinical_Info as primary key
     q.Study_ID = {$in:ChartDocument.studies}; 
     q.CRF = "Clinical_Info";
-
     ChartDocument.chartData = Collections.CRFs.find(q).fetch();
+    ChartDocument.chartData.map(function(cd) {  delete cd["CRF"]; })
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
-    var metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
-   if (typeof(metadata) == "string")
-       metadata = JSON.parse(metadata);
-    Object.keys(metadata).map(function(f) {
-	metadata[f].collection = "CRF";
-	metadata[f].crf = "Clinical_Info";
-    });
-
-    ChartDocument.chartData.map(function(cd) {  
-       delete cd["CRF"];
-    })
-
-
-    // Step 2. Build Map and other bookkeeping 
-    var chartDataMap = {};
-    ChartDocument.chartData.map(function (cd) { 
-        delete cd["_id"];
-        chartDataMap[cd.Sample_ID] = cd;
+    ChartDocument.metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
+    if (typeof(ChartDocument.metadata) == "string")
+       ChartDocument.metadata = JSON.parse(ChartDocument.metadata);
+    Object.keys(ChartDocument.metadata).map(function(f) {
+	ChartDocument.metadata[f].collection = "CRF";
+	ChartDocument.metadata[f].crf = "Clinical_Info";
     });
     ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
-    ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { return ci.Sample_ID })
+    ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { return ci.Sample_ID }).sort();
+    ChartDocument.chartDataMap = {};
 
-    // Step 3. 
-    // Join all the Gene like information into the samples into the ChartDataMap table
+    ChartDocument.chartData.map(function (cd) { 
+        delete cd["_id"];
+        ChartDocument.chartDataMap[cd.Sample_ID] = cd;
+    });
+}
+
+// Step 2. Join all the Gene like information into the samples into the ChartDataMap table
+// IN:  geneLikeDataDomain, genelist, samplelist
+// OUT: chartData, metadata
+function JoinAllGeneLikeInformation(ChartDocument) {
+    if (unchanged(ChartDocument, ["geneLikeDataDomain","genelist","samplelist"]))
+        return;
+    change(ChartDocument, ["chartData", "metadata"]);
 
     if (ChartDocument.geneLikeDataDomain && ChartDocument.genelist && ChartDocument.geneLikeDataDomain.length > 0 && ChartDocument.genelist.length > 0)  {
-
         ChartDocument.geneLikeDataDomain
           .filter(function(domain) {return domain.state})
           .map(function(domain) {
@@ -335,10 +383,10 @@ function makeNextChartDataPart1(ChartDocument) {
 		    var study = studyCache[geneData.study_label];
 		    var field_label = geneData.gene_label + ' ' + domain.labelItem;
 		    ChartDocument.samplelist.map(function(sample_label) {
-			chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
+			ChartDocument.chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
 		    });
-		    if (metadata[field_label] == null)
-			metadata[field_label] = { 
+		    if (ChartDocument.metadata[field_label] == null)
+			ChartDocument.metadata[field_label] = { 
 			    collection: domain.collection,
 			    crf: null, 
 			    label: field_label,
@@ -354,15 +402,15 @@ function makeNextChartDataPart1(ChartDocument) {
                 var label = geneName + ' ' + domain.labelItem;
 
                 if (domain.format_type == 3) {  // signature scores
-                    if (sampleID in chartDataMap) {
+                    if (sampleID in ChartDocument.chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
                         fields.map(function(field){ obj = obj[field]; });
 
                         // console.log("found", label, geneName, sampleID, obj, fields, geneData);
-                        chartDataMap[sampleID][label] = obj;
-			if (metadata[label] == null)
-			    metadata[label] = { 
+                        ChartDocument.chartDataMap[sampleID][label] = obj;
+			if (ChartDocument.metadata[label] == null)
+			    ChartDocument.metadata[label] = { 
 				collection: domain.collection,
 				crf: null, 
 				label: label,
@@ -371,15 +419,15 @@ function makeNextChartDataPart1(ChartDocument) {
                     }
 
                 } else if (domain.format_type == 2) {  // sample names are stored as attributes
-                    if (sampleID in chartDataMap) {
+                    if (sampleID in ChartDocument.chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
                         fields.map(function(field){ obj = obj[field]; });
 
                         // console.log("found", label, geneName, sampleID, obj);
-                        chartDataMap[sampleID][label] = obj;
-			if (metadata[label] == null)
-			    metadata[label] = { 
+                        ChartDocument.chartDataMap[sampleID][label] = obj;
+			if (ChartDocument.metadata[label] == null)
+			    ChartDocument.metadata[label] = { 
 				collection: domain.collection,
 				crf: null, 
 				label: label,
@@ -405,11 +453,11 @@ function makeNextChartDataPart1(ChartDocument) {
 
                         var f = parseFloat(obj);
                         if (!isNaN(f)) {
-                            if (sampleID in chartDataMap) {
-                                chartDataMap[sampleID][label] = f;
+                            if (sampleID in ChartDocument.chartDataMap) {
+                                ChartDocument.chartDataMap[sampleID][label] = f;
 
-				if (metadata[label] == null)
-				    metadata[label] = { 
+				if (ChartDocument.metadata[label] == null)
+				    ChartDocument.metadata[label] = { 
 					collection: domain.collection,
 					crf: null, 
 					label: label,
@@ -425,7 +473,7 @@ function makeNextChartDataPart1(ChartDocument) {
             if (domain.label == "Mutations") {
                 var labels  = ChartDocument.genelist.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
                 ChartDocument.samplelist.map(function (sampleID) {
-                    var datum = chartDataMap[sampleID];
+                    var datum = ChartDocument.chartDataMap[sampleID];
                     labels.map(function(label) {
                         if (!(label in datum))
                             datum[label] = "wt";
@@ -435,6 +483,15 @@ function makeNextChartDataPart1(ChartDocument) {
           }); // .map 
     } // if ChartDocument.geneLikeDataDomain 
 
+} // function JoinAllGeneLikeInformation
+
+// Step 3. Merge in the additional queries that fetch CRFs
+// IN:  additionalQueries
+// OUT: chartData
+function MergeCRFs(ChartDocument) {
+    if (unchanged(ChartDocument, ["additionalQueries","samplelist"]))
+        return;
+    change(ChartDocument, ["chartData"]);
 
     var mapPatient_ID_to_Sample_ID = {};
     ChartDocument.chartData.map(function(cd) {
@@ -443,9 +500,6 @@ function makeNextChartDataPart1(ChartDocument) {
 	 else
 	     mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
     });
-
-
-    // Step 4. Merge in the CRFs
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
              var query = JSON.parse(unescape(query));
@@ -477,7 +531,7 @@ function makeNextChartDataPart1(ChartDocument) {
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
 	     // console.log("META QUERY", label, msf);
-	     metadata[label] = msf;
+	     ChartDocument.metadata[label] = msf;
 
              var fl = {};
              fl[fieldName] = 1;
@@ -489,13 +543,13 @@ function makeNextChartDataPart1(ChartDocument) {
 
 
 		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
-                 if (doc.Sample_ID && doc.Sample_ID in chartDataMap) {
-                     chartDataMap[doc.Sample_ID][label] = doc[fieldName];
+                 if (doc.Sample_ID && doc.Sample_ID in ChartDocument.chartDataMap) {
+                     ChartDocument.chartDataMap[doc.Sample_ID][label] = doc[fieldName];
 		     // console.log("joined Sample_ID", doc);
                  } else {
                      if (doc.Patient_ID in mapPatient_ID_to_Sample_ID) {
                          mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
-                             chartDataMap[sample_ID][label] = doc[fieldName];
+                             ChartDocument.chartDataMap[sample_ID][label] = doc[fieldName];
                          });
 			  // console.log("joined through Patient_ID", doc);
 		     } 
@@ -504,25 +558,30 @@ function makeNextChartDataPart1(ChartDocument) {
              }); // forEach
 
         }); //  ChartDocument.additionalQueries.map
-
-    ChartDocument.metadata = metadata;
 }
 
-function makeNextChartDataPart2(ChartDocument) {
 
-    // Step 5. Transform any data.
+
+
+
+// Step 5. Transform any data.
+// IN: pivotTableConfig, transforms
+// OUT: chartData, dataFieldNames
+function TransformLabelsAndData(ChartDocument) {
+    if (unchanged(ChartDocument, ["chartData", "pivotTableConfig","transforms"]))
+        return;
+    change(ChartDocument, ["chartData","dataFieldNames"]);
+
     var keyUnion = {};  
     ChartDocument.chartData.map(function(datum) { 
 	Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
 
     ChartDocument.dataFieldNames =  Object.keys(keyUnion);
-    var cols = [];
-    var rows = [];
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)
-	cols = _.without(ChartDocument.pivotTableConfig.cols, null);
+	ChartDocument.pivotTableConfig.cols = _.without(ChartDocument.pivotTableConfig.cols, null);
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
-	rows = _.without(ChartDocument.pivotTableConfig.rows, null);
+	ChartDocument.pivotTableConfig.rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
 
     // normalize records
@@ -530,22 +589,31 @@ function makeNextChartDataPart2(ChartDocument) {
 
     var transforms = ChartDocument.transforms;
     if (transforms && transforms.length > 0) {
-	 var remodel = buildRemodelPlan(ChartDocument.chartData, transforms, rows, cols);
+	 var remodel = buildRemodelPlan(ChartDocument.chartData, transforms, ChartDocument.pivotTableConfig.rows, ChartDocument.pivotTableConfig.cols);
 	 // console.log("remodel", remodel);
 
 	 if (remodel.doIt) {
 	     ChartDocument.chartData = _.values(remodel.plan);
 	     // console.log("ChartDocument.chartData", ChartDocument.chartData);
 	 } else {
-	     ChartDocument.chartData = dichotomizeOrBin(ChartDocument.chartData, transforms, rows, remodel);
+	     ChartDocument.chartData = dichotomizeOrBin(ChartDocument.chartData, transforms, ChartDocument.pivotTableConfig.rows, remodel);
 	 }
     } // if transforms
+}
 
+    
 
-    // Step 6. Remove the excluded samples and (eventually) any other spot criteria.
+// Step 6. Remove the excluded samples and (eventually) any other spot criteria.
+// IN: pivotTableConfig.exclusions 
+// OUT: chartData,selectedFieldNames
+function Remove_Excluded_Samples_and_Sort(ChartDocument) {
+    if (unchanged(ChartDocument, ["chartData", "pivotTableConfig"]))
+        return;
+    change(ChartDocument, ["chartData","selectedFieldNames"]);
+
     var exclusions = ChartDocument.pivotTableConfig.exclusions;
     if (exclusions == null) exclusions = [];
-    var selectedFieldNames = _.union(rows, cols);
+    var selectedFieldNames = _.union(ChartDocument.pivotTableConfig.rows, ChartDocument.pivotTableConfig.cols);
 
     ChartDocument.selectedFieldNames = selectedFieldNames;
     var excludedKeys = _.intersection(Object.keys(exclusions), selectedFieldNames); // only those names that are engaged.
@@ -598,8 +666,10 @@ function makeNextChartDataPart2(ChartDocument) {
 		   a_value = a_value in order ? order[a_value] : order_n;
 		   b_value = b_value in order ? order[b_value] : order_n;
 	       }
-	       if (a_value < b_value) return -1;
-	       if (a_value > b_value) return 1;
+	       if (a_value < b_value)
+                   return -1;
+	       if (a_value > b_value)
+                   return 1;
 
 /*
 
@@ -621,47 +691,6 @@ function makeNextChartDataPart2(ChartDocument) {
     });
 }
 
-
-// Do the heavy lifting for Joining Samples.
-function SampleJoin(userId, ChartDocument, fieldNames) {
-    ST = Date.now();
-
-    if (ChartDocument.studies == null || ChartDocument.length == 0)
-      return { dataFieldNames: [], chartData: []};
-
-    if (ChartDocument.chartData == null || _.intersection(fieldNames, ["additionalQueries", "geneLikeDataDomain", "genelist", "samplelist", "studies"]).length > 0)
-	makeNextChartDataPart1(ChartDocument);
-
-    // if (_.intersection(fieldNames, ["gene_signatures"]).length > 0)
-    try {
-	ProcessGeneSignatureFormula(ChartDocument);
-
-	makeNextChartDataPart2(ChartDocument);
-	debugger
-	var html = renderJSdom(ChartDocument);
-	// console.log("render html", html);
-	var ret = Charts.direct.update({ _id : ChartDocument._id }, 
-	      {$set: 
-		  {
-		    dataFieldNames: ChartDocument.dataFieldNames,
-		    selectedFieldNames: ChartDocument.selectedFieldNames,
-		    elapsed: ChartDocument.elapsed,
-		    metadata: ChartDocument.metadata,
-		    chartData: ChartDocument.chartData,
-		    html: html,
-		   }});
-
-	var ret = Charts.direct.update({ _id : ChartDocument._id }, 
-	      {$set: 
-		  {
-		    html: html,
-		   }});
-	debugger
-    } catch (err) {
-        console.log("ProcessGeneSignatureFormula", err);
-	debugger
-    }
-} 
 
 
 Meteor.startup(function() {

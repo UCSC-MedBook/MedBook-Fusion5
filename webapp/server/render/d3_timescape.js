@@ -112,6 +112,7 @@ D3Timescape = function(window, chartDocument) {
     */
 
     chartDocument.elapsed = { min: min, max: max };
+    changed(chartDocument, ["elapsed"]);
 
     // console.log("D3Timescape", max, min, chartDocument.chartData.length);
     return "D3Timescape";
