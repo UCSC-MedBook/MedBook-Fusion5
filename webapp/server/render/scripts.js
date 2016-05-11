@@ -77,6 +77,7 @@ function WrapScript(name, script) {
 		+  hideinfo + 
 	    "</div></div>";
 
+	    console.log("wrapScript", script, html);
 	    Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
 
 	    }).run();  

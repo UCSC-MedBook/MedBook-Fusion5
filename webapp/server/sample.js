@@ -639,6 +639,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	makeNextChartDataPart2(ChartDocument);
 	debugger
 	var html = renderJSdom(ChartDocument);
+	// console.log("render html", html);
 	var ret = Charts.direct.update({ _id : ChartDocument._id }, 
 	      {$set: 
 		  {
@@ -649,6 +650,13 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		    chartData: ChartDocument.chartData,
 		    html: html,
 		   }});
+
+	var ret = Charts.direct.update({ _id : ChartDocument._id }, 
+	      {$set: 
+		  {
+		    html: html,
+		   }});
+	debugger
     } catch (err) {
         console.log("ProcessGeneSignatureFormula", err);
 	debugger

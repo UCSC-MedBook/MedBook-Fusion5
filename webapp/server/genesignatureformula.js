@@ -3,7 +3,7 @@
 fss = Npm.require('fs-extra')
 
 function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  gene_sandbox, signature_sandbox, method, whendone) {
-    var dirs = process.env.MEDBOOK_WORKSPACE + "bridge/" + chartDocument._id;
+    var dirs = process.env.MEDBOOK_WORKSPACE + "bridge/signture/" + chartDocument._id;
     fss.mkdirsSync(dirs);
 
     var stdout = dirs +  "/stdout";

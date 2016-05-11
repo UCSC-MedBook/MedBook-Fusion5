@@ -99,9 +99,7 @@ D3Timescape = function(window, chartDocument) {
     aggregate("SU2C_Subsequent_Treatment_V1");
 
     // console.log("chart min max", min, max);
-    Object.keys(patients).sort().map(function(k) {
-       console.log(k, patients[k]);
-    })
+    // Object.keys(patients).sort().map(function(k) { console.log("timescape", k, patients[k]); })
 
     chartDocument.chartData = aggregated;
 
