@@ -1,5 +1,5 @@
 heChartID = null;
-     
+
 function valueIn(field, value) {
     return function(mp) {
         var t =  mp[field];
@@ -38,7 +38,19 @@ function formatFloat(f) {
 Template.Controls.helpers({
 
    chartTypes: function() {
-       return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
+      //  return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
+      return {
+        "_id" : "capWFPWg9nftuJqQW",
+        "name" : "ChartTypes",
+        "value" : [
+            "Bar Chart",
+            "Box Plot",
+            "Landscape",
+            "Scatter Chart",
+            "Table",
+            "Timescape"
+        ]
+      };
    },
 
    TheChart: function() {
@@ -54,7 +66,7 @@ Template.Controls.helpers({
 	  if (func) {
 	      html = func(TheChart, {});
 	  }
-       } 
+       }
        html = html.replace(/onclick/g, "onClick");
        setTimeout(d3_tooltip_boxplot, 5000);
        return html;
@@ -88,7 +100,7 @@ Template.Controls.helpers({
        function fn(value) {
             // TRICKY A MUST MATCH B
             var s = link(value[0]) + "<br>" + link(value[1]);
-            return new Spacebars.SafeString(s); 
+            return new Spacebars.SafeString(s);
        };
 
 
@@ -123,12 +135,12 @@ Template.Controls.helpers({
        for (var i = 1; i < k; i++)
            for (var j = 1; j < k; j++) {
                var pValue = parseFloat(p[i][j]);
-               if (isNaN(pValue)) 
+               if (isNaN(pValue))
                    continue
-               if (cutoff && pValue > cutoff) 
+               if (cutoff && pValue > cutoff)
                    continue
                cache_dipsc_linear.push({correlates: [ c[i][0],  c[0][j] ],  // TRICKY B MUST MATCH A
-                   p_value: formatFloat(pValue), 
+                   p_value: formatFloat(pValue),
                    correlation: formatFloat(c[i][j]),
                    variance: formatFloat(v[i][j])});
            }
@@ -152,7 +164,7 @@ Template.Controls.helpers({
    },
 
    studiesSelected: function() {
-    
+
      var studies = CurrentChart("studies");
      if (studies && studies.length > 0)
         return Collections.studies.find({id: {$in: studies }}, {sort: {"name":1}});
@@ -169,10 +181,10 @@ Template.Controls.helpers({
            The description field is in HTML. But this recipe for displaying HTML in reactive table
            causes an error in the console log.  Need a better recipe.
 
-            { key: 'id' }, 
+            { key: 'id' },
             {
               key: 'description',
-              fn: function (value) { 
+              fn: function (value) {
                   // return new Spacebars.SafeString(value);
                   return value;
               }
@@ -230,17 +242,17 @@ Template.Controls.helpers({
 	      mine.push(c);
 	  else if (c.study.indexOf("user:") == 0)
 	      others.push(c);
-	  else 
+	  else
 	      rest.push(c);
        });
        function ss(a, b){
           try {
 	      var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
-	      if (studyA < studyB) return -1 
+	      if (studyA < studyB) return -1
 	      if (studyA > studyB) return 1
 
 	      var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
-	      if (nameA < nameB) return -1 
+	      if (nameA < nameB) return -1
 	      if (nameA > nameB) return 1
 	      return 0 //default return value (no sorting)
 	  } catch (err) {
@@ -266,9 +278,9 @@ Template.Controls.helpers({
            });
            vv.fieldOrder.map(function(fieldName, i) {
 
-               var meta = { 
+               var meta = {
 		   c: collName,
-		   f: fieldName, 
+		   f: fieldName,
                    j: hasSample_ID ? "Sample_ID" : "Patient_ID" ,
 		   s: vv.study
                };
@@ -303,11 +315,11 @@ Template.Controls.events({
        var geneSignatureFormula = TheChart.geneSignatureFormula;
 
        var text = geneSignatureFormula == null ? "Upreg = 2*TP53 + AR + RB" : geneSignatureFormula;
-       Overlay("GeneSignatureFormula", { 
+       Overlay("GeneSignatureFormula", {
 	   theChart: TheChart,
 	   text: text
        });
-  }, 
+  },
 
 
   'click .genePanelPicker' : function(e) {
@@ -317,11 +329,11 @@ Template.Controls.events({
        var text = genePanel == null ? "example:feature1,feature2,feature3" : genePanel.map(function(row) {
            return row.name + ":" + row.feature_list.join(",");
        }).join("\n");
-       Overlay("GenePanelPicker", { 
+       Overlay("GenePanelPicker", {
 	   theChart: TheChart,
 	   text: text
        });
-  }, 
+  },
 
   'click .element' : function(e) {
        var field =  $(e.target).data("field");
@@ -334,14 +346,14 @@ Template.Controls.events({
        var binTransform = _.find(TheChart.transforms, function(obj) { return obj.op == "bin" && obj.field == field; });
        if (binTransform) bin = binTransform.value;
 
-       Overlay("Element", { 
+       Overlay("Element", {
 	   theChart: TheChart,
-	   field: field, 
+	   field: field,
 	   type: type,
 	   exclusions: exclusions,
 	   bin: bin
        });
-  }, 
+  },
   'change #previousCharts' : function(e) {
 	var _id = $(e.target).val();
 	Router.go("/fusion/?id=" +_id);
@@ -363,14 +375,14 @@ Template.Controls.events({
       var dipsc_id =  CurrentChart("dipsc_id");
       if (dipsc_id == null)
           return;
-      var dipsc = DIPSC_coll.findOne({_id: dipsc_id}); 
+      var dipsc = DIPSC_coll.findOne({_id: dipsc_id});
       if (dipsc)
           Overlay("DIPSC", dipsc);
    },
    'change .transform' : function(evt, tmpl) {
        var transforms = [];
        $('.transform').map(function(i, e) {
-           if (e.value) 
+           if (e.value)
                transforms.push( {
                    op: $(e).data("op"),
                    field: $(e).data("field"),
@@ -399,8 +411,8 @@ Template.Controls.events({
    'click .topMutatedGenes': function(evt, tmpl) {
         var $link = $(evt.target);
         Meteor.call("topMutatedGenes", function(err,data) {
-            Overlay("Picker", { 
-                data: data, 
+            Overlay("Picker", {
+                data: data,
 
                 title: "Top Mutated Genes (click to select)",
 
@@ -532,7 +544,7 @@ Template.Controls.events({
            var _id = $(opt).val();
            genesets.push(_id);
        });
-       UpdateCurrentChart("genesets", genesets); 
+       UpdateCurrentChart("genesets", genesets);
    },
 
    'click #clear' : function(evt, tmpl) {
@@ -603,7 +615,7 @@ function initializeJQuerySelect2(document) {
           initSelection : function (element, callback) {
             var prev = document;
             if (prev && prev.genelist)
-                callback( prev.genelist.map(function(g) { 
+                callback( prev.genelist.map(function(g) {
 		    return { id: g, text: g }}) );
           },
           multiple: true,
@@ -763,7 +775,7 @@ initializeJQuerySortable = function() {
 	 if (well.hasClass("pvtUnused")) {
 	     Charts.update({_id: TheChart._id},
 	       {$pull:
-		 { 
+		 {
 		  "pivotTableConfig.cols": field,
 		  "pivotTableConfig.rows": field
 		 }
@@ -776,7 +788,7 @@ initializeJQuerySortable = function() {
 		 var rows = $(".pvtRows.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
 		 Charts.update({_id: TheChart._id},
 		   {$set:
-		     { 
+		     {
 		      "pivotTableConfig.cols": cols,
 		      "pivotTableConfig.rows": rows
 		      }
@@ -791,4 +803,3 @@ initializeJQuerySortable = function() {
     });
 
 };
-
