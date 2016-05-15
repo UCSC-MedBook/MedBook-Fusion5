@@ -7,10 +7,12 @@ var extend = Meteor.npmRequire('node.extend');
 // This is the central Joinalgoritm. 
 
 function SampleJoin(userId, ChartDocument, fieldNames) {
-    ChartDocument.fieldNames = fieldNames;
+
+
 
     try {
         SeedDataFromClincialInfo(ChartDocument);
+        initTemporaryDatabase(ChartDocument,fieldNames);
         JoinAllGeneLikeInformation(ChartDocument);
         MergeCRFs(ChartDocument);
         ProcessGeneSignatureFormula(ChartDocument);
@@ -35,6 +37,13 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	debugger
     }
 } 
+
+// These are temporary in memory datastructures which speed up the computation, but are not saved to the database.
+function initTemporaryDatabase(ChartDocument,fieldNames) {
+    ChartDocument.fieldNames = fieldNames; 
+    ChartDocument.chartDataMap = {};
+    ChartDocument.chartData.map(function (cd) { ChartDocument.chartDataMap[cd.Sample_ID] = cd; });
+}
 
 Meteor.startup( 
     function CleanupLostCharts() {
@@ -330,7 +339,10 @@ function SeedDataFromClincialInfo(ChartDocument) {
     q.Study_ID = {$in:ChartDocument.studies}; 
     q.CRF = "Clinical_Info";
     ChartDocument.chartData = Collections.CRFs.find(q).fetch();
-    ChartDocument.chartData.map(function(cd) {  delete cd["CRF"]; })
+    ChartDocument.chartData.map(function(cd) {  
+        delete cd["_id"];
+        delete cd["CRF"];
+    })
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     ChartDocument.metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
     if (typeof(ChartDocument.metadata) == "string")
@@ -341,12 +353,7 @@ function SeedDataFromClincialInfo(ChartDocument) {
     });
     ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { return ci.Sample_ID }).sort();
-    ChartDocument.chartDataMap = {};
 
-    ChartDocument.chartData.map(function (cd) { 
-        delete cd["_id"];
-        ChartDocument.chartDataMap[cd.Sample_ID] = cd;
-    });
 }
 
 // Step 2. Join all the Gene like information into the samples into the ChartDataMap table
@@ -489,6 +496,7 @@ function JoinAllGeneLikeInformation(ChartDocument) {
 // IN:  additionalQueries
 // OUT: chartData
 function MergeCRFs(ChartDocument) {
+    debugger
     if (unchanged(ChartDocument, ["additionalQueries","samplelist"]))
         return;
     change(ChartDocument, ["chartData"]);
