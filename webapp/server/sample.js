@@ -496,8 +496,8 @@ function JoinAllGeneLikeInformation(ChartDocument) {
 // IN:  additionalQueries
 // OUT: chartData
 function MergeCRFs(ChartDocument) {
-    debugger
-    if (unchanged(ChartDocument, ["additionalQueries","samplelist"]))
+    if (ChartDocument.additionalQueries == null || ChartDocument.additionalQueries.length == 0 ||  
+            unchanged(ChartDocument, ["additionalQueries", "pivotTableConfig", "samplelist"]))
         return;
     change(ChartDocument, ["chartData"]);
 
@@ -538,6 +538,7 @@ function MergeCRFs(ChartDocument) {
 	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
+             debugger
 	     // console.log("META QUERY", label, msf);
 	     ChartDocument.metadata[label] = msf;
 
