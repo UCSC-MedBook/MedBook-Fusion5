@@ -451,19 +451,39 @@ exportData = function() {
   if (local != null) {
       console.log("local", local);
       outstream = fs.createWriteStream(local, {encoding: "utf8"});
-
   } else {
-      response.writeHead(200, {
-	// 'Content-Type': 'text/tab-separated-values',
-	'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
-	'Cache-Control': 'no-cache, no-store, must-revalidate',
-	'Pragma': 'no-cache',
-	'Expires': '0',
-      });
-      outstream = response;
+
+
+      // Fill from cache
+      var path = process.env.MEDBOOK_WORKSPACE +"/cache/" + attachmentFilename;
+      if (fs.existsSync(path)) {
+          console.log("Filling from cache", path);
+          var stat = fs.statSync(path)
+	  response.writeHead(200, {
+	    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+	    'Content-Length': String(stat.size),
+	    'Cache-Control': 'no-cache, no-store, must-revalidate',
+	    'Pragma': 'no-cache',
+	    'Expires': '0',
+	  });
+	  var readStream = fs.createReadStream(path);
+	  readStream.pipe(response);
+	  return;
+
+      } else {
+ 
+	  response.writeHead(200, {
+	    'Content-Disposition': 'attachment; filename="' + attachmentFilename +'"',
+	    'Cache-Control': 'no-cache, no-store, must-revalidate',
+	    'Pragma': 'no-cache',
+	    'Expires': '0',
+	  });
+	  outstream = response;
+      }
   }
 
   if (kind == "genomic") {
+
       outstream.write("Gene");
       study.Sample_IDs.map(function(sample_label) {
 	  outstream.write("\t");
