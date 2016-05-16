@@ -1,4 +1,15 @@
-heChartID = null;
+
+function busy() {
+    var yy = $(".busy").removeClass("hidden");
+    console.log("busy", yy);
+}
+function unbusy() {
+    var yy = $(".busy").addClass("hidden");
+    console.log("unbusy", yy);
+}
+
+
+TheChartID = null;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -57,6 +68,7 @@ Template.Controls.helpers({
        } 
        // html = html.replace(/onclick/g, "onClick");
        setTimeout(d3_tooltip_boxplot, 5000);
+       unbusy();
        return html;
    },
 
@@ -681,6 +693,7 @@ UpdateCurrentChart = function(name, value) {
     x[name] = value;
     var u =  {};
     u[name] = value;
+    busy();
     Charts.update({_id: TheChartID}, {$set: u});
 }
 
@@ -763,6 +776,7 @@ initializeJQuerySortable = function() {
 	 var TheChart = CurrentChart();
 
 	 if (well.hasClass("pvtUnused")) {
+             busy();
 	     Charts.update({_id: TheChart._id},
 	       {$pull:
 		 { 
@@ -773,6 +787,7 @@ initializeJQuerySortable = function() {
 	     );
 	 } else if (well.hasClass("pvtUsed")) {
 	     if (this === ui.item.parent()[0]) {// http://forum.jquery.com/topic/sortables-update-callback-and-connectwith
+                 busy();
 
 		 var cols = $(".pvtCols.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
 		 var rows = $(".pvtRows.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
