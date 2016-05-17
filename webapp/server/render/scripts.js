@@ -67,7 +67,7 @@ function WrapScript(name, script) {
 	    + "<div>STDOUT:<code>" + out + "</code></div>"
 	    + "<div>STDERR:<code>" + err + "</code></div></div>";
 
-	    var hideinfo = '<summary><details>'
+	    var hideinfo = '<summary>'+outfile2+'<details>'
 	    + info
 	    + '</details> </summary>';
 
@@ -78,7 +78,8 @@ function WrapScript(name, script) {
 	    "</div></div>";
 
 	    console.log("wrapScript", script, html);
-	    Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
+	    var ret = Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
+	    console.log("wrapScript ret", ret);
 
 	    }).run();  
 	});

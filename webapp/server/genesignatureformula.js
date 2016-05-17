@@ -77,6 +77,11 @@ Meteor.startup(function() {
 });
 
 ProcessGeneSignatureFormula = function(chart) {
+    if (unchanged(chart, ["gene_signatures","samplelist"]))
+       return;
+    change(chart, ["chartData", "metadata"]);
+
+
     if (chart.gene_signatures == null)
        return
 
