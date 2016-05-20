@@ -7,6 +7,7 @@ Template.SimpleDataBrowser.rendered = function() {
          rowHeaders: true,
 	 colHeaders: true,
 	 contextMenu: true,
+         stretchH: 'all',
     });
 }
 

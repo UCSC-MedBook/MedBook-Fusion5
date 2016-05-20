@@ -40,6 +40,12 @@
   background-color: white;
 }
 
+.noscroll { 
+    overflow: hidden;
+    position:fixed;
+}
+
+
 #overlayPanel {
     z-index:2002;
     -moz-opacity: 1.0;
@@ -58,7 +64,10 @@
     overflow-y:scroll;
 }
 #overlayContent {
-    padding: 16 16px 16px 16px;
+    /* padding: 16 16px 16px 16px; */
+     position: absolute;
+     top: 0; bottom: 0; right: 0; left: 0;  /* follow the parent's edges */
+     outline: thin dashed green;            /* just so you can see the box */
 }
 
 body {
