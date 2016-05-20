@@ -313,6 +313,8 @@ function clinical(coll, samplesAllowed, study_label, response)  {
 
 if (Meteor.isServer) {
     Meteor.startup(function() {
+        Charts._ensureIndex({updatedAt: -1});
+
 	GeneLikeDataDomainsPrototype.map(function(domain) {
 	    if (domain.index) {
 	        console.log("Ensuring index ", domain.collection);
