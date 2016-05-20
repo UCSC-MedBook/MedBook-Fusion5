@@ -20,6 +20,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         Remove_Excluded_Samples_and_Sort(ChartDocument);
 
 	var html = renderJSdom(ChartDocument);
+        console.log("23 dataFieldNames", ChartDocument.dataFieldNames);
 	Charts.direct.update({ _id : ChartDocument._id }, 
 	      {$set: 
 		  {
@@ -577,9 +578,11 @@ function MergeCRFs(ChartDocument) {
 // IN: pivotTableConfig, transforms
 // OUT: chartData, dataFieldNames
 function TransformLabelsAndData(ChartDocument) {
+    /*
     if (unchanged(ChartDocument, ["chartData", "pivotTableConfig","transforms"]))
         return;
     change(ChartDocument, ["chartData","dataFieldNames"]);
+    */
 
     var keyUnion = {};  
     ChartDocument.chartData.map(function(datum) { 
@@ -592,6 +595,7 @@ function TransformLabelsAndData(ChartDocument) {
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
 	ChartDocument.pivotTableConfig.rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
+    console.log("596 dataFieldNames", ChartDocument.dataFieldNames);
 
     // normalize records
     ChartDocument.chartData = ChartDocument.chartData.map(Transform_Clinical_Info, keyUnion);
