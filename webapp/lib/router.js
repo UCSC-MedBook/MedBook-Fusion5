@@ -272,19 +272,33 @@ function genomicDataSamples3(coll, study, response)  {
 
       var cursor = Expression3.find({ study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
       var count = cursor.count();
-      console.log("download", count);
+      console.log( "core uncork end", response.cork == null, response.uncork == null, response.end == null);
+      console.log("cork", response.cork == null);
       response.setTimeout(20000 * 60 * 1000);
+      if (response.cork)
+          response.cork();
       cursor.forEach(function(doc) {
           var line = doc.gene_label;
 	  sort_order.map(function(i, j) {
-	     line += "\t" + String(doc.rsem_quan_log2[i]);
+	     line += "\t";
+             if (doc.rsem_quan_log2[i])
+                 line += String(doc.rsem_quan_log2[i]);
 	  });
 	  line += "\n";
 	  response.write(line);
-          if ((count % 1000) == 0)
-	      console.log("download", count, Date.now() - st);
+          if ((count % 1000) == 0) {
+              if (response.cork) response.cork();
+              if (response.uncork) response.uncork();
+              var stn = Date.now();
+	      console.log("download remaining", count, stn  - st);
+              st = stn;
+          }
           --count;
       });
+      if (response.uncork)
+          response.uncork();
+      if (response.end)
+          response.end();
       console.log("cursor download",count, "response.finished", response.finished );
 }
 
