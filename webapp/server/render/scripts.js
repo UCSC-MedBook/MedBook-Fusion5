@@ -54,7 +54,7 @@ function WrapScript(name, script) {
 	    try {outfile2 = fs.readFileSync(cwd + outfilename2, 'utf8'); } catch (err) {};
 
 	    Fiber(function() {
-		console.log('Script', script, exit_code, cmd, new Date() - start, outfile1 ? outfile1.length : null, outfile2 ? outfile2.len : null, out, err);
+		console.log('Script', script, exit_code, cmd, new Date() - start, outfile1 ? outfile1.length : null, outfile2 ? outfile2.len : null, out, "err", err);
 		/*
 		if (whendone)
 		    whendone(exit_code, out, err, outfile1, outfile2);
@@ -67,7 +67,7 @@ function WrapScript(name, script) {
 	    + "<div>STDOUT:<code>" + out + "</code></div>"
 	    + "<div>STDERR:<code>" + err + "</code></div></div>";
 
-	    var hideinfo = '<summary><details>'
+	    var hideinfo = '<summary>'+outfile2+'<details>'
 	    + info
 	    + '</details> </summary>';
 
@@ -77,7 +77,8 @@ function WrapScript(name, script) {
 		+  hideinfo + 
 	    "</div></div>";
 
-	    Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
+	    // console.log("wrapScript", script, html);
+	    var ret = Charts.direct.update({_id: chartDocument._id}, {$set: {html: html}});
 
 	    }).run();  
 	});

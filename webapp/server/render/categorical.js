@@ -1,7 +1,5 @@
 
 BoxPlotCategorical = function(chartDocument, exclusions) {
-   console.log("B1", ST - Date.now());
-
     var value_color_scale = d3.scale.category10();
 
     var rows = chartDocument.pivotTableConfig.rows;
@@ -33,7 +31,6 @@ BoxPlotCategorical = function(chartDocument, exclusions) {
        }
     });
 
-   console.log("B2", ST - Date.now());
 
     var combos = cartesianProductOf(rowValuePairs);
     combos.map(function(pairList, c) {
@@ -58,8 +55,6 @@ BoxPlotCategorical = function(chartDocument, exclusions) {
 	   throw new Error("Rows are too complex, please simplify");
     }) // map
 
-
-   console.log("B3", ST - Date.now());
 
     var numberVariables = [], columnCategoricalVariables = [];
 
@@ -157,7 +152,6 @@ BoxPlotCategorical = function(chartDocument, exclusions) {
         });
         return plot;
     });
-    console.log("B4", ST - Date.now());
 
     rows = rows.join(",");
     cols = cols.join(",");

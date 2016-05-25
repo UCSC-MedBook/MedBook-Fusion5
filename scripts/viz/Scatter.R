@@ -14,10 +14,21 @@ input = na.omit(input)
 data = unlist(input[1]);
 data2 = unlist(input[2]);
 cn = colnames(input)
-xlab = cn[1]
-ylab = cn[2]
 
-plot(data, data2, xlab=xlab, ylab=ylab)
 
-ignore = dev.off();
+dat<-data.frame(x=data,y=data2)
+attach(dat)
+plot(x,y,xlab=cn[1],ylab=cn[2]) 
+abline(lm(y~x));
 
+ct = cor.test(x,y);
+
+t_statistic = ct[1];
+df = ct[2];
+pvalue = sprintf("%.3f", ct[3])
+pearsons_r = sprintf("%.3f", ct[4])
+sided = ct[6]
+test = ct[7];
+
+stats = paste(test, " ", sided, " Pearsons R=", pearsons_r, " P-Value=", pvalue, sep='');
+write(stats, outputdata);

@@ -4,6 +4,7 @@
 
 OverlayClose = function() {
     $('#overlayContent').children().remove()
+    $("body").removeClass("noscroll");
     $('.overlay').addClass("hidden");
 };
 
@@ -100,5 +101,6 @@ Overlay = function(templateName, params) {
     var $overlayContent = $( '#overlayContent' );
     if (typeof(params) == "function")
         params = params();
+    $("body").addClass("noscroll");
     Blaze.renderWithData( Template[templateName], params, $overlayContent.get(0) );
 }

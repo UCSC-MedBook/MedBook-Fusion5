@@ -115,7 +115,7 @@ GoogleChart = function(chartDocument, opts) {
     dataTable.addColumn({type: 'string', role: 'tooltip'});
     dataTable.addColumn({type: 'string', role: 'style'});
 
-    var legend = '<svg><g>';
+    var legend = '<svg width="1000"><g>';
 
     var y = 0;
     function columnCluster(columns, label, clusterNumber) {

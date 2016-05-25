@@ -1,4 +1,15 @@
-heChartID = null;
+
+function busy() {
+    var yy = $(".busy").removeClass("hidden");
+    console.log("busy", yy);
+}
+function unbusy() {
+    var yy = $(".busy").addClass("hidden");
+    console.log("unbusy", yy);
+}
+
+
+TheChartID = null;
      
 function valueIn(field, value) {
     return function(mp) {
@@ -55,8 +66,9 @@ Template.Controls.helpers({
 	      html = func(TheChart, {});
 	  }
        } 
-       html = html.replace(/onclick/g, "onClick");
+       // html = html.replace(/onclick/g, "onClick");
        setTimeout(d3_tooltip_boxplot, 5000);
+       unbusy();
        return html;
    },
 
@@ -300,12 +312,14 @@ Template.Controls.events({
 
   'click .geneSignatureFormula' : function(e) {
        var TheChart = CurrentChart();
-       var geneSignatureFormula = TheChart.geneSignatureFormula;
 
-       var text = geneSignatureFormula == null ? "Upreg = 2*TP53 + AR + RB" : geneSignatureFormula;
-       Overlay("GeneSignatureFormula", { 
-	   theChart: TheChart,
-	   text: text
+       Overlay("SimpleDataBrowser", { 
+	   name: "Gene Signatures",
+	   data: TheChart.gene_signatures || [[1,2,3],[4,5,6]],
+	   save: function(data) {
+	      debugger
+	      UpdateCurrentChart("gene_signatures", data);
+	   }
        });
   }, 
 
@@ -679,6 +693,7 @@ UpdateCurrentChart = function(name, value) {
     x[name] = value;
     var u =  {};
     u[name] = value;
+    busy();
     Charts.update({_id: TheChartID}, {$set: u});
 }
 
@@ -761,6 +776,7 @@ initializeJQuerySortable = function() {
 	 var TheChart = CurrentChart();
 
 	 if (well.hasClass("pvtUnused")) {
+             busy();
 	     Charts.update({_id: TheChart._id},
 	       {$pull:
 		 { 
@@ -771,6 +787,7 @@ initializeJQuerySortable = function() {
 	     );
 	 } else if (well.hasClass("pvtUsed")) {
 	     if (this === ui.item.parent()[0]) {// http://forum.jquery.com/topic/sortables-update-callback-and-connectwith
+                 busy();
 
 		 var cols = $(".pvtCols.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
 		 var rows = $(".pvtRows.pvtUsed").children().map(function(i, e) {return $(e).data("field")}).get();
