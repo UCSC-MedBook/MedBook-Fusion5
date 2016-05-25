@@ -3,12 +3,16 @@
   <!-- Use `name` to add a custom class to the outer container -->
   {{#basicTabs name="" tabs=tabs}}
 
+    {{#tabContent slug="Analyze"}}
+      {{>SampleFusion}}
+    {{/tabContent}}
+
     {{#tabContent slug="Import"}}
       {{>DataImport}}
     {{/tabContent}}
 
-    {{#tabContent slug="Analyze"}}
-      {{>SampleFusion}}
+    {{#tabContent slug="Tables"}}
+      {{>TableBrowser}}
     {{/tabContent}}
 
     {{#tabContent slug="Export"}}

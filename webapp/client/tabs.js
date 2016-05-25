@@ -9,8 +9,9 @@ Template.topLevel.helpers({
   tabs: function () {
     // Every tab object MUST have a name and a slug!
     return [
-      { name: 'Import', slug: 'Import' },
       { name: 'Analyze', slug: 'Analyze' },
+      { name: 'Import', slug: 'Import' },
+      { name: 'Tables', slug: 'Tables' },
       { name: 'Export', slug: 'Export', onRender: function(slug, template) {
       }}
     ];
