@@ -215,11 +215,15 @@ Router.map(function() {
     template: "topLevel",
     path: '/fusion/tabs',
 
+    data: data,
+
     waitOn: function() {
       return [
-	  Meteor.subscribe('Metadata'),
-	  Meteor.subscribe('FusionFeatures'),
-	  Meteor.subscribe('studies')
+          Meteor.subscribe('MyCharts'),
+          Meteor.subscribe('TheChart', this.params._id || this.params.query.id),
+          Meteor.subscribe('FusionFeatures'),
+          Meteor.subscribe('Metadata'),
+          Meteor.subscribe('studies')
       ];
     },
 
