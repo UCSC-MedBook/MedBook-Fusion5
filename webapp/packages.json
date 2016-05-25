@@ -1,6 +1,6 @@
 {
-     "fs-extra" : "0.26.3",
      "node.extend" : "1.0.1",
+     "fs-extra" : "0.26.3",
      "node-jsdom" : "3.1.5",
      "random-js" : "1.0.4",
      "toml-js"   : "0.0.8",
