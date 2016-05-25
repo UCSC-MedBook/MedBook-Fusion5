@@ -4,20 +4,15 @@
   {{#basicTabs name="" tabs=tabs}}
 
     {{#tabContent slug="Import"}}
-      <h2>Import</h2>
       {{>DataImport}}
     {{/tabContent}}
 
     {{#tabContent slug="Analyze"}}
-      <h2>Analyze</h2>
       {{>SampleFusion}}
     {{/tabContent}}
 
     {{#tabContent slug="Export"}}
-        {{#if activeTab}}
-          <h2>Export</h2>
-          {{>Download}}
-        {{/if}}
+      {{>Download}}
     {{/tabContent}}
 
   {{/basicTabs}}
