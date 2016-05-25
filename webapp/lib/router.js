@@ -70,6 +70,7 @@ function waitOn() {
     ];
 }
 
+/*
 Router.map(function() {
   this.route('home', {
     template: "SampleFusion",
@@ -78,14 +79,14 @@ Router.map(function() {
     data: data,
   });
 });
+*/
 
 Router.map(function() {
   this.route('display', {
-    template: "SampleFusion",
-    onBeforeAction: function() { this.state.set("NoControls", true); this.next();},
+    onBeforeAction: function() {  
+        Router.go('home', {query: {id: this.params._id}});
+    },
     path: '/fusion/display/:_id',
-    data: data,
-    waitOn: waitOn,
   });
 });
 
@@ -211,9 +212,9 @@ Router.map(function() {
 });
 
 Router.map(function() {
-  this.route('topLevel', {
+  this.route('home', {
     template: "topLevel",
-    path: '/fusion/tabs',
+    path: '/fusion/',
 
     data: data,
 
