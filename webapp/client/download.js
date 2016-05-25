@@ -71,6 +71,7 @@ Template.Download.events({
 
 
 Template.Download.rendered = function() {
+    alert("treeview");
 
     $('#tree').treeview(
 	{

@@ -210,13 +210,37 @@ Router.map(function() {
   });
 });
 
+Router.map(function() {
+  this.route('topLevel', {
+    template: "topLevel",
+    path: '/fusion/tabs',
 
+    waitOn: function() {
+      return [
+	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('FusionFeatures'),
+	  Meteor.subscribe('studies')
+      ];
+    },
+
+    onBeforeAction : function(arg) {
+       Session.set("BrowseStudies", null);
+       Session.set("BrowseTable", null);
+       this.next();
+    }
+  });
+});
 
 Router.map(function() {
   this.route('import', {
     template: "DataImport",
     path: '/fusion/import',
     waitOn: waitOn,
+
+    onBeforeAction : function(arg) {
+       Session.set("activeTabs", "Import");
+       this.next();
+    }
   });
 });
 

@@ -1,0 +1,28 @@
+<template name="topLevel">
+
+  <!-- Use `name` to add a custom class to the outer container -->
+  {{#basicTabs name="" tabs=tabs}}
+
+    {{#tabContent slug="Import"}}
+      <h2>Import</h2>
+      {{>DataImport}}
+    {{/tabContent}}
+
+    {{#tabContent slug="Analyze"}}
+      <h2>Places</h2>
+      <button class="add-Analyze">
+        Add Analyze
+      </button>
+    {{/tabContent}}
+
+    {{#tabContent slug="Export"}}
+        {{#if activeTab}}
+          <h2>Export</h2>
+          {{>Download}}
+        {{/if}}
+    {{/tabContent}}
+
+  {{/basicTabs}}
+
+</template>
+
