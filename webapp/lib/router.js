@@ -84,7 +84,7 @@ Router.map(function() {
 Router.map(function() {
   this.route('display', {
     onBeforeAction: function() {  
-        Router.go('home', {query: {id: this.params._id}});
+        Router.go('home', {}, {query: {id: this.params._id}});
     },
     path: '/fusion/display/:_id',
   });
