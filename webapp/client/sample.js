@@ -39,18 +39,7 @@ Template.Controls.helpers({
 
    chartTypes: function() {
       //  return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
-      return {
-        "_id" : "capWFPWg9nftuJqQW",
-        "name" : "ChartTypes",
-        "value" : [
-            "Bar Chart",
-            "Box Plot",
-            "Landscape",
-            "Scatter Chart",
-            "Table",
-            "Timescape"
-        ]
-      };
+       return ["Bar Chart", "Box Plot", "Landscape", "Scatter Chart", "Table", "Timescape"];
    },
 
    TheChart: function() {
