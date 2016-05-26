@@ -46,8 +46,20 @@ function formatFloat(f) {
     return f;
 };
 
-Template.Controls.helpers({
+shorten = function() {
+   var s = "" + this;
+   var n = s.lastIndexOf(":");
+   var m = s.length;
+   if (n > 0 && n < m)
+      s = s.substring(n+1);
+   return s
+}
 
+Template.Field_Attribute.helpers({
+   shorten: shorten
+});
+
+Template.Controls.helpers({
    chartTypes: function() {
        return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
    },
@@ -317,7 +329,6 @@ Template.Controls.events({
 	   name: "Gene Signatures",
 	   data: TheChart.gene_signatures || [[1,2,3],[4,5,6]],
 	   save: function(data) {
-	      debugger
 	      UpdateCurrentChart("gene_signatures", data);
 	   }
        });

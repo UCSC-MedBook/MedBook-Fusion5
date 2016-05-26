@@ -15,195 +15,199 @@
 
 
 <template name="Controls">
-    <div class="panel panel-default">
-      <div class="panel-heading" >
+<div>
+    <div class="leftdivThin" >
+        <div class="panel panel-default">
+          <div class="panel-heading" >
 
-      <h1 >Data Fusion Tool</h1>
-       This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations based around using Patient Samples from SU2C and TCGA datasets.
-	</div>
-       <div id="p" class="panel-body ">
+          <h1 >Data Fusion Tool</h1>
+           This application allows you to fuse clinical, research, genomic and pathway data into beautiful visualizations based around using Patient Samples from SU2C and TCGA datasets.
+            </div>
+           <div id="p" class="panel-body ">
 
-       <div class="input-group ">
-	     <button type="button" name="newChart" value="new" class="btn ">New Chart</button>
-	     &nbsp;
-	     &nbsp;
-	     <select style="width:250px;" class="form-control" id="previousCharts">
-		{{#each previousCharts}}
-		    <option {{this.selected}} placeHolder="Previous charts" value="{{this._id}}">{{this.label}}</option>
-		{{/each}}
-	     </select>
-      </div>
+           <div class="input-group ">
+                 <button type="button" name="newChart" value="new" class="btn ">New Chart</button>
+                 &nbsp;
+                 &nbsp;
+                 <select style="width:250px;" class="form-control" id="previousCharts">
+                    {{#each previousCharts}}
+                        <option {{this.selected}} placeHolder="Previous charts" value="{{this._id}}">{{this.label}}</option>
+                    {{/each}}
+                 </select>
+          </div>
 
-      </div>
-    </div>
+          </div>
+        </div>
 
-    <div class="panel panel-default">
-      <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
+        <div class="panel panel-default">
+          <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
 
-          <h3 class="panel-title">1. Select Studies (required)</h3>
-       </div>
-       <div id="p1" class="panel-body collapse">
-         <select id="studies"  multiple="multiple">
-            {{#each studies}}
-                <option {{this.selected}} value="{{this.id}}">{{this.name}}</option>
-            {{/each}}
-         </select>
-         <div>
+              <h3 class="panel-title">1. Select Studies (required)</h3>
+           </div>
+           <div id="p1" class="panel-body collapse">
+             <select id="studies"  multiple="multiple">
+                {{#each studies}}
+                    <option {{this.selected}} value="{{this.id}}">{{this.name}}</option>
+                {{/each}}
+             </select>
+             <div>
 
-             {{> reactiveTable showNavigation="auto" fields=["id", "description"]
-                  settings=studiesSelectedSettings class="studiesSelectedTable"
-                  collection=studiesSelected rowsPerPage=20 class="studiesSelectedTable table borderless" }}
-         </div>
-       </div>
-    </div>
+                 {{> reactiveTable showNavigation="auto" fields=["id", "description"]
+                      settings=studiesSelectedSettings class="studiesSelectedTable"
+                      collection=studiesSelected rowsPerPage=20 class="studiesSelectedTable table borderless" }}
+             </div>
+           </div>
+        </div>
 
-    <div class="panel panel-default">
-      <div class="panel-heading" data-toggle="collapse" data-target="#p2">
-          <h3 class="panel-title">2. Select Genes (optional)
-          </h3>
-       </div>
-       <div id="p2" class="panel-body collapse">
-           <input value="r-m" class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
-              <span>
-              <button id="clear">Clear Gene List</button>
-            <label>Gene Sets</label>
-            <select id="genesets" multiple>
-                <optGroup label="">>
-                    <option style="display:none;" value="" disabled selected>Select your geneset</option>
-                </optGroup>
-               {{{genesets}}}
+        <div class="panel panel-default">
+          <div class="panel-heading" data-toggle="collapse" data-target="#p2">
+              <h3 class="panel-title">2. Select Genes (optional)
+              </h3>
+           </div>
+           <div id="p2" class="panel-body collapse">
+               <input value="r-m" class="genelist" style="width:100%;" id="genelist" placeholder="Enter HUGO Gene Symbols or Gene Aliases" name="genelist">
+                  <span>
+                  <button id="clear">Clear Gene List</button>
+                <label>Gene Sets</label>
+                <select id="genesets" multiple>
+                    <optGroup label="">>
+                        <option style="display:none;" value="" disabled selected>Select your geneset</option>
+                    </optGroup>
+                   {{{genesets}}}
+                </select>
+                  <button id="clear">All Genes In</button>
+                  <br>
+
+                  <button class="topMutatedGenes" style="margin-top: 5px;">Select from top mutated genes</button>
+                  </span>
+            {{>checkBox list=geneLikeDataDomains}}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading"  data-toggle="collapse" data-target="#p3">
+              <h3 class="panel-title">3. Include additional Clinical Report Forms and other data (optional)</h3>
+           </div>
+           <div id="p3" class="panel-body collapse">
+             <select id="additionalQueries"  multiple="multiple">
+                {{{additionalQueries}}}
             </select>
-              <button id="clear">All Genes In</button>
-              <br>
+           </div>
+        </div>
 
-              <button class="topMutatedGenes" style="margin-top: 5px;">Select from top mutated genes</button>
-              </span>
-        {{>checkBox list=geneLikeDataDomains}}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+              <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Focus on these Patients or Samples (optional)</h3>
+           </div>
+           <div id="p4" class="panel-body collapse">
+                  Highlight these samples:
+                  <input style="width:100%;" id="focuslist" placeholder="Enter PatientID or Sample ID">
+
+                  <div style="margin:20px"></div>
+
+                  Show only these samples:
+                  <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
+                  <div id="builder"></div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+              <h3 class="panel-title"  data-toggle="collapse" data-target="#p5" >5. Rename, BIN or Transform the data</h3>
+           </div>
+           <div id="p5" class="panel-body collapse">
+                {{> Transforms }}
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-heading">
+              <h3 class="panel-title"  data-toggle="collapse" data-target="#p6" >6. Data Enrichment </h3>
+           </div>
+           <div id="p6" class="panel-body collapse">
+              <button type="button" id="GeneSignatureFormula" style="margin:10px;" class="btn btn-default geneSignatureFormula">Gene Signature Formulas</button>
+            </div>
         </div>
     </div>
 
-    <div class="panel panel-default">
-      <div class="panel-heading"  data-toggle="collapse" data-target="#p3">
-          <h3 class="panel-title">3. Include additional Clinical Report Forms and other data (optional)</h3>
-       </div>
-       <div id="p3" class="panel-body collapse">
-         <select id="additionalQueries"  multiple="multiple">
-            {{{additionalQueries}}}
-        </select>
-       </div>
-    </div>
+    <div class="rightdivOverflow" >
+      <div style="display: inline-block;" class="dataExplorerControlPanel">
+        <div class="output" style="margin: 30px;">
+          <table class="cold" cellpadding="5">
+            <tbody>
+              <tr class="pvtControls">
+                <td>
+                  <div class="dataExplorerControlPanel">
+                    <div style="text-align:center;">
+                      <label>Chart Type</label>
+                      <select class="pvtRenderer">
+                        {{#each chartTypes }}
+                          <option value="{{this}}"> {{this}} </option>
+                        {{/each}}
+                      </select>
+                    </div><br />
+                  </div>
+                </td>
 
-    <div class="panel panel-default">
-      <div class="panel-heading">
-          <h3 class="panel-title"  data-toggle="collapse" data-target="#p4" >4. Focus on these Patients or Samples (optional)</h3>
-       </div>
-       <div id="p4" class="panel-body collapse">
-	      Highlight these samples:
-              <input style="width:100%;" id="focuslist" placeholder="Enter PatientID or Sample ID">
+                <td class="pvtVals pvtControls">
+                    <!--
+                        <select class="pvtAggregator">
+                          <option value="Mean"> Mean </option>
+                          <option value="Count"> Count </option>
+                          <option value="Sum"> Sum </option>
+                        </select><br />
 
-	      <div style="margin:20px"></div>
-
-	      Show only these samples:
-              <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
-	      <div id="builder"></div>
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-      <div class="panel-heading">
-          <h3 class="panel-title"  data-toggle="collapse" data-target="#p5" >5. Rename, BIN or Transform the data</h3>
-       </div>
-       <div id="p5" class="panel-body collapse">
-            {{> Transforms }}
-        </div>
-    </div>
-
-    <div class="panel panel-default">
-      <div class="panel-heading">
-          <h3 class="panel-title"  data-toggle="collapse" data-target="#p6" >6. Data Enrichment </h3>
-       </div>
-       <div id="p6" class="panel-body collapse">
-	  <button type="button" id="GeneSignatureFormula" style="margin:10px;" class="btn btn-default geneSignatureFormula">Gene Signature Formulas</button>
-        </div>
-    </div>
+                        <select class="pvtAttrDropdown">
+                          <option value="Age Bin"> Age Bin </option>
+                        </select>
+                    -->
+                </td>
 
 
-  <div style="display: inline-block;" class="dataExplorerControlPanel">
-    <div class="output" style="margin: 30px;">
-      <table class="cold" cellpadding="5">
-	<tbody>
-	  <tr class="pvtControls">
-	    <td>
-	      <div class="dataExplorerControlPanel">
-		<div style="text-align:center;">
-		  <label>Chart Type</label>
-		  <select class="pvtRenderer">
-		    {{#each chartTypes }}
-		      <option value="{{this}}"> {{this}} </option>
-		    {{/each}}
-		  </select>
-		</div><br />
-	      </div>
-	    </td>
+                <td class= "pvtAxisContainer pvtControls pvtHorizList pvtCols pvtUsed ui-sortable">
+                    {{#each TheChart.pivotTableConfig.cols}}
+                        {{>Field_Attribute}}
+                    {{else}}
+                         <div class="dropHere">Drag data fields from left to this box for columns</div>
+                    {{/each}}
+                </td>
+              </tr>
+                <tr>
+                <td class="pvtAxisContainer pvtUnused pvtControls pvtVertList ui-sortable">
+                    {{#each unusedDataFieldNames}}
+                        {{>Field_Attribute}}
+                    {{/each}}
+                </td>
 
-	    <td class="pvtVals pvtControls">
-		<!--
-		    <select class="pvtAggregator">
-		      <option value="Mean"> Mean </option>
-		      <option value="Count"> Count </option>
-		      <option value="Sum"> Sum </option>
-		    </select><br />
+                    <td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
+                        {{#each TheChart.pivotTableConfig.rows}}
+                            {{>Field_Attribute}}
+                        {{else}}
+                            <div style="min-width:50px" class="dropHere">Drag data fields from left to this box for rows</div>
+                        {{/each}}
+                    </td>
+                    <td valign="top" class="pvtRendererArea" style="opacity: 1;">
+                      <div style="min-width:200px;text-align-center;">
+                        {{{html}}}
+                      </div>
+                      <div style="margin:30px">
+                          <span>
+                              <button type="button" onclick="printButton()" style="margin:10px;" class="btn btn-default">Print</button>
+                              <button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>
+                              <a target="_blank" id="DownloadButton" href="/fusion/exportChart/?id={{this._id}}" style="margin:10px;" class="btn btn-default">Download</a>
+                              <button type="button" id="TableBrowser" style="margin:10px;" class="btn btn-default">New Table</button>
 
-		    <select class="pvtAttrDropdown">
-		      <option value="Age Bin"> Age Bin </option>
-		    </select>
-		-->
-	    </td>
+                              <button type="button" id="GenePanelPicker" style="margin:10px;" class="btn btn-default genePanelPicker">Gene Panel Picker</button>
 
-
-	    <td class= "pvtAxisContainer pvtControls pvtHorizList pvtCols pvtUsed ui-sortable">
-		{{#each TheChart.pivotTableConfig.cols}}
-		    {{>Field_Attribute}}
-		{{else}}
-		     <div class="dropHere">Drag data fields from left to this box for columns</div>
-		{{/each}}
-	    </td>
-	  </tr>
-	    <tr>
-	    <td class="pvtAxisContainer pvtUnused pvtControls pvtVertList ui-sortable">
-		{{#each unusedDataFieldNames}}
-		    {{>Field_Attribute}}
-		{{/each}}
-	    </td>
-
-		<td class="pvtAxisContainer pvtRows pvtControls pvtUsed pvtVertList ui-sortable" valign= "top">
-		    {{#each TheChart.pivotTableConfig.rows}}
-			{{>Field_Attribute}}
-		    {{else}}
-		        <div style="min-width:50px" class="dropHere">Drag data fields from left to this box for rows</div>
-		    {{/each}}
-		</td>
-		<td valign="top" class="pvtRendererArea" style="opacity: 1;">
-		  <div style="min-width:200px;text-align-center;">
-		    {{{html}}}
-		  </div>
-		  <div style="margin:30px">
-		      <span>
-			  <button type="button" onclick="printButton()" style="margin:10px;" class="btn btn-default">Print</button>
-			  <button type="button" onclick="postButton()" style="margin:10px;" class="btn btn-default">Post</button>
-			  <a target="_blank" id="DownloadButton" href="/fusion/exportChart/?id={{this._id}}" style="margin:10px;" class="btn btn-default">Download</a>
-			  <button type="button" id="TableBrowser" style="margin:10px;" class="btn btn-default">New Table</button>
-
-			  <button type="button" id="GenePanelPicker" style="margin:10px;" class="btn btn-default genePanelPicker">Gene Panel Picker</button>
-
-		      </span>
-		  </div>
-		</td>
-	      </tr>
-	    </tbody>
-	  </table>
+                          </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 	</div>
     </div>
+    
 
 <!--
     <div class="panel panel-default">
@@ -230,6 +234,9 @@
         </div>
     {{/with}}
 
+<!-- right column -->
+</div> 
+</div> 
 
 </template>
 
@@ -287,6 +294,9 @@
 </template>
 
 <template name="Field_Attribute">
-	<li data-field="{{this}}" class="axis_0 ui-sortable-handle"><span class="pvtAttr">{{this}}<span class="pvtTriangle">
-	<a href="#" data-field="{{this}}" class="element">&#9662;</a></span></span></li>
-</template>
+	<li data-field="{{this}}" class="pvtAttrHover axis_0 ui-sortable-handle">
+            <span class="pvtAttr">{{shorten this}}
+                <span class="pvtTriangle"> <a href="#" data-field="{{this}}" class="element">&#9662;</a> </span>
+            </span>
+        </li>
+    </template>
