@@ -4,7 +4,10 @@ Template.DataImport.rendered = function() {
     var container = document.getElementById("hot");
 
     DataImportSpreadSheet = new Handsontable(container, { 
+         minRows: 20,
+         minCols: 20,
 	 minSpareRows: 1,
+	 minSpareCols: 1,
 	 rowHeaders: true,
 	 colHeaders: true,
 	 contextMenu: true
@@ -31,8 +34,15 @@ function transpose(data) {
 }
 
 function analyze(rowData) {
- rowData.shift(); // discard first row
+ var firstRow = rowData.shift(); // discard first row
  var columns = transpose(rowData);
+
+ columns = columns.filter(function(a){
+     for (var i =0; i < a.length;i++)
+        if (a[i] != "" && a[i] != null) 
+            return true;
+     return false;
+ });
 
  function and(a,b) { return a && b };
  function or(a,b) { return a || b };
@@ -75,7 +85,7 @@ function analyze(rowData) {
 
        if (stringsBoolVec[i]) 
 	   return "strings";
-       return "unknown"
+       return "String"
   }
 
   var dataBoolVec= columns.map(allDates);
@@ -83,24 +93,24 @@ function analyze(rowData) {
   var stringsBoolVec= columns.map(allNumbers);
   var valueSpace= columns.map(unique);
   var results = numbersBoolVec.map(judge);
+
    
   return results;
 }
 
-function saveTable(rowData) {
-    var headers = _.clone(rowData[0]);
+function saveTable(rowData, headerSelects) {
+    var headers = _.clone(rowData[0]).filter(function(a) { return a != null});
     var primaryKeys = rowData.map(function(row) { return row[0]; });
-    var results = analyze(_.clone(rowData));
 
-    var fields =  headers.map(function(fieldName, i) {
-	console.log(results);
-	debugger;
+
+    var fields =  headers.map(function(fieldName, columnNumber) {
 	return {
 		  "Field_Name": fieldName,
 		  "optional": true,
-		  "type": "String"
+		  "type": headerSelects[columnNumber].value
 	}
     });
+    console.log(fields, fields);
 
     Meteor.call("newTableFromSpreadsheet", 
        $("#newTableName").val(), $("#studyForNewTable").val(), fields, rowData, 
@@ -108,28 +118,75 @@ function saveTable(rowData) {
        function(err, ret) {
 	   if (err)
 	       Overlay("MessageOver", { text: err })
-	   else if (ret)
+	   else 
 	       Overlay("MessageOver", { text: ret })
        }
     );
 }
 
-Template.DataImport.events({
- 'click #save' : function() {
-    var rowData = _.clone(DataImportSpreadSheet.getData());
-    saveTable(rowData);
+var types = ["Number","String", "Date"];
 
+function selectType(columnNumber, current) {
+
+    function option(value) {
+      var o = '<option value="' + value +'"';
+      if (current == value)
+          o += ' selected ';
+      o += '>' + value  + ' </option>';
+      return o;
+    }
+
+    return '<select  data-columnnumber="' + columnNumber + '" >' + types.map(option) + ' </select>';
+}
+
+
+Template.DataImport.events({
+ 'click #save' : function(evt, tmpl) {
+    var rowData = _.clone(DataImportSpreadSheet.getData());
+    if (tmpl.dataAnalyzed)
+        saveTable(rowData, tmpl.headerSelects);
+    else
+       Overlay("MessageOver", { text: "Please click analyze first and review each column's type" })
   }, 
- 'click #analyze' : function() {
+
+ 'click #analyze' : function(evt, tmpl) {
     var rowData = _.clone(DataImportSpreadSheet.getData());
     var results = analyze(rowData);
+
+    tmpl.dataAnalyzed = true;
+    
+    function colHeadersFunction(n) {
+        if (n < results.length)
+            return  selectType( n, results[n] );
+        return null;
+    }
+    tmpl.headerSelects = [];
+
+    var ret =  DataImportSpreadSheet.updateSettings(
+        {
+            colHeaders: colHeadersFunction,
+            fixedRowsTop: 1,
+            fixedColumnsLeft: 1,
+
+            afterGetColHeader: function(col, TH) {
+                if (col >= 0) {
+                    var $select = $(TH).find("select")
+                    if ($select.length > 0) {
+                        var columnNumber = $select.data("columnnumber");
+                        tmpl.headerSelects[columnNumber] = $select[0];
+                        console.log(columnNumber, tmpl.headerSelects[columnNumber]);
+                    }
+                }
+            },
+        },
+        false);
     console.log(results);
   },
 
  'click #transpose' : function() {
       var data = DataImportSpreadSheet.getData();
       var newData = transpose(data);
-      DataImportSpreadSheet.updateSettings({data: newData}, false);
+      var ret = DataImportSpreadSheet.updateSettings({data: newData}, false);
       return ret;
    },
 
