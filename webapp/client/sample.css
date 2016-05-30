@@ -92,7 +92,7 @@ details {
 }
 .leftdivThin{
     float:left;
-    width:15%;
+    width:25%;
 }
 .rightdiv{
     float:left;
@@ -101,7 +101,7 @@ details {
 } 
 .rightdivOverflow{
     float:left;
-    width:50%;
+    width:75%;
 } 
 .correlate-headerCell {
     font-size:12px;

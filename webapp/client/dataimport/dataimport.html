@@ -1,42 +1,44 @@
 <template name="DataImport">
-<div class="width:800px">
-    <div class="panel panel-default">
-      <div class="panel-heading" >
-         <h3 >Load data into a new table</h3>
-	 Use this tool to upload clinical data or other observations into MedBook.
-	 Supported formats include tab-separated-values (.tab or .tsv),  comma-separated-values (.csv),
-	 and JavaScript Object Notation (.json) files. You can also type or copy and paste from a an excel spreadsheet into the spreadsheet below.
-       </div>
-       <div id="p1" class="panel-body ">
-  <div class="well form-inline">
-   <h4>Select a file</h4>
-       <input type="file" multiple="" id="fileInput" name="files[]">
+    <div class="width:800px">
+        <div class="leftdivThin">
+            <div class="panel panel-default">
 
-   <h4>Select a study and a table name</h4>
-	 <select style="width:260px;height:34px;margin:20px;" class="form-control" id="studyForNewTable">
-	    <option selected value="{{myStudy}}">{{myStudy}}</option>
-	    {{#each studies}}
-		<option value="{{this._id}}">{{this.name}}</option>
-	    {{/each}}
-	 </select>
-	     &nbsp; &nbsp;
-	 <input id="newTableName" placeholder="new table name" style="width:250px;height:35px;" >
-	     &nbsp; &nbsp;
-	    <button class="btn btn-primary" id="transpose">Transpose</button>
-	    <button class="btn btn-primary" id="analyze">Analyze</button>
-	 <br>
-    <button class="btn btn-primary" id="save">Save Table</button>
-    <button class="btn btn-danger" id="cancel">Cancel Import</button>
-  </div>
-       </div>
+                <div class="panel-heading" data-toggle="collapse" data-target="#p1">
+                    <h3>Load data into a new table</h3> Use this tool to upload clinical data or other observations into MedBook. Supported formats include tab-separated-values (.tab or .tsv), comma-separated-values (.csv), and JavaScript Object Notation (.json) files. You can also type or copy and paste from a an excel spreadsheet into the spreadsheet below.
+                </div>
+
+                <div id="p1" class="panel-body ">
+                    <div class="well form-inline">
+                        <h4>Select a file</h4>
+                        <input type="file" multiple="" id="fileInput" name="files[]">
+
+                        <h4>Select a study and a table name</h4>
+                        <select style="width:200px;height:35px;" class="form-control" id="studyForNewTable">
+                            <option selected value="{{myStudy}}">{{myStudy}}</option>
+                            {{#each studies}}
+                            <option value="{{this._id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                        <br>
+                        <input id="newTableName" placeholder="new table name" style="width:200px;height:35px;">
+                        <br>
+                        <button class="btn btn-primary" id="transpose">Transpose</button>
+                        <br>
+                        <button class="btn btn-primary" id="analyze">Analyze</button>
+                        <br>
+                        <button class="btn btn-primary" id="save">Save Table</button>
+                        <br>
+                        <button class="btn btn-danger" id="cancel">Cancel Import</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="rightdivOverflow" style="padding-left:10px;">
+            <div id="importTableArea" class="panel panel-default encompass" style="min-height:300px; min-width:300px;">
+                <div style="margin:20px;">
+                    <div id="hot"></div>
+                </div>
+            </div>
+        </div>
     </div>
-
-
-    <div class="panel panel-default encompass" style="min-height:300px; max-height:600px;">
-	<div style="margin:20px;">
-	   <div id="hot"></div>
-	</div>
-    </div>
-</div>
 </template>
-

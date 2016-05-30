@@ -10,10 +10,20 @@ Template.DataImport.rendered = function() {
 	 minSpareCols: 1,
 	 rowHeaders: true,
 	 colHeaders: true,
-	 contextMenu: true
+	 contextMenu: true,
+         manualColumnResize: true,
+         manualRowResize: true
     });
-
+    $("#importTableArea").resizable( {
+        resize: function( event, ui ) {
+            DataImportSpreadSheet.updateSettings({
+                height: ui.size.height -40,
+                width: ui.size.width -40, 
+            });
+        }
+    });
 }
+
 Template.DataImport.helpers({
    studies : function() {
       var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
@@ -232,3 +242,4 @@ readFile = function(f,onLoadCallback) {
  }
  reader.readAsText(f);
 };
+
