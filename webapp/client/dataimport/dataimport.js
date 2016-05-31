@@ -43,81 +43,105 @@ function transpose(data) {
   return newData
 }
 
+
+function empty(s) { 
+    if (s == null) return true;
+    if (s == "") return true;
+    s = s.trim();
+    if (s.indexOf("n/a") == 0) return true;
+    if (s == "na") return true;
+    if (s == "") return true;
+    s = s.toLowerCase(s);
+    if (s.indexOf("unk") == 0) return true;
+    return false
+};
+
+function and(a,b) { return a && b };
+function or(a,b) { return a || b };
+
+function allEmpty(column) {
+   if (column.length == 0)
+      return [];
+   return column.map(empty).reduce(and);
+}
+
+function allStrings(column) {
+   if (column.length == 0)
+      return [];
+   return column.map(function(v) { return empty(v) || typeof(v) == "string"} ).reduce(and);
+}
+function allNumbers(column) {
+   if (column.length == 0)
+      return [];
+   return column.map(function(v) { return empty(v) || !isNaN(v)} ).reduce(and);
+}
+function allDates(column) {
+   if (column.length == 0)
+      return [];
+   return column.map(function(v) { return empty(v) || moment(v).isValid()} ).reduce(and);
+}
+function unique(column) {
+   var seen = {};
+   var dupes = {};
+   for (var i = 0; i < column.length; i++) {
+       if (column[i] in seen)
+           dupes[column[i]] = true;
+       else
+           seen[column[i]] = true;
+   }
+   return  {
+       uniqueValues: Object.keys(seen),
+       dupeValues: Object.keys(dupes),
+   }
+}
 function analyze(rowData) {
- var firstRow = rowData.shift(); // discard first row
- var columns = transpose(rowData);
+  var firstRow = rowData.shift(); // discard first row
+  var columns = transpose(rowData);
+  var dateVec= columns.map(allDates);
+  var numbersVec= columns.map(allNumbers);
+  var emptyVec= columns.map(allEmpty);
+  var stringsVec= columns.map(allStrings);
+  // var valueSpace= columns.map(unique);
 
- columns = columns.filter(function(a){
-     for (var i =0; i < a.length;i++)
-        if (a[i] != "" && a[i] != null) 
-            return true;
-     return false;
- });
-
- function and(a,b) { return a && b };
- function or(a,b) { return a || b };
-
- function allStrings(column) {
-     if (column.length == 0)
-	return [];
-     return column.map(function(v) { return v == "" || v == "N/A" || typeof(v) == "string"} ).reduce(and);
- }
- function allNumbers(column) {
-     if (column.length == 0)
-	return [];
-     return column.map(function(v) { return v == "" || v == "N/A" || !isNaN(v)} ).reduce(and);
- }
- function allDates(column) {
-     if (column.length == 0)
-	return [];
-     return column.map(function(v) { return v == "" || v == "N/A" || moment(v).isValid()} ).reduce(and);
- }
- function unique(column) {
-     var seen = {};
-     var dupes = {};
-     for (var i = 0; i < column.length; i++) {
-	 if (column[i] in seen)
-	     dupes[column[i]] = true;
-	 else
-	     seen[column[i]] = true;
-     }
-     return  {
-	 uniqueValues: Object.keys(seen),
-	 dupeValues: Object.keys(dupes),
-     }
- }
+  // from the specfic to the general
   function judge(isNumber, i) {
+       if (emptyVec[i])   
+	   return "Exclude";
+
+       if (dateVec[i]) 
+	   return "Date";
+
        if (isNumber)
-	   return "number";
+	   return "Number";
 
-       if (stringsBoolVec[i]) 
-	   return "date";
+       if (stringsVec[i]) 
+	   return "String";
 
-       if (stringsBoolVec[i]) 
-	   return "strings";
-       return "String"
+       return "Unknown"
   }
 
-  var dataBoolVec= columns.map(allDates);
-  var numbersBoolVec= columns.map(allNumbers);
-  var stringsBoolVec= columns.map(allNumbers);
-  var valueSpace= columns.map(unique);
-  var results = numbersBoolVec.map(judge);
 
+  var results = numbersVec.map(judge);
    
   return results;
 }
 
-function saveTable(rowData, headerSelects) {
-    var headers = _.clone(rowData[0]).filter(function(a) { return a != null});
+function saveTable(rowData) {
+    var headers = _.clone(rowData[0]);
     var primaryKeys = rowData.map(function(row) { return row[0]; });
+
+    var headerTypes = [];
+
+    $("select.SelectType").each(function() {
+        headerTypes[$(this).data("columnnumber")] = this.value;
+    });
 
 
     var fields =  headers.map(function(fieldName, columnNumber) {
 	return {
 		  "Field_Name": fieldName,
 		  "optional": true,
-		  "type": headerSelects[columnNumber].value
+		  "type": DataImportSpreadSheet.types[columnNumber]
 	}
     });
     console.log(fields, fields);
@@ -134,7 +158,7 @@ function saveTable(rowData, headerSelects) {
     );
 }
 
-var types = ["Number","String", "Date"];
+var types = ["Unknown", "Number","String", "Date", "Exclude"];
 
 function selectType(columnNumber, current) {
 
@@ -146,31 +170,73 @@ function selectType(columnNumber, current) {
       return o;
     }
 
-    return '<select  data-columnnumber="' + columnNumber + '" >' + types.map(option) + ' </select>';
+    return '<select class="SelectType"  data-columnnumber="' + columnNumber + '" >' + types.map(option) + ' </select>';
 }
 
 
+function cleanUp() {
+    DataImportSpreadSheet.updateSettings({
+         minCols: 1,
+         minRows: 1,
+	 minSpareRows: 0,
+	 minSpareCols: 0,
+    });
+
+    for (var i = DataImportSpreadSheet.types.length - 1; i >= 0; i--) {
+        if (DataImportSpreadSheet.types[i] == "Exclude") {
+            DataImportSpreadSheet.types.splice(i, 1);
+            DataImportSpreadSheet.alter("remove_col", i, 1, null, false)
+        }
+    }
+
+    var rowData = DataImportSpreadSheet.getData();
+
+    for (var j = rowData.length - 1; j >= 0; j--) {
+        if (DataImportSpreadSheet.isEmptyRow(j))  {
+            rowData.splice(j, 1);
+        }
+    }
+
+    DataImportSpreadSheet.updateSettings({
+         data: rowData,
+    });
+};
+
 Template.DataImport.events({
- 'click #save' : function(evt, tmpl) {
-    var rowData = _.clone(DataImportSpreadSheet.getData());
+ 'click #cleanUp' : function(evt, tmpl) {
     if (tmpl.dataAnalyzed)
-        saveTable(rowData, tmpl.headerSelects);
+       cleanUp();
     else
        Overlay("MessageOver", { text: "Please click analyze first and review each column's type" })
   }, 
 
+ 'click #save' : function(evt, tmpl) {
+    if (tmpl.dataAnalyzed) {
+        var rowData = _.clone(DataImportSpreadSheet.getData());
+        saveTable(rowData);
+    } else
+       Overlay("MessageOver", { text: "Please click analyze first and review each column's type" })
+  }, 
+
+ 'change .SelectType' : function(evt, tmpl) {
+     var columnnumber = $(evt.target).data("columnnumber");
+     DataImportSpreadSheet.types[columnnumber] = evt.target.value;
+ },
+
+ 
+
  'click #analyze' : function(evt, tmpl) {
     var rowData = _.clone(DataImportSpreadSheet.getData());
-    var results = analyze(rowData);
+
+    DataImportSpreadSheet.types = analyze(rowData);
 
     tmpl.dataAnalyzed = true;
     
     function colHeadersFunction(n) {
-        if (n < results.length)
-            return  selectType( n, results[n] );
+        if (n < DataImportSpreadSheet.types.length)
+            return  selectType( n,  DataImportSpreadSheet.types[n] );
         return null;
     }
-    tmpl.headerSelects = [];
 
     var ret =  DataImportSpreadSheet.updateSettings(
         {
@@ -179,18 +245,10 @@ Template.DataImport.events({
             fixedColumnsLeft: 1,
 
             afterGetColHeader: function(col, TH) {
-                if (col >= 0) {
-                    var $select = $(TH).find("select")
-                    if ($select.length > 0) {
-                        var columnNumber = $select.data("columnnumber");
-                        tmpl.headerSelects[columnNumber] = $select[0];
-                        console.log(columnNumber, tmpl.headerSelects[columnNumber]);
-                    }
-                }
             },
         },
         false);
-    console.log(results);
+    console.log( DataImportSpreadSheet.types );
   },
 
  'click #transpose' : function() {
