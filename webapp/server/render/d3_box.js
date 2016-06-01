@@ -200,6 +200,18 @@ Meteor.startup(function() {
               sample.enter().insert("circle", "text")
                   .attr("class", function(d) { return d.ValueClass; })
                   .attr("text", function(d) { return d.Label})
+
+                  .attr("text2", function(d) { 
+                      var p = d.Phenotype;
+                      var n = p.lastIndexOf(":");
+                      if (n > 0 && n < (p.length -1))
+                         p = p.substring(n+1);
+                      return p;
+                  })
+                  .attr("text3", function(d) { 
+                      return String(d.Value)
+                  })
+
                   .attr("cx", function(d) { 
                       var x = JitterSeedless(d.Label);
                       return d.cx + (x-0.5)*(width*.90); 
