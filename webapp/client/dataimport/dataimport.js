@@ -194,6 +194,16 @@ function cleanUp() {
     for (var j = rowData.length - 1; j >= 0; j--) {
         if (DataImportSpreadSheet.isEmptyRow(j))  {
             rowData.splice(j, 1);
+        } else {
+            DataImportSpreadSheet.types.map(function(type, i) {
+                if (type == "Number" ||  type == "Date") {
+                    var value = rowData[j][i];
+                    if (type == "Number" && isNan(value))
+                        ;
+                    else if (type == "Date" &&  moment(v).isValid())
+                        ;
+                }
+            });
         }
     }
 

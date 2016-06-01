@@ -101,7 +101,8 @@ function displayBoxPlots(window, plotDataSets, h, v, svgContainer, plotWidth, ro
       var svgBoxPlot = svgTop.append("svg").attr("class", "svgBoxPlot");
 
       var yAxis = d3.svg.axis().scale(yRange).ticks(5).orient("left").tickSize(5,0,5);
-      svgTop.append("g").attr('class', 'axis').attr("transform", "translate(30, " + baseline + " )").call(yAxis);
+      svgTop.append("g").attr('class', 'axis').attr("transform", "translate(100, " + baseline + " )").call(yAxis);
+      X += 100;
 
       var nestedSVG = svgBoxPlot
           .selectAll("svg")
@@ -118,7 +119,7 @@ function displayBoxPlots(window, plotDataSets, h, v, svgContainer, plotWidth, ro
        var nestedG = nestedSVG
           .attr("class", "box svgPlot")
           .attr("width", 40 + width + margin.left + margin.right)
-          .attr("height", 50 + height + margin.bottom + margin.top)
+          .attr("height", 50 + height + margin.bottom + margin.top +200)
         .append("g")
           .attr("transform", function() { 
                   var r =  "translate(" + (20+ margin.left)  + "," +  baseline + ")"
