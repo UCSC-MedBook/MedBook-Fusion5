@@ -1,4 +1,4 @@
-fss = Npm.require('fs-extra');
+fs = Npm.require('fs');
 
 Meteor.startup(function() {
     Expression3._ensureIndex({study_label: 1});
