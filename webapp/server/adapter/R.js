@@ -1,5 +1,4 @@
-fss = Npm.require('fs-extra');
-var fs = fss;
+var fs = Npm.require('fs');
 spawn = Npm.require('child_process').spawn;
 Fiber = Npm.require('fibers');
 
@@ -8,7 +7,7 @@ function Viz(name, script) {
 
     return function(chartDocument, args, outfilename1, outfilename2, whendone) {
 	var dirs = process.env.MEDBOOK_WORKSPACE + "bridge/" + chartDocument._id;
-	fs.mkdirsSync(dirs);
+	fs.mkdirSync(dirs);
 
 	var stdout = dirs +  "/stdout";
 	var stderr = dirs +  "/stderr";
@@ -63,13 +62,13 @@ Meteor.startup(function() {
 
     var dir = process.env.MEDBOOK_SCRIPTS + "viz/"
 
-    function readDirUpdateDB() {
-	var data = fs.readdir(dir, function(err, data) {
-	    console.log(data);
-	});
-    }
+    // function readDirUpdateDB() {
+    // 	var data = fs.readdir(dir, function(err, data) {
+    // 	    console.log(data);
+    // 	});
+    // }
 
-    readDirUpdateDB();
-    fs.watch(dir, readDirUpdateDB);
+    // readDirUpdateDB();
+    // fs.watch(dir, readDirUpdateDB);
 
 });
