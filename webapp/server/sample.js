@@ -24,6 +24,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	      {$set: 
 		  {
 		    dataFieldNames: ChartDocument.dataFieldNames,
+		    pivotTableConfig: ChartDocument.pivotTableConfig,
 		    selectedFieldNames: ChartDocument.selectedFieldNames,
 		    metadata: ChartDocument.metadata,
 		    chartData: ChartDocument.chartData,
@@ -599,12 +600,13 @@ function TransformLabelsAndData(ChartDocument) {
     ChartDocument.chartData.map(function(datum) { 
 	Object.keys(datum).map(function(k) { keyUnion[k] = "N/A"; });
     });
+    if (ChartDocument.pivotTableConfig == null) ChartDocument.pivotTableConfig  = {};
+    if (ChartDocument.pivotTableConfig.rows == null) ChartDocument.pivotTableConfig.rows = [];
+    if (ChartDocument.pivotTableConfig.cols == null) ChartDocument.pivotTableConfig.cols = [];
 
     ChartDocument.dataFieldNames =  Object.keys(keyUnion);
-    if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.cols)
-	ChartDocument.pivotTableConfig.cols = _.without(ChartDocument.pivotTableConfig.cols, null);
-    if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
-	ChartDocument.pivotTableConfig.rows = _.without(ChartDocument.pivotTableConfig.rows, null);
+    ChartDocument.pivotTableConfig.cols = _.intersection(ChartDocument.pivotTableConfig.cols, ChartDocument.dataFieldNames );
+    ChartDocument.pivotTableConfig.rows = _.intersection(ChartDocument.pivotTableConfig.rows, ChartDocument.dataFieldNames );
 
 
     // normalize records
