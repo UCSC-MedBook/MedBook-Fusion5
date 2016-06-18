@@ -20,7 +20,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         Remove_Excluded_Samples_and_Sort(ChartDocument);
 
 	var html = renderJSdom(ChartDocument);
-        console.log("23 dataFieldNames", ChartDocument.dataFieldNames);
 	Charts.direct.update({ _id : ChartDocument._id }, 
 	      {$set: 
 		  {
@@ -43,7 +42,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 function initTemporaryDatabase(ChartDocument,fieldNames) {
     ChartDocument.fieldNames = fieldNames; 
     ChartDocument.chartDataMap = {};
-    ChartDocument.chartData.map(function (cd) { ChartDocument.chartDataMap[cd.Sample_ID] = cd; });
 }
 
 Meteor.startup( 
@@ -332,8 +330,10 @@ change = function(ChartDocument, fields) {
 // IN: samplelist, studies 
 // OUT: chartData, samplelist, metadata
 function SeedDataFromClincialInfo(ChartDocument) {
+    /*
     if (ChartDocument.samplelist != null && unchanged(ChartDocument, ["samplelist", "studies"]))
         return;
+    */
     change(ChartDocument, [ "samplelist", "metadata"]);
 
     var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
@@ -344,6 +344,7 @@ function SeedDataFromClincialInfo(ChartDocument) {
         delete cd["_id"];
         delete cd["CRF"];
     })
+    ChartDocument.chartData.map(function (cd) { ChartDocument.chartDataMap[cd.Sample_ID] = cd; });
     // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
     ChartDocument.metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
     if (typeof(ChartDocument.metadata) == "string")
@@ -361,8 +362,10 @@ function SeedDataFromClincialInfo(ChartDocument) {
 // IN:  geneLikeDataDomain, genelist, samplelist
 // OUT: chartData, metadata
 function JoinAllGeneLikeInformation(ChartDocument) {
+    /*
     if (unchanged(ChartDocument, ["geneLikeDataDomain","genelist","samplelist"]))
         return;
+        */
     change(ChartDocument, ["chartData", "metadata"]);
 
     if (ChartDocument.geneLikeDataDomain && ChartDocument.genelist && ChartDocument.geneLikeDataDomain.length > 0 && ChartDocument.genelist.length > 0)  {
@@ -391,6 +394,8 @@ function JoinAllGeneLikeInformation(ChartDocument) {
 		    var study = studyCache[geneData.study_label];
 		    var field_label = geneData.gene_label + ' ' + domain.labelItem;
 		    ChartDocument.samplelist.map(function(sample_label) {
+			if (!(sample_label in ChartDocument.chartDataMap))
+                            ChartDocument.chartDataMap[sample_label] = {};
 			ChartDocument.chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[study.gene_expression_index[sample_label]];
 		    });
 		    if (ChartDocument.metadata[field_label] == null)
@@ -416,6 +421,8 @@ function JoinAllGeneLikeInformation(ChartDocument) {
                         fields.map(function(field){ obj = obj[field]; });
 
                         // console.log("found", label, geneName, sampleID, obj, fields, geneData);
+			if (!(sampleID in ChartDocument.chartDataMap))
+                            ChartDocument.chartDataMap[sampleID] = {};
                         ChartDocument.chartDataMap[sampleID][label] = obj;
 			if (ChartDocument.metadata[label] == null)
 			    ChartDocument.metadata[label] = { 
@@ -433,6 +440,8 @@ function JoinAllGeneLikeInformation(ChartDocument) {
                         fields.map(function(field){ obj = obj[field]; });
 
                         // console.log("found", label, geneName, sampleID, obj);
+			if (!(sampleID in ChartDocument.chartDataMap))
+                            ChartDocument.chartDataMap[sampleID] = {};
                         ChartDocument.chartDataMap[sampleID][label] = obj;
 			if (ChartDocument.metadata[label] == null)
 			    ChartDocument.metadata[label] = { 
@@ -461,17 +470,17 @@ function JoinAllGeneLikeInformation(ChartDocument) {
 
                         var f = parseFloat(obj);
                         if (!isNaN(f)) {
-                            if (sampleID in ChartDocument.chartDataMap) {
-                                ChartDocument.chartDataMap[sampleID][label] = f;
+                            if (!(sampleID in ChartDocument.chartDataMap))
+                                ChartDocument.chartDataMap[sampleID] = {};
+                            ChartDocument.chartDataMap[sampleID][label] = f;
 
-				if (ChartDocument.metadata[label] == null)
-				    ChartDocument.metadata[label] = { 
-					collection: domain.collection,
-					crf: null, 
-					label: label,
-					type: domain.field_type
-				    };
-                            }
+                            if (ChartDocument.metadata[label] == null)
+                                ChartDocument.metadata[label] = { 
+                                    collection: domain.collection,
+                                    crf: null, 
+                                    label: label,
+                                    type: domain.field_type
+                                };
                         }
                     });
                 } // else if geneData.gene
@@ -481,6 +490,8 @@ function JoinAllGeneLikeInformation(ChartDocument) {
             if (domain.label == "Mutations") {
                 var labels  = ChartDocument.genelist.map(function(geneName) { return geneName + ' ' + domain.labelItem});;
                 ChartDocument.samplelist.map(function (sampleID) {
+                    if (!(sampleID in ChartDocument.chartDataMap))
+                        ChartDocument.chartDataMap[sampleID] = {};
                     var datum = ChartDocument.chartDataMap[sampleID];
                     labels.map(function(label) {
                         if (!(label in datum))
@@ -595,7 +606,6 @@ function TransformLabelsAndData(ChartDocument) {
     if (ChartDocument.pivotTableConfig  &&  ChartDocument.pivotTableConfig.rows)
 	ChartDocument.pivotTableConfig.rows = _.without(ChartDocument.pivotTableConfig.rows, null);
 
-    console.log("596 dataFieldNames", ChartDocument.dataFieldNames);
 
     // normalize records
     ChartDocument.chartData = ChartDocument.chartData.map(Transform_Clinical_Info, keyUnion);
