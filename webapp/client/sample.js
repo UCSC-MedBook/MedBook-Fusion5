@@ -809,3 +809,17 @@ initializeJQuerySortable = function() {
 
 };
 
+window.getSvg = function() {
+    var w = $("#wrapper")
+    if (w.length > 0) return w;
+
+    w = $(".svgTop");
+    if (w.length > 0) return w;
+
+    w = $("svg");
+    if (w.length > 0) return w;
+
+    console.log("getSvg lost");
+
+}
+
