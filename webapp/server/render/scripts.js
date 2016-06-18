@@ -89,7 +89,8 @@ function WrapScript(name, script) {
 
 Meteor.startup(function() {
 
-    var dir = "/scripts/viz/"
+    assert(process.env.MEDBOOK_SCRIPTS, "TEO: PLEASE SET process.env.MEDBOOK_SCRIPTS to be the follder where /scripts/ lives");
+    var dir = process.env.MEDBOOK_SCRIPTS + "viz/";
 
     function readDirUpdateDB() {
 	var data = fs.readdir(dir, function(err, data) {
