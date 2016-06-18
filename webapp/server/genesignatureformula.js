@@ -1,10 +1,10 @@
 // process formula's like this
 
-fss = Npm.require('fs-extra')
+var fs = Npm.require('fs')
 
 function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  gene_sandbox, signature_sandbox, method, whendone) {
     var dirs = process.env.MEDBOOK_WORKSPACE + "bridge/signture/" + chartDocument._id;
-    fss.mkdirsSync(dirs);
+    fs.mkdirSync(dirs);
 
     var stdout = dirs +  "/stdout";
     var stderr = dirs +  "/stderr";
@@ -61,20 +61,20 @@ function signature_compare(chartDocument, sample_gene_labels, sig_gene_labels,  
 
 
 
-Meteor.startup(function() {
+// Meteor.startup(function() {
 
-    var dir = process.env.MEDBOOK_SCRIPTS + "viz/"
+//     var dir = process.env.MEDBOOK_SCRIPTS + "viz/"
 
-    function readDirUpdateDB() {
-	var data = fs.readdir(dir, function(err, data) {
-	    console.log(data);
-	});
-    }
+//     function readDirUpdateDB() {
+// 	var data = fs.readdir(dir, function(err, data) {
+// 	    console.log(data);
+// 	});
+//     }
 
-    readDirUpdateDB();
-    fs.watch(dir, readDirUpdateDB);
+//     readDirUpdateDB();
+//     fs.watch(dir, readDirUpdateDB);
 
-});
+// });
 
 ProcessGeneSignatureFormula = function(chart) {
     if (unchanged(chart, ["gene_signatures","samplelist"]))

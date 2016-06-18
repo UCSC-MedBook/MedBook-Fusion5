@@ -1,3 +1,4 @@
+
 function pruneTable(source_data) {
 	if (source_data.length < 2 || source_data[0].length < 2)
 	    throw new Meteor.Error("Data table too small");
@@ -36,10 +37,10 @@ function convertData(target_field, datum) {
 	    target_field.allowedValues = [datum];
 	else
 	    target_field.allowedValues = _.union(target_field.allowedValues, [datum]);
+        target_field.allowedValues = target_field.allowedValues.sort();
     } if (target_field.type == "Number") {
         datum = Number(datum);
     }
-    target_field.allowedValues = target_field.allowedValues.sort();
     return datum;
 }
 
@@ -90,7 +91,7 @@ Meteor.methods( {
 	    "fieldOrder" : columns,
 	    "study" : studyForNewTable,
 	};
-	Collections.Metadata.upsert({name: target_name}, targetTableType);
+	Collections.Metadata.upsert({study: studyForNewTable, name: target_name}, targetTableType);
 
 	var n = 0;
 	for (var j = 1; j < source_data.length; j++) {

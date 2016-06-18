@@ -1,4 +1,4 @@
-fss = Npm.require('fs-extra');
+fss = Meteor.npmRequire('fs-extra');
 var fs = fss;
 spawn = Npm.require('child_process').spawn;
 Fiber = Npm.require('fibers');
@@ -89,7 +89,7 @@ function WrapScript(name, script) {
 
 Meteor.startup(function() {
 
-    var dir = process.env.MEDBOOK_SCRIPTS + "viz/"
+    var dir = "/scripts/viz/"
 
     function readDirUpdateDB() {
 	var data = fs.readdir(dir, function(err, data) {

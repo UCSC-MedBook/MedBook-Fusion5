@@ -4,6 +4,12 @@
 
 body {
 }
+.tab-item {
+    border-radius: 15px !important;
+    box-shadow: -1px -1px 0 #c0c0c0,1px 1px 0 #c0c0c0,0 5px 15px rgba(0,0,0,0.4);
+    background: lightgray;
+}
+
 .panel, .intro {
     border-radius: 15px !important;
     box-shadow: -1px -1px 0 #c0c0c0,1px 1px 0 #c0c0c0,0 5px 15px rgba(0,0,0,0.4);
@@ -49,7 +55,7 @@ details {
 
 
 .dataExplorerControlPanel {
-    margin: 10px;
+    margin-left: 10px;
     padding: 2px;
     border: solid gray 1px;
     border-radius: 15px;
@@ -84,10 +90,18 @@ details {
     width:50%;
     overflow:hidden;
 }
+.leftdivThin{
+    float:left;
+    width:25%;
+}
 .rightdiv{
     float:left;
     width:50%;
     overflow:hidden;
+} 
+.rightdivOverflow{
+    float:left;
+    width:75%;
 } 
 .correlate-headerCell {
     font-size:12px;

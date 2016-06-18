@@ -1,0 +1,13 @@
+.basicTabs-container .tabs-content-container, .dynamicTabs-container .tabs-content-container {
+  border-top: none !important;
+
+}
+
+.nav-tabs {
+  border-bottom: none !important;
+}
+
+.encompass {
+    display:block;
+    overflow:hidden;
+}

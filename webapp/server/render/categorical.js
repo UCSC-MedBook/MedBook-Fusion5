@@ -120,14 +120,15 @@ BoxPlotCategorical = function(chartDocument, exclusions) {
             }
 
             if (good && (rowCategoricalVariables.length == 0 || value_color != null)) {
-                var value = elem[plotPredicates[0].label];
+                var phenotype = plotPredicates[0].label;
+                var value = elem[phenotype];
                 var f = parseFloat(value);
                 var g = { 
                     Label: elem.Sample_ID ? elem.Sample_ID : elem.Gene, 
                     Study_ID: elem.Study_ID, 
                     ValueClass: "BoxPlotToolTipHover " + rowLabel,
                     ValueColor: value_color,
-                    Phenotype: rowLabel ? rowLabel+","+columnLabel : columnLabel,
+                    Phenotype: phenotype,
                     Value: f,
                 };
                 var strataLabel = null;
