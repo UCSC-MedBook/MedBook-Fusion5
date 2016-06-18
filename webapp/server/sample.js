@@ -11,8 +11,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
 
     try {
-        SeedDataFromClincialInfo(ChartDocument);
         initTemporaryDatabase(ChartDocument,fieldNames);
+        SeedDataFromClincialInfo(ChartDocument);
         JoinAllGeneLikeInformation(ChartDocument);
         MergeCRFs(ChartDocument);
         ProcessGeneSignatureFormula(ChartDocument);
