@@ -1,11 +1,11 @@
 
 function busy() {
     var yy = $(".busy").removeClass("hidden");
-    console.log("busy", yy);
+    // console.log("busy", yy);
 }
 function unbusy() {
     var yy = $(".busy").addClass("hidden");
-    console.log("unbusy", yy);
+    // console.log("unbusy", yy);
 }
 
 
