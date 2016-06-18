@@ -8,7 +8,8 @@ var extend = Meteor.npmRequire('node.extend');
 
 function SampleJoin(userId, ChartDocument, fieldNames) {
 
-
+    if (ChartDocument.studies  == null || ChartDocument.studies.length == 0)
+        return;
 
     try {
         initTemporaryDatabase(ChartDocument,fieldNames);

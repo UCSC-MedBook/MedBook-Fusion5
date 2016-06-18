@@ -374,7 +374,8 @@ Template.Controls.events({
   'click button[name="newChart"]' : function(e) {
 	var _id =  Charts.insert({});
 	var d = Charts.findOne({_id: _id});
-	Router.go("/fusion/?id=" +_id);
+        /* redirects to the new location. On this new page, the back button in your browser would point to the original page containing the redirecting JavaScript. */
+	window.location = ("/fusion/?id=" +_id);
    },
   'click button[name="focus"]' : function(e) {
       var clickedButton = e.currentTarget;
