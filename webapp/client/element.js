@@ -139,13 +139,14 @@ Template.Element.events({
 	    } else {
 		if (field in exclusions) {
 		    var index = exclusions[field].indexOf(value);
-		    exclusions[field].splice(index, 1);
-		    if (exclusions[field].length == 0)
-			delete exclusions[field];
+                    if (index >= 0) {
+                        exclusions[field].splice(index, 1);
+                        if (exclusions[field].length == 0)
+                            delete exclusions[field];
+                    }
 		}
 	    }
     	})
-	debugger;
 	UpdateCurrentChart("pivotTableConfig.exclusions", exclusions);
 	OverlayClose();
     }
