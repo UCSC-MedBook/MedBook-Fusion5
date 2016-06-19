@@ -476,13 +476,20 @@ function JoinAllGeneLikeInformation(ChartDocument) {
                                 ChartDocument.chartDataMap[sampleID] = {};
                             ChartDocument.chartDataMap[sampleID][label] = f;
 
-                            if (ChartDocument.metadata[label] == null)
-                                ChartDocument.metadata[label] = { 
+                            if (ChartDocument.metadata[label] == null) {
+                                var m = {
                                     collection: domain.collection,
                                     crf: null, 
                                     label: label,
                                     type: domain.field_type
                                 };
+                                if (domain.field_type == "String" && typeof(obj) == "string") {
+                                   if (m.allowedValues == null) m.allowedValues = [];
+                                    m.allowedValues = _.union( m.allowedValues, obj);
+                                }
+
+                                ChartDocument.metadata[label] = m;
+                            }
                         }
                     });
                 } // else if geneData.gene
@@ -498,6 +505,16 @@ function JoinAllGeneLikeInformation(ChartDocument) {
                     labels.map(function(label) {
                         if (!(label in datum))
                             datum[label] = "wt";
+                        if (ChartDocument.metadata[label] == null) // true when there is only wildtype
+                            ChartDocument.metadata[label] = { 
+                                collection: domain.collection,
+                                crf: null, 
+                                label: label,
+                                type: domain.field_type,
+                                allowedValues: ["wt"]
+                            };
+                        else
+                            ChartDocument.metadata[label].allowedValues = _.union(ChartDocument.metadata[label].allowedValues, "wt");
                     });
                 });
             }
