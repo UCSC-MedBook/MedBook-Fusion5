@@ -8,8 +8,20 @@ var extend = Meteor.npmRequire('node.extend');
 
 function SampleJoin(userId, ChartDocument, fieldNames) {
 
-    if (ChartDocument.studies  == null || ChartDocument.studies.length == 0)
+    if (ChartDocument.studies  == null || ChartDocument.studies.length == 0) {
+	Charts.direct.update({ _id : ChartDocument._id }, 
+	      {$set: 
+		  {
+		    dataFieldNames: [],
+		    pivotTableConfig: {rows:[], cols:[], rendererName: ChartDocument.pivotTableConfig.rendererName},
+		    selectedFieldNames: [],
+		    metadata: {},
+                    elapsed: ChartDocument.elapsed,
+                    samplelist: [],
+		    html: "<b> Please select one or more studies.</b>",
+		   }});
         return;
+    }
 
     try {
         initTemporaryDatabase(ChartDocument,fieldNames);
@@ -34,7 +46,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		    html: html,
 		   }});
 
-        console.log(ChartDocument.chartData);
+        // console.log(ChartDocument.chartData);
 
     } catch (err) {
         console.log("SampleJoin", err, err.stack);
@@ -346,17 +358,21 @@ function SeedDataFromClincialInfo(ChartDocument) {
     ChartDocument.chartData = [];
     ChartDocument.metadata  = {};
 
+    debugger
     Collections.studies.find({id: inStudies}).forEach(function(study) {
         console.log("adding study", study.id);
+        debugger
 
         // TBD: make sure the user has access to this study.
         //
         ChartDocument.studyCache[study.id] = study;
 
         var q =  {Study_ID: study.id};
+        /*
         if ( ChartDocument.samplelist != null && ChartDocument.samplelist.length > 0) {
             q.Sample_ID =  {$in: ChartDocument.samplelist};
         }
+        */
 
         // case 1,the user specified a form to start with in the user interface (TBD)
         if (ChartDocument.start_crf)
