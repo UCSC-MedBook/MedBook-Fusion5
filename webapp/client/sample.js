@@ -548,7 +548,7 @@ Template.Controls.events({
 
    'change #genelist' : function(evt, tmpl) {
        var $genelist = $("#genelist");
-       var before = $genelist.select2("val");
+       var before = $genelist.select2("data").map(function(f) { return f.id });
        UpdateCurrentChart("genelist", before);
    },
 
@@ -701,6 +701,12 @@ CurrentChart = function(name) {
 }
 
 UpdateCurrentChart = function(name, value) {
+    if (name == "genelist")     
+        value.map(function(f) {
+          if (f.indexOf(" ") >= 0)
+             debugger;
+         })
+
     var x = Charts.find({_id: TheChartID});
     x[name] = value;
     var u =  {};
