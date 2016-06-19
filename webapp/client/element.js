@@ -52,17 +52,15 @@ Template.Element.helpers({
        if (md.type == "String" && md.allowedValues)
 	   values = TheChart.metadata[this.field].allowedValues;
        else {
-	   var excludedValues = this.field in TheChart.pivotTableConfig ? TheChart.pivotTableConfig.exclusions[this.field]  : [];
+	   var excludedValues = TheChart.pivotTableConfig && this.field in TheChart.pivotTableConfig.exclusions ? TheChart.pivotTableConfig.exclusions[this.field]  : [];
 	   values = _.uniq(_.union(excludedValues, _.pluck(TheChart.chartData, this.field))).map(function(n) {
-	      try {
+	      if (Number.isFinite(n))
 		 return Number(n);
-	      } catch (err) {
-		 return n;
-	      }
+             return String(n);
 	   }).sort(function(a,b) {return a- b});
        }
        if (!_.contains(values,"N/A"))
-	   values.push("N/A");
+	   values.unshift("N/A");
        return values;
     }
 });
