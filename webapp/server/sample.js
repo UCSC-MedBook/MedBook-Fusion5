@@ -337,27 +337,96 @@ function SeedDataFromClincialInfo(ChartDocument) {
         return;
     */
     change(ChartDocument, [ "samplelist", "metadata"]);
+    
+    var inStudies = {$in:ChartDocument.studies}; 
+    ChartDocument.studyCache = {};
 
-    var q = ChartDocument.samplelist == null || ChartDocument.samplelist.length == 0 ? {} : {Sample_ID: {$in: ChartDocument.samplelist}};
-    q.Study_ID = {$in:ChartDocument.studies}; 
-    q.CRF = "Clinical_Info";
-    ChartDocument.chartData = Collections.CRFs.find(q).fetch();
-    ChartDocument.chartData.map(function(cd) {  
-        delete cd["_id"];
-        delete cd["CRF"];
-    })
-    ChartDocument.chartData.map(function (cd) { ChartDocument.chartDataMap[cd.Sample_ID] = cd; });
-    // Currently Clinical_Info metadata is a singleton. But when that changes, so must this:
-    ChartDocument.metadata = Collections.Metadata.findOne({ name: "Clinical_Info"}).schema;  
-    if (typeof(ChartDocument.metadata) == "string")
-       ChartDocument.metadata = JSON.parse(ChartDocument.metadata);
-    Object.keys(ChartDocument.metadata).map(function(f) {
-	ChartDocument.metadata[f].collection = "CRF";
-	ChartDocument.metadata[f].crf = "Clinical_Info";
+    ChartDocument.chartData = [];
+    ChartDocument.metadata  = {};
+
+    Collections.studies.find({id: inStudies}).forEach(function(study) {
+        console.log("adding study", study.id);
+
+        // TBD: make sure the user has access to this study.
+        //
+        ChartDocument.studyCache[study.id] = study;
+        debugger
+
+        var q =  {Study_ID: study.id};
+        if ( ChartDocument.samplelist != null && ChartDocument.samplelist.length > 0) {
+            q.Sample_ID =  {$in: ChartDocument.samplelist};
+        }
+
+        // case 1,the user specified a form to start with in the user interface (TBD)
+        if (ChartDocument.start_crf)
+            q.CRF = ChartDocument.start_crf;
+
+        // case 2,there is a well known form specified in the study (TBD)
+        else if (study.start_crf) 
+            q.CRF = study.start_crf;
+
+        // case 3, we use a CRF whose name has Clinical_Info in it. 
+        else {
+            // But we don't know what it is, so find it.
+            var ci = Collections.CRFs.findOne({ CRF: /.*Clinical_Info/, Study_ID: study.id});
+            if (ci)
+                q.CRF = ci.CRF;
+            }
+
+
+        // HACK 
+        // HACK 
+        // HACK 
+        if (q.CRF == null) {
+            // use any CRF table
+            var ci = Collections.CRFs.findOne({ Study_ID: study.id});
+            if (ci)
+                q.CRF = q.ci.CRF;
+            else {
+                // SHOULD WE return;  // SKIP THIS STUDY
+            }
+        }
+
+        if (q.CRF && study.gene_expression_index) {
+            Collections.CRFs.find(q).forEach( function(cd) {  
+
+                if (cd.Sample_ID in study.gene_expression_index) {  // FINALLY LOAD IT!
+                    delete cd["_id"];
+                    delete cd["CRF"];
+
+                    ChartDocument.chartData.push(cd);
+                }
+            })
+
+            var metadata = Collections.Metadata.findOne({ name: q.CRF}).schema;  
+            if (typeof(metadata) == "string")
+               metadata = JSON.parse(metadata);
+
+            Object.keys(metadata).map(function(f) {
+                ChartDocument.metadata[f] = metadata[f];
+                ChartDocument.metadata[f].collection = "CRFs";
+                ChartDocument.metadata[f].crf = q.CRF;
+            });
+        } else {
+            // MAKE INITIAL CHART DATA RECORDS HERE
+            var sample_ids = [];
+
+            if (study.gene_expression_index)
+                sample_ids = Object.keys(study.gene_expression_index);
+            else
+                sample_ids = study.Sample_IDs;
+
+            sample_ids.map(function (sample_id) {
+                ChartDocument.chartData.push({Sample_ID: sample_id, Study_ID: study.id});
+            });
+            ChartDocument.metadata["Sample_ID"] = {collection: "studies", type: "String"};
+            ChartDocument.metadata["Study_ID"] = {collection: "studies", type: "String"};
+        }
+        console.log("ChartDocument.chartData.length", ChartDocument.chartData.length);
     });
+
     ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
     ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { return ci.Sample_ID }).sort();
-
 }
 
 // Step 2. Join all the Gene like information into the samples into the ChartDataMap table
