@@ -34,6 +34,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 		    html: html,
 		   }});
 
+        console.log(ChartDocument.chartData);
+
     } catch (err) {
         console.log("SampleJoin", err, err.stack);
 	debugger
@@ -350,7 +352,6 @@ function SeedDataFromClincialInfo(ChartDocument) {
         // TBD: make sure the user has access to this study.
         //
         ChartDocument.studyCache[study.id] = study;
-        debugger
 
         var q =  {Study_ID: study.id};
         if ( ChartDocument.samplelist != null && ChartDocument.samplelist.length > 0) {
@@ -426,7 +427,10 @@ function SeedDataFromClincialInfo(ChartDocument) {
     });
 
     ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
-    ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { return ci.Sample_ID }).sort();
+    ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { 
+        ChartDocument.chartDataMap[ ci.Sample_ID ] = ci;
+        return ci.Sample_ID;
+    }).sort();
 }
 
 // Step 2. Join all the Gene like information into the samples into the ChartDataMap table
@@ -638,7 +642,6 @@ function MergeCRFs(ChartDocument) {
 	     }
 	     msf.collection = "CRF";
 	     msf.crf = crfName;
-             debugger
 	     // console.log("META QUERY", label, msf);
 	     ChartDocument.metadata[label] = msf;
 
