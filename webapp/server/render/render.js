@@ -19,7 +19,7 @@ ChartTypeMap = {
   "Box Plot" :       { type: 3, func: D3BoxPlot },
   // "Contingency" :    { type: 3, func: Contingency },
   "Scatter Chart" :  { type: 1, client: "makeD3Scatter"},
-  "Bar Chart" :      { type: 1, client: "GoogleChart"},
+  // "Bar Chart" :      { type: 1, client: "GoogleChart"},
 }
 
 // use FusionFeatures collection to communicate from server to client

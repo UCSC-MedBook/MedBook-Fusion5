@@ -13,7 +13,7 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 	      {$set: 
 		  {
 		    dataFieldNames: [],
-		    pivotTableConfig: {rows:[], cols:[], rendererName: ChartDocument.pivotTableConfig.rendererName},
+		    pivotTableConfig: {rows:[], cols:[], rendererName: "Table"},
 		    selectedFieldNames: [],
 		    metadata: {},
                     elapsed: ChartDocument.elapsed,
