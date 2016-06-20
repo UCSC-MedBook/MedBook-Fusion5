@@ -50,7 +50,6 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     } catch (err) {
         console.log("SampleJoin", err, err.stack);
-	debugger
     }
 } 
 
@@ -358,10 +357,8 @@ function SeedDataFromClincialInfo(ChartDocument) {
     ChartDocument.chartData = [];
     ChartDocument.metadata  = {};
 
-    debugger
     Collections.studies.find({id: inStudies}).forEach(function(study) {
         console.log("adding study", study.id);
-        debugger
 
         // TBD: make sure the user has access to this study.
         //
