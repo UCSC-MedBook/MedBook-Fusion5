@@ -17,8 +17,8 @@ ChartTypeMap = {
   "Timescape" :      { type: 2, func: D3Timescape},
   "Landscape" :      { type: 3, func: D3Landscape},
   "Box Plot" :       { type: 3, func: D3BoxPlot },
-  // "Contingency" :    { type: 3, func: Contingency },
-  "Scatter Chart" :  { type: 1, client: "makeD3Scatter"},
+  //"hContingency" :    { type: 3, func: Contingency },  needs debugging
+  //"Scatter Chart" :  { type: 1, client: "makeD3Scatter"},  prefer the R implementation.
   "Bar Chart" :      { type: 1, client: "GoogleChart"},
 }
 

@@ -8,8 +8,6 @@ D3ScatterChart = function(window, pivotData, opts, exclusions) {
     var v = _.clone(pivotData.pivotTableConfig.rows);
     var h = _.clone(pivotData.pivotTableConfig.cols);
 
-    debugger
-
     var xk = Object.keys(exclusions);
     var data = pivotData.chartData.filter(function(elem) {
         for (var i = 0; i < xk.length; i++) {

@@ -75,6 +75,7 @@ Template.Controls.helpers({
        if (html && html.length > 0 && html.length < 30)  {
           var func = eval(html)
 	  if (func) {
+              Meteor.subscribe("TheChartData", TheChart._id);
 	      html = func(TheChart, {});
 	  }
        } 
