@@ -11,20 +11,31 @@
             <div class="panel panel-default">
                 <div class="panel-heading" >
                     <h4>Select a study and a table name</h4>
-                        <select id="studyForNewTable" >
+
+                        <select id="DataImportStudy" >
                             <option selected value="{{myStudy}}">{{myStudy}}</option>
                             {{#each studies}}
+                                <option value="{{this.id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+
+                        <select id="DataImportTable" style="margin-top:20px;">
+                            <option selected value="New Table">New Table</option>
+                            {{#each tables}}
                                 <option value="{{this._id}}">{{this.name}}</option>
                             {{/each}}
                         </select>
+
                         <br>
-                        <input id="newTableName" placeholder="new table name" style="margin-top:10px;width:100%;">
+                        {{#if $.Session.equals "DataImportTable" "New Table" }}
+                            <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
+                        {{/if}}
                 </div>
             </div>
 
             <div class="panel panel-default">
                 <div class="panel-heading" data-toggle="collapse" data-target="#i2">
-                    <h3 class="panel-title">From File</h3>
+                    <h3 class="panel-title">Load from file</h3>
                 </div>
 
 

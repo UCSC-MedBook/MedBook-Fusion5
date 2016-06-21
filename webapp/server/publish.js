@@ -120,7 +120,7 @@ Meteor.publish('Metadata', function() {
     return cursor;
 });
 Meteor.publish('CRFs', function(studies, crfs) {
-    // console.log("this.userId", this.userId);
+    console.log("this.userId", this.userId, studies, crfs);
 
     var user_record = Meteor.users.findOne({_id:this.userId}, {fields: {'profile.collaborations':1}});
     // console.log("user_record", user_record);

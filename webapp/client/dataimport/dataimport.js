@@ -1,5 +1,19 @@
 DataImportSpreadSheet = null;
 
+Meteor.startup(function() {
+    Session.set("DataImportStudy", MyStudy())
+});
+
+
+var AfterInit = false;
+var DocumentModified = false;
+
+window.onbeforeunload = function() {
+      if (DocumentModified)
+           return "Navigating away may lose changes. Please save table first";
+      return null;
+}
+
 Template.DataImport.rendered = function() {
     var container = document.getElementById("hot");
 
@@ -12,7 +26,14 @@ Template.DataImport.rendered = function() {
 	 colHeaders: true,
 	 contextMenu: true,
          manualColumnResize: true,
-         manualRowResize: true
+         manualRowResize: true,
+         afterChange: function(changes, source) {
+             if (AfterInit) {
+                DocumentModified = true;
+             }
+         },
+         afterInit: function() { AfterInit = true;}
+
     });
     $("#importTableArea").resizable( {
         resize: function( event, ui ) {
@@ -29,6 +50,12 @@ Template.DataImport.helpers({
       var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
       return ret;
    },
+   tables : function() {
+       var dis = Session.get("DataImportStudy");
+       if (dis)
+           return Collections.Metadata.find({study: dis}, {fields: {"name":1}})
+       return [];
+   }
 });
 
 
@@ -127,6 +154,7 @@ function analyze(rowData) {
 }
 
 function saveTable(rowData) {
+    DocumentModified = false;
     var headers = _.clone(rowData[0]);
     var primaryKeys = rowData.map(function(row) { return row[0]; });
 
@@ -147,7 +175,7 @@ function saveTable(rowData) {
     console.log(fields, fields);
 
     Meteor.call("newTableFromSpreadsheet", 
-       $("#newTableName").val(), $("#studyForNewTable").val(), fields, rowData, 
+       $("#newTableName").val(), $("#DataImportStudy").val(), fields, rowData, 
 
        function(err, ret) {
 	   if (err)
@@ -231,11 +259,44 @@ Template.DataImport.events({
  'change .SelectType' : function(evt, tmpl) {
      var columnnumber = $(evt.target).data("columnnumber");
      DataImportSpreadSheet.types[columnnumber] = evt.target.value;
+  },
+
+ 'change #DataImportStudy' : function(evt, tmpl) {
+    var study = $("#DataImportStudy").val();
+    Session.set("DataImportStudy", study);
+  },
+
+ 'change #DataImportTable' : function(evt, tmpl) {
+    var study = Session.get("DataImportStudy");
+    var table = $("#DataImportTable").val();
+    Meteor.subscribe("CRFs", [study], [table])
+
+    Session.set("DataImportTable", table);
+    Meteor.autorun(function() {
+
+        var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
+        if (dataAsDocs.length > 0)
+            debugger;
+
+        var md = Collections.Metadata.findOne({study: study, name: table});
+        var dataAsRows = [];
+        dataAsDocs.map(function(doc) {
+            var row = [];
+            md.fieldOrder.map(function(attr) {
+                if (attr in doc) {
+                    row.push(doc[attr]);
+                } else
+                    row.push(null);
+            });
+            dataAsRows.push(row);
+        });
+
+        if (dataAsRows.length > 0)
+            DataImportSpreadSheet.updateSettings({data: dataAsRows}, false);
+   });
  },
 
- 
-
- 'click #analyze' : function(evt, tmpl) {
+  'click #analyze' : function(evt, tmpl) {
     var rowData = _.clone(DataImportSpreadSheet.getData());
 
     DataImportSpreadSheet.types = analyze(rowData);

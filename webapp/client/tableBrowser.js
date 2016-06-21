@@ -59,10 +59,12 @@ Handlebars.registerHelper('TabularTables', function (){
     return TabularTables;
 });
 
-Handlebars.registerHelper('myStudy', function (){
+MyStudy = function() {
       var un = Meteor.user().username;
       return "user:"+un;
-});
+};
+
+Handlebars.registerHelper('myStudy', MyStudy)
 
 
 Template.TableBrowser.helpers({
