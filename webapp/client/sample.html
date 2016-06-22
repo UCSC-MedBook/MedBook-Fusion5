@@ -52,6 +52,7 @@
               <h3 class="panel-title">1. Select Studies and Tables (required)</h3>
            </div>
            <div id="p1" class="panel-body collapse">
+
              <select id="studies"  multiple="multiple">
                 {{#each studies}}
                     <option {{this.selected}} value="{{this.id}}">{{this.name}}</option>
@@ -66,16 +67,22 @@
              </div>
 -->
              <div>
-                Tables
-                <select class="StartTables" multiple>
-                   {{#each studiesSelected}}
-                   <optgroup label="{{this.name}}">
-                       {{#each tablesFor this}}
-                          <option id="{{this._id}}" >{{this.name}}</option>
-                       {{/each}}
-                      </optgroup>
+                <ul class="list-unstyled" >
+                   {{#each studiesSelected2}}
+                       <li >
+                           <ul class="list-unstyled" >
+                           {{this.name}}
+                           {{#each tablesFor this}}
+                               <li style="margin-left:15px;"> {{this.name}} 
+                                   <input data-_id="{{this._id}}" type="checkbox" id="cbox1" >
+                               </li>
+                            {{else}}
+                                <li style="margin-left:8px;"><b><i>No clinical info tables loaded</i></b> </li>
+                           {{/each}}
+                           </ul>
+                       </li>
                    {{/each}}
-                </select>
+                </ul>
              </div>
            </div>
         </div>

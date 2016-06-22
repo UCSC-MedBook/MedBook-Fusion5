@@ -59,6 +59,15 @@ Template.Field_Attribute.helpers({
    shorten: shorten
 });
 
+function studiesSelected() {
+ var studies = CurrentChart("studies");
+ if (studies && studies.length > 0)
+    return Collections.studies.find({id: {$in: studies }}, {sort: {"name":1}});
+ else
+    return [];
+}
+
+
 Template.Controls.helpers({
    chartTypes: function() {
        return Collections.FusionFeatures.findOne({name: "ChartTypes"}).value;
@@ -181,17 +190,21 @@ Template.Controls.helpers({
      return coll;
    },
 
-   studiesSelected: function() {
-     var studies = CurrentChart("studies");
-     if (studies && studies.length > 0)
-        return Collections.studies.find({id: {$in: studies }}, {sort: {"name":1}});
-     else
-        return [];
+   studiesSelected: studiesSelected, 
+   studiesSelected2: function() {
+       var myStudy = "user:" + Meteor.user().username;
+       var ss2 = [ {
+           id: myStudy,
+           name: myStudy
+       }].concat( studiesSelected().fetch()) ;
+
+       debugger;
+       return ss2;
    },
 
    studies: function() {
        return Collections.studies.find({}, {sort: {"name":1}});
-   }
+   },
 
    studiesSelectedSettings: function () {
       return {
