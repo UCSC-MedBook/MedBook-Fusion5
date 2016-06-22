@@ -182,13 +182,16 @@ Template.Controls.helpers({
    },
 
    studiesSelected: function() {
-    
      var studies = CurrentChart("studies");
      if (studies && studies.length > 0)
         return Collections.studies.find({id: {$in: studies }}, {sort: {"name":1}});
      else
         return [];
    },
+
+   studies: function() {
+       return Collections.studies.find({}, {sort: {"name":1}});
+   }
 
    studiesSelectedSettings: function () {
       return {
@@ -327,6 +330,9 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
+  'changed.bs.select .StartTables' : function(e) {
+      debugger;
+  },
 
   'click .geneSignatureFormula' : function(e) {
        var TheChart = CurrentChart();

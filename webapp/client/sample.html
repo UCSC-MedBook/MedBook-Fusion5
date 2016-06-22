@@ -71,7 +71,7 @@
                    {{#each studiesSelected}}
                    <optgroup label="{{this.name}}">
                        {{#each tablesFor this}}
-                       <option>{{this.name}}</option>
+                          <option id="{{this._id}}" >{{this.name}}</option>
                        {{/each}}
                       </optgroup>
                    {{/each}}
