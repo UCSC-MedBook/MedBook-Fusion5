@@ -60,6 +60,11 @@ window.makeHandsontable = function(theChart, extraOptions, length, column) {
 	   columns.push(column);
 	if (hot)
 	   try { hot.destroy(); } catch (err) {};
+
+	var cw = document.getElementById('ChartWrapper');
+        if (cw.length == 0)
+            return;
+
 	window.hot = new Handsontable(document.getElementById('ChartWrapper'), { 
 	     minSpareRows: 1,
 	     rowHeaders: true,
