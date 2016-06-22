@@ -72,14 +72,18 @@ function transpose(data) {
 
 
 function empty(s) { 
-    if (s == null) return true;
-    if (s == "") return true;
-    s = s.trim();
-    if (s.indexOf("n/a") == 0) return true;
-    if (s == "na") return true;
-    if (s == "") return true;
-    s = s.toLowerCase(s);
-    if (s.indexOf("unk") == 0) return true;
+    try {
+        if (s == null) return true;
+        // http://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals
+        if ( typeof(s) == 'string' || s instanceof String) {
+            if (s == "") return true;
+            s = s.trim();
+            s = s.toLowerCase(s);
+            if (s.indexOf("n/a") == 0) return true;
+            if (s == "na") return true;
+            if (s.indexOf("unk") == 0) return true;
+        }
+    } catch (err) { debugger; }
     return false
 };
 
@@ -105,7 +109,7 @@ function allNumbers(column) {
 function allDates(column) {
    if (column.length == 0)
       return [];
-   return column.map(function(v) { return empty(v) || moment(v).isValid()} ).reduce(and);
+   return column.map(function(v) { return v instanceof Date || empty(v) || moment(v).isValid()} ).reduce(and);
 }
 function unique(column) {
    var seen = {};
@@ -132,6 +136,9 @@ function analyze(rowData) {
 
   // from the specfic to the general
   function judge(isNumber, i) {
+       if (emptyVec[i])   
+	   return "Exclude";
+
        if (emptyVec[i])   
 	   return "Exclude";
 
@@ -186,7 +193,7 @@ function saveTable(rowData) {
     );
 }
 
-var types = ["Unknown", "Number","String", "Date", "Exclude"];
+var types = ["Unknown", "Number","String", "Date", "Exclude", "Sample_ID", "Patint_ID"];
 
 function selectType(columnNumber, current) {
 
@@ -270,16 +277,14 @@ Template.DataImport.events({
     var study = Session.get("DataImportStudy");
     var table = $("#DataImportTable").val();
     Meteor.subscribe("CRFs", [study], [table])
-
     Session.set("DataImportTable", table);
+
     Meteor.autorun(function() {
 
         var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
-        if (dataAsDocs.length > 0)
-            debugger;
 
         var md = Collections.Metadata.findOne({study: study, name: table});
-        var dataAsRows = [];
+        var dataAsRows = [md.fieldOrder];
         dataAsDocs.map(function(doc) {
             var row = [];
             md.fieldOrder.map(function(attr) {
@@ -297,6 +302,7 @@ Template.DataImport.events({
  },
 
   'click #analyze' : function(evt, tmpl) {
+    busy();
     var rowData = _.clone(DataImportSpreadSheet.getData());
 
     DataImportSpreadSheet.types = analyze(rowData);
@@ -320,6 +326,9 @@ Template.DataImport.events({
         },
         false);
     console.log( DataImportSpreadSheet.types );
+
+    unbusy();
+    Overlay("MessageOver", { text: "Analyzed!" })
   },
 
  'click #transpose' : function() {
