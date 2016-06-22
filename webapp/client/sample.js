@@ -1,9 +1,9 @@
 
-function busy() {
+busy = function() {
     var yy = $(".busy").removeClass("hidden");
     // console.log("busy", yy);
 }
-function unbusy() {
+unbusy = function() {
     var yy = $(".busy").addClass("hidden");
     // console.log("unbusy", yy);
 }
