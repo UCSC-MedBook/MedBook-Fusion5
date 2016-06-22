@@ -17,6 +17,8 @@
 <template name="Controls">
 <div>
     <div class="leftdivThin" >
+
+
         <div class="panel panel-default">
           <div class="panel-heading" >
 
@@ -39,10 +41,15 @@
           </div>
         </div>
 
+
+
+
+
+
         <div class="panel panel-default">
           <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
 
-              <h3 class="panel-title">1. Select Studies (required)</h3>
+              <h3 class="panel-title">1. Select Studies and Tables (required)</h3>
            </div>
            <div id="p1" class="panel-body collapse">
              <select id="studies"  multiple="multiple">
@@ -50,11 +57,25 @@
                     <option {{this.selected}} value="{{this.id}}">{{this.name}}</option>
                 {{/each}}
              </select>
+<!--
              <div>
 
                  {{> reactiveTable showNavigation="auto" fields=["id", "description"]
                       settings=studiesSelectedSettings class="studiesSelectedTable"
                       collection=studiesSelected rowsPerPage=20 class="studiesSelectedTable table borderless" }}
+             </div>
+-->
+             <div>
+                Tables
+                <select class="StartTables" multiple>
+                   {{#each studiesSelected}}
+                   <optgroup label="{{this.name}}">
+                       {{#each tablesFor this}}
+                       <option>{{this.name}}</option>
+                       {{/each}}
+                      </optgroup>
+                   {{/each}}
+                </select>
              </div>
            </div>
         </div>

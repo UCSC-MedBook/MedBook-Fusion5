@@ -176,6 +176,11 @@ Template.Controls.helpers({
       return prevGeneLikeDataDomains;
    },
 
+   tablesFor: function(study) {
+     var coll = Collections.Metadata.find({study: study.id}).fetch();
+     return coll;
+   },
+
    studiesSelected: function() {
     
      var studies = CurrentChart("studies");
@@ -574,6 +579,10 @@ Template.Controls.events({
 })
 
 function initializeHtmlElements(document) {
+    $('.StartTables').selectpicker({
+          style: 'btn-info',
+          size: 8
+    });
 
     $('.pvtRenderer').find("option[value='"+
 	document.pivotTableConfig.rendererName
