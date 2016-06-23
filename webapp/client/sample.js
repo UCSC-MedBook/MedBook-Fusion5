@@ -197,8 +197,6 @@ Template.Controls.helpers({
            id: myStudy,
            name: myStudy
        }].concat( studiesSelected().fetch()) ;
-
-       debugger;
        return ss2;
    },
 
@@ -343,8 +341,15 @@ Template.checkBox.helpers({
 
 
 Template.Controls.events({
-  'changed.bs.select .StartTables' : function(e) {
-      debugger;
+  'click .StartTables' : function(e) {
+      var startTables = [];
+      $.each($(".StartTables:checked"), function(){            
+          startTables.push({
+              study: $(this).data("study"),
+              table: $(this).data("table")
+          });
+      });
+      UpdateCurrentChart("startTables", startTables);
   },
 
   'click .geneSignatureFormula' : function(e) {

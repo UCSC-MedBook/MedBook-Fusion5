@@ -60,7 +60,10 @@ Handlebars.registerHelper('TabularTables', function (){
 });
 
 MyStudy = function() {
-      var un = Meteor.user().username;
+      var mu = Meteor.user();
+      if (mu == null)
+          return "";
+      var un = mu.username;
       return "user:"+un;
 };
 

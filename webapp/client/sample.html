@@ -71,16 +71,18 @@
                    {{#each studiesSelected2}}
                        <li >
                            <ul class="list-unstyled" >
-                           {{this.name}}
+                               <b>{{this.name}}</b>
                            {{#each tablesFor this}}
                                <li style="margin-left:15px;"> {{this.name}} 
-                                   <input data-_id="{{this._id}}" type="checkbox" id="cbox1" >
+                               <input class="StartTables" data-study="{{this.study}}" data-table="{{this.name}}" type="checkbox" id="cbox1" >
                                </li>
                             {{else}}
-                                <li style="margin-left:8px;"><b><i>No clinical info tables loaded</i></b> </li>
+                                <li style="margin-left:8px;"><i>No tables for {{this.name}}</i></li>
                            {{/each}}
                            </ul>
                        </li>
+                    {{else}}
+                        <li><B>NO TABLES LOADED!</B></li>
                    {{/each}}
                 </ul>
              </div>

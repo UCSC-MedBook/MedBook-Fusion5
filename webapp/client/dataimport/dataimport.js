@@ -14,7 +14,7 @@ window.onbeforeunload = function() {
       return null;
 }
 
-Template.DataImport.rendered = function() {
+function initHandsontable() {
     var container = document.getElementById("hot");
 
     DataImportSpreadSheet = new Handsontable(container, { 
@@ -44,6 +44,7 @@ Template.DataImport.rendered = function() {
         }
     });
 }
+Template.DataImport.rendered = initHandsontable;
 
 Template.DataImport.helpers({
    studies : function() {
@@ -281,23 +282,28 @@ Template.DataImport.events({
 
     Meteor.autorun(function() {
 
-        var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
-
-        var md = Collections.Metadata.findOne({study: study, name: table});
-        var dataAsRows = [md.fieldOrder];
-        dataAsDocs.map(function(doc) {
-            var row = [];
-            md.fieldOrder.map(function(attr) {
-                if (attr in doc) {
-                    row.push(doc[attr]);
-                } else
-                    row.push(null);
+        var table = Session.get("DataImportTable");
+        if (table == "New Table") {
+            DataImportSpreadSheet.destroy();
+            initHandsontable();
+        } else {
+            var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
+            var md = Collections.Metadata.findOne({study: study, name: table});
+            var dataAsRows = [md.fieldOrder];
+            dataAsDocs.map(function(doc) {
+                var row = [];
+                md.fieldOrder.map(function(attr) {
+                    if (attr in doc) {
+                        row.push(doc[attr]);
+                    } else
+                        row.push(null);
+                });
+                dataAsRows.push(row);
             });
-            dataAsRows.push(row);
-        });
 
-        if (dataAsRows.length > 0)
-            DataImportSpreadSheet.updateSettings({data: dataAsRows}, false);
+            if (dataAsRows.length > 0)
+                DataImportSpreadSheet.updateSettings({data: dataAsRows}, false);
+        }
    });
  },
 
