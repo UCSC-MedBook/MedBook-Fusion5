@@ -603,11 +603,6 @@ Template.Controls.events({
 })
 
 function initializeHtmlElements(document) {
-    $('.StartTables').selectpicker({
-          style: 'btn-info',
-          size: 8
-    });
-
     $('.pvtRenderer').find("option[value='"+
 	document.pivotTableConfig.rendererName
 	+"']").attr("selected",true);
