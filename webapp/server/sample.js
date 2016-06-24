@@ -25,7 +25,8 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 
     try {
         initTemporaryDatabase(ChartDocument,fieldNames);
-        SeedDataFromClincialInfo(ChartDocument);
+        // SeedDataFromClincialInfo(ChartDocument);
+        SeedDataFromStartTables(ChartDocument)
         JoinAllGeneLikeInformation(ChartDocument);
         MergeCRFs(ChartDocument);
         ProcessGeneSignatureFormula(ChartDocument);
@@ -52,6 +53,91 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
         console.log("SampleJoin", err, err.stack);
     }
 } 
+
+function loadTableIntoDocument(ChartDocument, q) {
+    Collections.CRFs.find(q).forEach( function(cd) {  
+
+        if (cd.Sample_ID in study.gene_expression_index) {  // FINALLY LOAD IT!
+            delete cd["_id"];
+            delete cd["CRF"];
+
+            ChartDocument.chartData.push(cd);
+        }
+    })
+
+    debugger
+    console.log("q", q);
+    var metadata = Collections.Metadata.findOne(q).schema;  
+    if (typeof(metadata) == "string")
+       metadata = JSON.parse(metadata);
+
+    Object.keys(metadata).map(function(f) {
+        ChartDocument.metadata[f] = metadata[f];
+        ChartDocument.metadata[f].collection = "CRFs";
+        ChartDocument.metadata[f].crf = q.name;
+        ChartDocument.metadata[f].study = q.study;
+    });
+
+    var tableQuery = {
+        Study_ID: q.study,
+        CRF: q.name
+    };
+    if (ChartDocument.samplelistFilter && ChartDocument.samplelistFilter.length > 0) {
+        tableQuery.Sample_ID = {$in: ChartDocument.samplelistFilter};
+    }
+
+    // Fetch and possibly merge CRF documents
+    Collections.CRFs.find(tableQuery).forEach(function(doc) {
+        var full_ID = doc.Study_ID + "/" + doc.Sample_ID;
+
+        if (full_ID in ChartDocument.chartDataMap) {
+            debugger;
+            extend(ChartDocument.chartDataMap[ full_ID ], doc);
+        } else {
+            ChartDocument.chartData.push(doc);
+            ChartDocument.chartDataMap[ full_ID ] = doc;
+            ChartDocument.samplelist.push(full_ID);
+        }
+    });
+}
+
+
+// Step 1. Use Clinical_Info as primary key
+// IN: samplelist, studies 
+// OUT: chartData, samplelist, metadata
+function SeedDataFromStartTables(ChartDocument) {
+    /*
+    if (ChartDocument.samplelist != null && unchanged(ChartDocument, ["samplelist", "studies"]))
+        return;
+    */
+    change(ChartDocument, [ "samplelist", "metadata"]);
+    
+    // init
+    var inStudies = {$in:ChartDocument.studies}; 
+    ChartDocument.studyCache = {};
+    ChartDocument.chartData = [];
+    ChartDocument.metadata  = {};
+    var studies = [];
+
+    // cache studies
+    Collections.studies.find({id: inStudies}).forEach(function(study) {
+        console.log("adding study", study.id);
+
+        // TBD: make sure the user has access to this study.
+        //
+        ChartDocument.studyCache[study.id] = study;
+        studies.push(study);
+    });
+
+    // load seed start tables from database
+    ChartDocument.startTables.map(function(q) {
+        loadTableIntoDocument(ChartDocument, q);
+    });
+
+    // polish in memory data data structure set up
+    ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
+    ChartDocument.samplelist.sort();
+}
 
 // These are temporary in memory datastructures which speed up the computation, but are not saved to the database.
 function initTemporaryDatabase(ChartDocument,fieldNames) {

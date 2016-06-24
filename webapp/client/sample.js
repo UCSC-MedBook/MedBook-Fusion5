@@ -346,7 +346,7 @@ Template.Controls.events({
       $.each($(".StartTables:checked"), function(){            
           startTables.push({
               study: $(this).data("study"),
-              table: $(this).data("table")
+              name: $(this).data("table")
           });
       });
       UpdateCurrentChart("startTables", startTables);
@@ -573,7 +573,7 @@ Template.Controls.events({
    'change #samplelist' : function(evt, tmpl) {
        var s = $("#samplelist").val();
        s = s.split(/[ ,;]/).filter(function(e) { return e.length > 0 });
-       UpdateCurrentChart("samplelist", s);
+       UpdateCurrentChart("samplelistFilter", s);
    },
 
    'change #genelist' : function(evt, tmpl) {
@@ -613,7 +613,7 @@ function initializeHtmlElements(document) {
 	+"']").attr("selected",true);
 
     if (document & document.samplelist)
-         $("#samplelist").val(document.samplelist);
+         $("#samplelist").val(document.samplelistFilter);
 
      GeneLikeDataDomainsPrototype.map(function(domain) {
           $("input[name='" + domain.checkBoxName + "']").prop("checked", domain.state);
