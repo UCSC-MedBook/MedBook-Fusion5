@@ -1,7 +1,6 @@
 var extend = Meteor.npmRequire('node.extend');
 
 
-
 // SampleJoin is the most important function in Fusion.
 // Does the heavy lifting for Joining Samples.
 // This is the central Joinalgoritm. 

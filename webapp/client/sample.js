@@ -186,8 +186,15 @@ Template.Controls.helpers({
    },
 
    tablesFor: function(study) {
-     var coll = Collections.Metadata.find({study: study.id}).fetch();
-     return coll;
+     var allTables = Collections.Metadata.find({study: study.id}).fetch();
+     var usedTables = CurrentChart("startTables").filter(function(pair) { 
+         return pair.study == study.id }).map(function(pair) {
+             return pair.name });
+     allTables.map(function(table) {
+         if (_.contains(usedTables, table.name))
+            table.checked = "checked";
+     });
+     return allTables;
    },
 
    studiesSelected: studiesSelected, 
@@ -755,11 +762,6 @@ renderChart = function() {
     var dipsc_id =  CurrentChart("dipsc_id");
     Meteor.subscribe("DIPSC", dipsc_id);
 
-
-    /*
-    if (ChartDocument.studies == null || ChartDocument.studies.length == 0)
-        ChartDocument.studies = ["prad_wcdt"]; // HACK HACK
-    */
 
     RefreshChart(_id, true);
 

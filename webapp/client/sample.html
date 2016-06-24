@@ -74,7 +74,7 @@
                                <b>{{this.name}}</b>
                            {{#each tablesFor this}}
                                <li style="margin-left:15px;"> {{this.name}} 
-                               <input class="StartTables" data-study="{{this.study}}" data-table="{{this.name}}" type="checkbox" id="cbox1" >
+                               <input class="StartTables" data-study="{{this.study}}" data-table="{{this.name}}" {{this.checked}} type="checkbox" id="cbox1" >
                                </li>
                             {{else}}
                                 <li style="margin-left:8px;"><i>No tables for {{this.name}}</i></li>
