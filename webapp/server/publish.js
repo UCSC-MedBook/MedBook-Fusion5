@@ -240,7 +240,16 @@ Meteor.publish('TheChart', function(_id) {
     return cursor;
 });
 
-Meteor.publish('TheChartData', function(_id, n, m) {
-    var cursor = Charts.find({_id: _id}, {fields: { chartData:1 }});
-    return cursor;
+Meteor.publish('TheChartData', function(_id, dataFields) {
+     
+    var obj = Charts.findOne({_id: _id}, {fields: { pivotTableConfig:1 }});
+    if (obj) {
+        var fields = {};
+        if (dataFields)
+            dataFields.map(function(field) { fields["chartData."+field] = 1; });
+        var cursor = Charts.find({_id: _id}, {fields: fields});
+        return cursor;
+    } else {
+        return [];
+    }
 });
