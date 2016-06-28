@@ -27,6 +27,9 @@ id_text = function(array) {
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
     Meteor.subscribe("Biopsy_Research");
+    Handlebars.registerHelper("studies", function() {
+        return Collections.studies.find({}, {sort: {"name":1}});
+    });
 });
 
 function getCurrentDipsc() {
@@ -207,9 +210,6 @@ Template.Controls.helpers({
        return ss2;
    },
 
-   studies: function() {
-       return Collections.studies.find({}, {sort: {"name":1}});
-   },
 
    studiesSelectedSettings: function () {
       return {

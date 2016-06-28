@@ -149,6 +149,26 @@ Router.map(function() {
 
 
 Router.map(function() {
+  this.route('SpreadsheetContainer', {
+    template: "SpreadsheetContainer",
+    path: '/fusion/ss/',
+    data: data,
+    waitOn: function() {
+      return [
+	  Meteor.subscribe('Metadata'),
+	  Meteor.subscribe('FusionFeatures'),
+	  Meteor.subscribe('studies')
+      ];
+    },
+    onBeforeAction : function(arg) {
+       Session.set("BrowseStudies", null);
+       Session.set("BrowseTable", null);
+       this.next();
+    }
+  });
+});
+
+Router.map(function() {
   this.route('fusionTables', {
     template: "TableBrowser",
     path: '/fusion/tables/',

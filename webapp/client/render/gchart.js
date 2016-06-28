@@ -48,7 +48,6 @@ GoogleChart = function(chartDocument, opts) {
     if (chartData == null)
        return;
 
-    debugger
     var aa = analyze(chartData, cols);
     var performCount =  !_.any(aa, function(elem) { return elem.isNumbers; });
 

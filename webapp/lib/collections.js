@@ -56,7 +56,9 @@ MinimalChart = {
        rendererName: "Table",
    },
    exclusions: [],
-   chartData: []
+   chartData: [],
+   startTables: []
+
 };
 
 ensureMinimalChart = function(doc) {

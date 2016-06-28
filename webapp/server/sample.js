@@ -54,23 +54,20 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 } 
 
 function loadTableIntoDocument(ChartDocument, q) {
-    Collections.CRFs.find(q).forEach( function(cd) {  
+    var table = Collections.Metadata.findOne(q);
+    if (table.fieldOrder == null || table.fieldOrder.length == 0)
+        return
+    var primaryKey = table.fieldOrder[0]
+    var fullKey = q.study + "/" + q.name + "/" + primaryKey;
 
-        if (cd.Sample_ID in study.gene_expression_index) {  // FINALLY LOAD IT!
-            delete cd["_id"];
-            delete cd["CRF"];
+    ChartDocument.primaryKeys.push(fullKey);
 
-            ChartDocument.chartData.push(cd);
-        }
-    })
-
-    debugger
-    console.log("q", q);
-    var metadata = Collections.Metadata.findOne(q).schema;  
+    var metadata = table.schema;
     if (typeof(metadata) == "string")
        metadata = JSON.parse(metadata);
 
-    Object.keys(metadata).map(function(f) {
+
+    table.fieldOrder.map(function(f) {
         ChartDocument.metadata[f] = metadata[f];
         ChartDocument.metadata[f].collection = "CRFs";
         ChartDocument.metadata[f].crf = q.name;
@@ -82,15 +79,23 @@ function loadTableIntoDocument(ChartDocument, q) {
         CRF: q.name
     };
     if (ChartDocument.samplelistFilter && ChartDocument.samplelistFilter.length > 0) {
-        tableQuery.Sample_ID = {$in: ChartDocument.samplelistFilter};
+        tableQuery[ChartDocument.Join] = {$in: ChartDocument.samplelistFilter};
     }
 
     // Fetch and possibly merge CRF documents
     Collections.CRFs.find(tableQuery).forEach(function(doc) {
-        var full_ID = doc.Study_ID + "/" + doc.Sample_ID;
+        delete doc["_id"];
 
+        var join_value = doc[primaryKey];
+        if (join_value == null)
+            return;
+
+        var study = doc.Study_ID;
+        if ("Study" in doc) study = doc.Study
+        else if ("study" in doc) study = doc.dtudy
+
+        var full_ID = study + "/" + join_value;
         if (full_ID in ChartDocument.chartDataMap) {
-            debugger;
             extend(ChartDocument.chartDataMap[ full_ID ], doc);
         } else {
             ChartDocument.chartData.push(doc);
@@ -116,6 +121,10 @@ function SeedDataFromStartTables(ChartDocument) {
     ChartDocument.studyCache = {};
     ChartDocument.chartData = [];
     ChartDocument.metadata  = {};
+
+    if (ChartDocument.Join == null)
+        ChartDocument.Join = "Sample_ID";
+
     var studies = [];
 
     // cache studies
@@ -133,14 +142,17 @@ function SeedDataFromStartTables(ChartDocument) {
         loadTableIntoDocument(ChartDocument, q);
     });
 
-    // polish in memory data data structure set up
-    ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
+    // polish in memory data structure set up
+    ChartDocument.chartData.sort( function (a,b) { 
+        return a[ChartDocument.Join].localeCompare(b[ChartDocument.Join])
+    });
     ChartDocument.samplelist.sort();
 }
 
 // These are temporary in memory datastructures which speed up the computation, but are not saved to the database.
 function initTemporaryDatabase(ChartDocument,fieldNames) {
     ChartDocument.fieldNames = fieldNames; 
+    ChartDocument.primaryKeys = []
     ChartDocument.chartDataMap = {};
 }
 
@@ -176,99 +188,10 @@ Meteor.startup(
 
 
 // The "this" object has to be the default dictonary of all possible keys.
-function Transform_Clinical_Info(f) {
+function Normalize(f, i, keys) {
     delete f["_id"];
-    // delete f["Sample_ID"];
-    // delete f["Patient_ID"];
-    // delete f["On_Study_Date"];
-    // delete f["Off_Study_Date"];
 
-    /*
-    var on = f["On_Study_Date"];
-    var off = f["OffStudy_Date"];
-    if (off == null)
-        off = Date.now();
-
-    if (off && on)
-        f["Days_on_Study"] = (off - on) / 86400000;
-
-    delete f["On_Study_Date"];
-    delete f["Off_Study_Date"];
-    */
-
-
-    // Make sure that 
-    Object.keys(this).map(function(k) {
-        if  (f[k] == null) {
-            f[k] = this[k];
-        }
-    });
-
-
-    /*
-    if  (f["Abiraterone"] == null)
-        f["Abiraterone"] = "unknown";
-
-    if  (f["Enzalutamide"] == null)
-        f["Enzalutamide"] = "unknown";
-
-    if  (f["biopsy_site"] == null)
-        f["biopsy_site"] = "unknown";
-
-    if  (f["site"] == null)
-        f["site"] = "unknown";
-
-    if  (f["Days_on_Study"] == null)
-        f["Days_on_Study"] = "unknown";
-
-
-    if  (f["biopsy_site"] == null)
-        f["biopsy_site"] = "unknown";
-
-    if  (f["age"] == null)
-        f["age"] = "unknown";
-
-    if (f["Reason_for_Stopping_Treatment"] == null)
-        f["Reason_for_Stopping_Treatment"] = "unknown";
-    */
-
-    delete f["Death on study"];
-
-
-    var r = f.Reason_for_Stopping_Treatment;
-    if (r == null) r =  "n/a";
-    else if (r.indexOf("unknown") >= 0) r =  "n/a";
-    else if (r.indexOf("Adverse") >= 0) r =  "AE";
-    else if (r.indexOf("Complet") >= 0) r =  "Complete";
-    else if (r.indexOf("complet") >= 0) r =  "Complete";
-    else if (r.indexOf("Death") >= 0) r =  "Death";
-    else if (r.indexOf("Progress") >= 0) r =  "Progression";
-    else if (r.indexOf("progress") >= 0) r =  "Progression";
-    else if (r.indexOf("withdraw") >= 0) r =  "Withdraw";
-    else if (r.indexOf("Discretion") >= 0) r =  "Discretion";
-    f.Reason_for_Stopping_Treatment = r;
-    
-    var t = f["treatment_for_mcrpc_prior_to_biopsy"];
-    if (t) {
-        var abi = t.indexOf("Abiraterone") >= 0 ;
-        var enz = t.indexOf("Enzalutamide") >= 0 ;
-        if (abi && !enz) t = "Abi";
-        else if (!abi && enz) t = "Enz";
-        else if (abi && enz) t = "Abi-Enz";
-        else if (!abi && !enz) t = "Chemo";
-        else t =  "unknown";
-    } else 
-        t =  "unknown";
-
-    f["treatment_prior_to_biopsy"] = t;
-    delete f["treatment_for_mcrpc_prior_to_biopsy"];
-
-    f["timepoint"] = "baseline";
-    if ( f.Sample_ID.match(/^DTB-\d\d\dPro/)) // DTB Hack
-        f["timepoint"] = "progression";
-
-
-    Object.keys(f).map(function(k) {
+    keys.map(function(k) {
         if (f[k] == null)
            f[k] = "N/A";
     });
@@ -277,35 +200,6 @@ function Transform_Clinical_Info(f) {
     return f;
 };
 
-function GeneJoin(userId, ChartDocument, fieldNames) {
-     var big = Expression.find(
-                 {"Study_ID" : "prad_tcga"}, 
-                 {
-                    fields: {
-                         "gene":1,
-                         "variance.rsem_quan_log2":1,
-                         "mean.rsem_quan_log2":1
-                    },
-                    limit: 1000,
-                    sort: {"variance.rsem_quan_log2":-1}
-                }
-             ).fetch().map(
-                 function(e) { 
-                     return { 
-                        Gene: e.gene,
-                        Variance: e.variance.rsem_quan_log2,
-                        Mean: e.mean.rsem_quan_log2
-                      }
-                   });
-
-     Charts.direct.update({ _id : ChartDocument._id }, 
-          {$set: 
-              {
-                dataFieldNames: ['Expression', 'Variance', 'Mutation'],
-                selectedFieldNames: ['Expression', 'Variance', 'Mutation'],
-                chartData: big
-               }});
-}
 
 function buildRemodelPlan(chartData, transforms, rows, cols) {
  var remodel = { doIt: false, plan: {} };
@@ -450,11 +344,6 @@ function SeedDataFromClincialInfo(ChartDocument) {
         ChartDocument.studyCache[study.id] = study;
 
         var q =  {Study_ID: study.id};
-        /*
-        if ( ChartDocument.samplelist != null && ChartDocument.samplelist.length > 0) {
-            q.Sample_ID =  {$in: ChartDocument.samplelist};
-        }
-        */
 
         // case 1,the user specified a form to start with in the user interface (TBD)
         if (ChartDocument.start_crf)
@@ -489,7 +378,7 @@ function SeedDataFromClincialInfo(ChartDocument) {
         if (q.CRF && study.gene_expression_index) {
             Collections.CRFs.find(q).forEach( function(cd) {  
 
-                if (cd.Sample_ID in study.gene_expression_index) {  // FINALLY LOAD IT!
+                if (cd[ChartDocument.Join] in study.gene_expression_index) {  // FINALLY LOAD IT!
                     delete cd["_id"];
                     delete cd["CRF"];
 
@@ -507,27 +396,30 @@ function SeedDataFromClincialInfo(ChartDocument) {
                 ChartDocument.metadata[f].crf = q.CRF;
             });
         } else {
+            // Second best case
             // MAKE INITIAL CHART DATA RECORDS HERE
-            var sample_ids = [];
+            var primary_keys = [];
 
             if (study.gene_expression_index)
-                sample_ids = Object.keys(study.gene_expression_index);
+                primary_keys = Object.keys(study.gene_expression_index);
             else
-                sample_ids = study.Sample_IDs;
+                primary_keys = study.Sample_IDs;
 
-            sample_ids.map(function (sample_id) {
-                ChartDocument.chartData.push({Sample_ID: sample_id, Study_ID: study.id});
+            primary_keys.map(function (primary_key) {
+                ChartDocument.chartData.push({Sample_ID: primary_key, Study_ID: study.id});
             });
-            ChartDocument.metadata["Sample_ID"] = {collection: "studies", type: "String"};
-            ChartDocument.metadata["Study_ID"] = {collection: "studies", type: "String"};
+            if (!("Sample_ID" in ChartDocument.metadata))
+                ChartDocument.metadata["Sample_ID"] = {collection: "studies", type: "String"};
+            if (!("Study_ID" in ChartDocument.metadata))
+                ChartDocument.metadata["Study_ID"] = {collection: "studies", type: "String"};
         }
         console.log("ChartDocument.chartData.length", ChartDocument.chartData.length);
     });
 
-    ChartDocument.chartData.sort( function (a,b) { return a.Sample_ID.localeCompare(b.Sample_ID)});
+    ChartDocument.chartData.sort( function (a,b) { return a[ChartDocument.Join].localeCompare(b[ChartDocument.Join])});
     ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { 
-        ChartDocument.chartDataMap[ ci.Sample_ID ] = ci;
-        return ci.Sample_ID;
+        ChartDocument.chartDataMap[ ci[ChartDocument.Join] ] = ci;
+        return ci[ChartDocument.Join];
     }).sort();
 }
 
@@ -703,12 +595,12 @@ function MergeCRFs(ChartDocument) {
         return;
     change(ChartDocument, ["chartData"]);
 
-    var mapPatient_ID_to_Sample_ID = {};
+    var mapPatient_ID_to_JoinKey = {};
     ChartDocument.chartData.map(function(cd) {
-	 if (!(cd.Patient_ID in mapPatient_ID_to_Sample_ID))
-	     mapPatient_ID_to_Sample_ID[cd.Patient_ID] = [ cd.Sample_ID ]
+	 if (!(cd.Patient_ID in mapPatient_ID_to_JoinKey))
+	     mapPatient_ID_to_JoinKey[cd.Patient_ID] = [ cd[ChartDocument.Join] ]
 	 else
-	     mapPatient_ID_to_Sample_ID[cd.Patient_ID].push(cd.Sample_ID);
+	     mapPatient_ID_to_JoinKey[cd.Patient_ID].push(cd[ChartDocument.Join]);
     });
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
@@ -745,20 +637,18 @@ function MergeCRFs(ChartDocument) {
 
              var fl = {};
              fl[fieldName] = 1;
-	     fl.Sample_ID = 1;
+	     fl[ChartDocument.Join] = 1;
 	     fl.Patient_ID = 1;
 
 	     // the following query needs study_id and perhaps sample_list
              Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
 
 
-		 // should use joinOn instead here. But just use the simple heuristic of trying Sample_ID first, then Patient_ID
-                 if (doc.Sample_ID && doc.Sample_ID in ChartDocument.chartDataMap) {
-                     ChartDocument.chartDataMap[doc.Sample_ID][label] = doc[fieldName];
-		     // console.log("joined Sample_ID", doc);
+                 if (doc[ChartDocument.Join] && doc[ChartDocument.Join] in ChartDocument.chartDataMap) {
+                     ChartDocument.chartDataMap[doc[ChartDocument.Join]][label] = doc[fieldName];
                  } else {
-                     if (doc.Patient_ID in mapPatient_ID_to_Sample_ID) {
-                         mapPatient_ID_to_Sample_ID[doc.Patient_ID].map(function(sample_ID) {
+                     if (doc.Patient_ID in mapPatient_ID_to_JoinKey) {
+                         mapPatient_ID_to_JoinKey[doc.Patient_ID].map(function(sample_ID) {
                              ChartDocument.chartDataMap[sample_ID][label] = doc[fieldName];
                          });
 			  // console.log("joined through Patient_ID", doc);
@@ -798,7 +688,7 @@ function TransformLabelsAndData(ChartDocument) {
 
 
     // normalize records
-    ChartDocument.chartData = ChartDocument.chartData.map(Transform_Clinical_Info, keyUnion);
+    ChartDocument.chartData = ChartDocument.chartData.map(Normalize, Object.keys(keyUnion));
 
     var transforms = ChartDocument.transforms;
     if (transforms && transforms.length > 0) {
@@ -912,18 +802,15 @@ Meteor.startup(function() {
 	     return; // prevent infinite loops
 
         ensureMinimalChart(ChartDocument);
-  
-        // console.log("Join", ChartDocument.Join)
-        if (ChartDocument.Join == null ||  ChartDocument.Join == "Sample_ID")
-            SampleJoin(userId, ChartDocument, fieldNames);
-        else if (ChartDocument.Join == "Gene")
-            GeneJoin(userId, ChartDocument, fieldNames);
+        SampleJoin(userId, ChartDocument, fieldNames);
     });// chart.after.update
 
+    /*
     Charts.find({html: {$exists:0}}).forEach(function(doc) {
 	// console.log("render", doc._id);
         ensureMinimalChart(doc);
 	doc.html = renderJSdom(doc);
 	Charts.direct.update({ _id : doc._id }, {$set: doc});
     });
+    */
 });
