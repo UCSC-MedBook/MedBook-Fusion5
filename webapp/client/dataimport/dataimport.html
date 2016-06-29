@@ -8,56 +8,53 @@
                 </div>
             </div>
 
+            <div class="panel panel-default">
+                <div class="panel-heading" >
+                    <h4>Select a study and a table name</h4>
+
+                        <select id="DataImportStudy" >
+                            <option selected value="{{myStudy}}">{{myStudy}}</option>
+                            {{#each studies}}
+                                <option value="{{this.id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+
+                        <select id="DataImportTable" style="margin-top:20px;">
+                            <option selected value="New Table">New Table</option>
+                            {{#each tables}}
+                                <option value="{{this._id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+
+                        <br>
+                        <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" data-toggle="collapse" data-target="#i2">
+                    <h3 class="panel-title">Load from file</h3>
+                </div>
+
+
+                <div id="i2" class="panel-body collapse">
+                    <input type="file" multiple="" id="fileInput" name="files[]"> <br>
+                    Supported formats include tab-separated-values (.tab or .tsv), comma-separated-values (.csv), and JavaScript Object Notation (.json) files
+                </div>
+            </div>
         </div>
         <div class="rightdivOverflow" style="padding-left:10px;">
             <div id="importTableArea" class="panel panel-default encompass" style="min-height:300px; min-width:300px;">
                 <div style="margin:10px;">
-                    <button class="btn btn-primary" id="load">Load</button> &nbsp;
                     <button class="btn btn-primary" id="transpose">Transpose</button> &nbsp;
                     <button class="btn btn-primary" id="analyze">Analyze</button> &nbsp;
                     <button class="btn btn-primary" id="cleanUp">Clean Up</button> &nbsp;
-                    <button class="btn btn-primary" id="save">Save Table</button> &nbsp;
-                    <button class="btn btn-primary btn-danger" id="clear" >Clear</button> 
+                    <button class="btn btn-primary" id="save">Save Table</button> <br>
                 </div>
                 <div style="margin:10px;">
                     <div id="hot"></div>
                 </div>
             </div>
         </div>
-    </div>
-</template>
-
-<template name="LoadTable">
-    <div class="panel-heading" >
-        <h4>Select an existing study and a table name</h4>
-
-            <select id="DataImportStudy" >
-                {{#each studies}}
-                    <optgroup label="{{this.name}}">
-                     {{#each tablesFor this}}
-                        <option value="{{this.name}}">{{this.name}}</option>
-                     {{/each}}
-                    </optgroup>
-                {{/each}}
-            </select>
-
-            <select id="DataImportTable" style="margin-top:5px;">
-                <option selected value="New Table">Select a Table</option>
-                <option value="New Table">Create a New Table</option>
-                {{#each tables}}
-                    <option value="{{this._id}}">{{this.name}}</option>
-                {{/each}}
-            </select>
-
-            <br>
-            or
-
-            <h4>Load a Table from a file</h4>
-            <br>
-
-
-
-        <input type="file" multiple="" id="fileInput" name="files[]"> <br>
-        Supported formats include tab-separated-values (.tab or .tsv), comma-separated-values (.csv), and JavaScript Object Notation (.json) files
     </div>
 </template>

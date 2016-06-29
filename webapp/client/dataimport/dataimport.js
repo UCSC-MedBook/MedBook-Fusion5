@@ -83,6 +83,7 @@ function empty(s) {
             if (s.indexOf("n/a") == 0) return true;
             if (s == "na") return true;
             if (s.indexOf("unk") == 0) return true;
+            if (s.indexOf("none") == 0) return true;
         }
     } catch (err) { debugger; }
     return false
@@ -161,6 +162,7 @@ function analyze(rowData) {
   return results;
 }
 
+
 function saveTable(rowData) {
     DocumentModified = false;
     var headers = _.clone(rowData[0]);
@@ -182,10 +184,12 @@ function saveTable(rowData) {
     });
     console.log(fields, fields);
 
+    busy();
     Meteor.call("newTableFromSpreadsheet", 
        $("#newTableName").val(), $("#DataImportStudy").val(), fields, rowData, 
 
        function(err, ret) {
+           unbusy();
 	   if (err)
 	       Overlay("MessageOver", { text: err })
 	   else 
@@ -218,6 +222,20 @@ function cleanUp() {
 	 minSpareCols: 0,
     });
 
+    var rowData = DataImportSpreadSheet.getData();
+
+    rowData.map(function(row, j) {
+        row.map(function(element, i) {
+            if (empty(element))
+                row[i] = '';
+        });
+    });
+
+    DataImportSpreadSheet.updateSettings({
+         data: rowData,
+         columns: null
+    });
+
     for (var i = DataImportSpreadSheet.types.length - 1; i >= 0; i--) {
         if (DataImportSpreadSheet.types[i] == "Exclude") {
             DataImportSpreadSheet.types.splice(i, 1);
@@ -225,53 +243,49 @@ function cleanUp() {
         }
     }
 
-    var rowData = DataImportSpreadSheet.getData();
+    rowData = DataImportSpreadSheet.getData();
 
     for (var j = rowData.length - 1; j >= 0; j--) {
         if (DataImportSpreadSheet.isEmptyRow(j))  {
             rowData.splice(j, 1);
         } else {
+            /*
             DataImportSpreadSheet.types.map(function(type, i) {
                 if (type == "Number" ||  type == "Date") {
                     var value = rowData[j][i];
-                    if (type == "Number" && isNan(value))
+                    if (type == "Number" && isNaN(value))
                         ;
-                    else if (type == "Date" &&  moment(v).isValid())
+                    else if (type == "Date" &&  moment(value).isValid())
                         ;
                 }
             });
+            */
         }
     }
 
     DataImportSpreadSheet.updateSettings({
          data: rowData,
-    });
+         columns: DataImportSpreadSheet.types.map(function(f) {
+            return {
+                renderer: function(hotInstance, TD, row, col, prop, value, cellProperties) {
+                        TD.style.color = 'black';
+                        TD.innerHTML = value;
+                 }
+            }
+        })
+    },
+    false);
+   Overlay("MessageOver", { text: "Clean up done" })
 };
 
 Template.DataImport.events({
- 'click #clear' : function() {
-        Overlay("Confirm", {
-            text: "Are you sure you want to clear the table?",
-
-            confirm: function() {
-                DataImportSpreadSheet.destroy();
-                initHandsontable();
-            },
-
-            cancel: function() {
-            },
-        });
- },
-
- 'click #load' : function() {
-       Overlay("LoadTable", { })
-  },
-    
  'click #cleanUp' : function(evt, tmpl) {
-    if (tmpl.dataAnalyzed)
+    if (tmpl.dataAnalyzed) {
+       busy();
        cleanUp();
-    else
-       Overlay("MessageOver", { text: "Please click analyze first and review each column's type" })
+       unbusy();
+    } else
+       Overlay("MessageOver", { text: "Please click analyze first and review each column's type and null data fields" })
   }, 
 
  'click #save' : function(evt, tmpl) {
@@ -290,9 +304,40 @@ Template.DataImport.events({
  'change #DataImportStudy' : function(evt, tmpl) {
     var study = $("#DataImportStudy").val();
     Session.set("DataImportStudy", study);
-
   },
 
+ 'change #DataImportTable' : function(evt, tmpl) {
+    var study = Session.get("DataImportStudy");
+    var table = $("#DataImportTable").val();
+    Meteor.subscribe("CRFs", [study], [table])
+    Session.set("DataImportTable", table);
+
+    Meteor.autorun(function() {
+
+        var table = Session.get("DataImportTable");
+        if (table == "New Table") {
+            DataImportSpreadSheet.destroy();
+            initHandsontable();
+        } else {
+            var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
+            var md = Collections.Metadata.findOne({study: study, name: table});
+            var dataAsRows = [md.fieldOrder];
+            dataAsDocs.map(function(doc) {
+                var row = [];
+                md.fieldOrder.map(function(attr) {
+                    if (attr in doc) {
+                        row.push(doc[attr]);
+                    } else
+                        row.push(null);
+                });
+                dataAsRows.push(row);
+            });
+
+            if (dataAsRows.length > 0)
+                DataImportSpreadSheet.updateSettings({data: dataAsRows}, false);
+        }
+   });
+ },
 
   'click #analyze' : function(evt, tmpl) {
     busy();
@@ -307,6 +352,8 @@ Template.DataImport.events({
             return  selectType( n,  DataImportSpreadSheet.types[n] );
         return null;
     }
+    function getColumns() {
+    }
 
     var ret =  DataImportSpreadSheet.updateSettings(
         {
@@ -316,6 +363,18 @@ Template.DataImport.events({
 
             afterGetColHeader: function(col, TH) {
             },
+
+            columns: DataImportSpreadSheet.types.map(function(f) {
+                return {
+                    renderer: function(hotInstance, TD, row, col, prop, value, cellProperties) {
+                            TD.style.color = 'blue';
+                            if (empty(value))
+                                TD.innerHTML = value + '<span style="color:red">NULL</span>';
+                            else
+                                TD.innerHTML = value;
+                     }
+                }
+            })
         },
         false);
     console.log( DataImportSpreadSheet.types );
@@ -374,55 +433,4 @@ readFile = function(f,onLoadCallback) {
  reader.readAsText(f);
 };
 
-Template.LoadTable.events({
- 'change #DataImportTable' : function(evt, tmpl) {
-    var study = Session.get("DataImportStudy");
-    var table = $("#DataImportTable").val();
-    Meteor.subscribe("CRFs", [study], [table])
-
-    if (study == "New Table" && DocumentModified)
-        Overlay("Confirm", {
-            confirm: function() {
-                Session.set("DataImportTable", table);
-            },
-            cancel: function() {
-            },
-        });
-    else
-        Session.set("DataImportTable", table);
-
-    Meteor.autorun(function() {
-        var table = Session.get("DataImportTable");
-        if (table == "New Table") {
-            DataImportSpreadSheet.destroy();
-            initHandsontable();
-        } else {
-            var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
-            var md = Collections.Metadata.findOne({study: study, name: table});
-            var dataAsRows = [md.fieldOrder];
-            dataAsDocs.map(function(doc) {
-                var row = [];
-                md.fieldOrder.map(function(attr) {
-                    if (attr in doc) {
-                        row.push(doc[attr]);
-                    } else
-                        row.push(null);
-                });
-                dataAsRows.push(row);
-            });
-
-            if (dataAsRows.length > 0)
-                DataImportSpreadSheet.updateSettings({data: dataAsRows}, false);
-        }
-   });
- },
-});
-
-Template.LoadTable.helpers({
-    'tablesFor': function(study) {
-         debugger
-         var allTables = Collections.Metadata.find({study: study.id}, {sort: {name:1}}).fetch();
-         return allTables;
-     }
-});
 

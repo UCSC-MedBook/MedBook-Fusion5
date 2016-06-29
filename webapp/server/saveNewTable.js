@@ -47,7 +47,7 @@ function convertData(target_field, datum) {
 
 Meteor.methods( {
    newTableFromSpreadsheet : function(target_name, studyForNewTable, fields, source_data) {
-        console.log(" newTableFromSpreadsheet", target_name, studyForNewTable, source_data);
+        // console.log(" newTableFromSpreadsheet", target_name, studyForNewTable, source_data);
 
 	var columns = pruneTable(source_data);
 	fields.splice(columns.length); // prune and then validate columns
@@ -61,7 +61,7 @@ Meteor.methods( {
 	   throw new Meteor.Error("User is unknown");
 
 	if (studyForNewTable != "user:" + user.username) {
-	    var study = Collection.studies.find({id: studyForNewTable}, {fields: {collaborations:1, id:1}});
+	    var study = Collections.studies.find({id: studyForNewTable}, {fields: {collaborations:1, id:1}});
 	    if (study == null) throw new Meteor.Error("Study not found");
 
 	    if (_.intersection(study.collaborations, user.profile.collaborations).length == 0) 
@@ -108,7 +108,7 @@ Meteor.methods( {
    },
 
    newTable : function(target_name, studyForNewTable, source_data, source_chart_id) {
-        console.log(" newTable", target_name, studyForNewTable, source_data, source_chart_id);
+        // console.log(" newTable", target_name, studyForNewTable, source_data, source_chart_id);
 
         if (this.userId == null)
 	   throw new Meteor.Error("User must login");
