@@ -120,6 +120,7 @@ function SeedDataFromStartTables(ChartDocument) {
     var inStudies = {$in:ChartDocument.studies}; 
     ChartDocument.studyCache = {};
     ChartDocument.chartData = [];
+    ChartDocument.samplelist = [];
     ChartDocument.metadata  = {};
 
     if (ChartDocument.Join == null)
