@@ -12,13 +12,15 @@ GeneLikeDataDomainsPrototype = [
         subscriptionName: "GeneExpression",
         queryField: 'gene_label',
         field: "rsem_quan_log2",
-        state: false,
+        state: true,
         data_set_label_name: 'data_set_id',
         sample_label_name: null,
         gene_label_name: 'gene_label',
 	index: { "gene_label" : 1, "data_set_label" : 1 },
 	field_type: "Number",
-    },
+    }
+/*
+,
     {
         format_type: 2,
         label: "Mutations",
@@ -38,6 +40,7 @@ GeneLikeDataDomainsPrototype = [
 	field_type: "String",
 
     },
+    */
 ];
 
 
