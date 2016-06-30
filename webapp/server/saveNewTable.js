@@ -27,7 +27,9 @@ function convertData(target_field, datum) {
 
     if (datum == null)
         return null;
-    datum = datum.trim();
+
+    if (typeof datum == "string")
+        datum = datum.trim();
     if (datum == "")
         return null;
 

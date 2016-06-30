@@ -64,17 +64,39 @@
 </template>
 
 <template name="DataSave">
-    <select id="DataSave" >
-        <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
-        {{#each data_sets}}
-            <option value="{{this._id}}">{{this.name}}</option>
-        {{/each}}
-    </select>
-    <select id="DataSave" style="margin-top:20px;">
-        <option selected value="New Table">New Table</option>
-        {{#each tables}}
-            <option value="{{this._id}}">{{this.name}}</option>
-        {{/each}}
-    </select>
-    <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
+
+ <div class="MessageOver">
+    <div class="panel panel-default">
+      <div class="panel-heading" > <h3>Save Data</h3> </div>
+      <div  class="panel-body ">
+        <br>
+        <select id="DataSaveDataset" >
+            <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+            {{#each data_sets}}
+                <option value="{{this._id}}">{{this.name}}</option>
+            {{/each}}
+        </select>
+        <br>
+        <select id="DataSaveTable" style="margin-top:20px;">
+            <option selected value="none">Change an existing table</option>
+            {{#each tables}}
+                <option value="{{this._id}}">{{this.name}}</option>
+            {{/each}}
+            <option value="New Table">Create a New Table</option>
+        </select>
+        {{#if $.Session.equals "DataSaveTable" "New Table" }}
+            <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
+        {{/if}}
+
+          <center>
+          <span>
+              <button class="OK btn btn-primary" style="margin:10px;" type="button">OK</button>
+              &nbsp;
+              <button class="CANCEL btn btn-primary" style="margin:10px;" type="button">CANCEL</button>
+          </span>
+          </center>
+        </div>
+     </div>
+ </div>
+
 </template>

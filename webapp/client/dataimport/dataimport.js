@@ -65,7 +65,7 @@ Template.DataSave.helpers({
       return ret;
    },
    tables : function() {
-       var dis = Session.get("DataImportDataSet");
+       var dis = Session.get("DataSaveDataset");
        if (dis)
            return Collections.Metadata.find({data_set: dis}, {fields: {"name":1}})
        return [];
@@ -198,14 +198,18 @@ function saveTable(rowData) {
     });
     console.log(fields, fields);
 
+    var table_name = Session.get("DataSaveTable");
+    if (table_name == null || table_name == "New Table" || table_name == "")
+        return alert("please fill in new table name");
+
     busy();
     Meteor.call("newTableFromSpreadsheet", 
-       $("#newTableName").val(), $("#DataImportDataSet").val(), fields, rowData, 
+       table_name, $("#DataImportDataSet").val(), fields, rowData, 
 
        function(err, ret) {
            unbusy();
 	   if (err)
-	       Overlay("MessageOver", { text: err })
+	       Overlay("MessageOver", { text: "ERROR:" +err })
 	   else 
 	       Overlay("MessageOver", { text: ret })
        }
@@ -292,6 +296,32 @@ function cleanUp() {
    Overlay("MessageOver", { text: "Clean up done" })
 };
 
+Template.DataSave.events({
+ 'change #DataSaveDataset' : function(evt, tmpl) {
+    var data_set = $(evt.target).val();
+    Session.set("DataSaveDataset", data_set);
+  },
+
+ 'change #DataSaveTable' : function(evt, tmpl) {
+    var table_name = $(evt.target).val();
+    Session.set("DataSaveTable", table_name);
+  },
+
+ 'change #newTableName' : function(evt, tmpl) {
+    var table_name = $(evt.target).val();
+    Session.set("DataSaveTable", table_name);
+  },
+
+ 'click .CANCEL' : function(evt, tmpl) {
+       OverlayClose();
+ },
+ 'click .OK' : function(evt, tmpl) {
+    var rowData = _.clone(DataImportSpreadSheet.getData());
+    saveTable(rowData);
+    OverlayClose();
+  }, 
+});
+
 Template.DataImport.events({
  'click #cleanUp' : function(evt, tmpl) {
     if (tmpl.dataAnalyzed) {
@@ -304,8 +334,7 @@ Template.DataImport.events({
 
  'click #save' : function(evt, tmpl) {
     if (tmpl.dataAnalyzed) {
-        var rowData = _.clone(DataImportSpreadSheet.getData());
-        saveTable(rowData);
+       Overlay("DataSave")
     } else
        Overlay("MessageOver", { text: "Please click analyze first and review each column's type" })
   }, 
