@@ -134,7 +134,7 @@ function SeedDataFromStartTables(ChartDocument) {
 
     // cache data_sets
     Collections.data_sets.find({_id: inDataSets}).forEach(function(data_set) {
-        console.log("adding data_set", data_set._id);
+        // console.log("adding data_set", data_set._id);
 
         // TBD: make sure the user has access to this data_set.
         //
@@ -338,6 +338,7 @@ function JoinAllGeneLikeInformation(ChartDocument) {
         ChartDocument.geneLikeDataDomain
           .filter(function(domain) {return domain.state})
           .map(function(domain) {
+
             var query = {};
             if (domain.data_set_label_name)
                 query[domain.data_set_label_name] = {$in: ChartDocument.data_sets};
@@ -354,15 +355,24 @@ function JoinAllGeneLikeInformation(ChartDocument) {
 	        var data_setCache = {};
 
 		cursor.forEach(function(geneData) {
-		    if (!(geneData.data_set_label in data_setCache)) 
-		        data_setCache[geneData.data_set_label] = Collections.data_sets.findOne({_id: geneData.data_set_label})
+		    if (!(geneData.data_set_id in data_setCache)) 
+		        data_setCache[geneData.data_set_id] = Collections.data_sets.findOne({_id: geneData.data_set_id})
 
-		    var data_set = data_setCache[geneData.data_set_label];
+		    var data_set = data_setCache[geneData.data_set_id];
 		    var field_label = geneData.gene_label + ' ' + domain.labelItem;
 		    ChartDocument.samplelist.map(function(sample_label) {
-			if (!(sample_label in ChartDocument.chartDataMap))
-                            ChartDocument.chartDataMap[sample_label] = {};
-			ChartDocument.chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[data_set.gene_expression_index[sample_label]];
+                        var parts = sample_label.split('/');
+                        var data_set_name = parts[0];
+                        var key = parts[1];
+
+                        if (data_set_name == data_set.name && key in data_set.gene_expression_index) {
+                            var i = data_set.gene_expression_index[key];
+
+                            if (ChartDocument.chartDataMap[sample_label][field_label] != null)
+                                console.log("OVERWRITE", sample_label, field_label, key, data_set._id, ChartDocument.chartDataMap[sample_label][field_label], geneData.rsem_quan_log2[i]);
+
+                            ChartDocument.chartDataMap[sample_label][field_label] = geneData.rsem_quan_log2[i];
+                        }
 		    });
 		    if (ChartDocument.metadata[field_label] == null)
 			ChartDocument.metadata[field_label] = { 
@@ -380,26 +390,7 @@ function JoinAllGeneLikeInformation(ChartDocument) {
                 var geneName = geneData[domain.gene_label_name];
                 var label = geneName + ' ' + domain.labelItem;
 
-                if (domain.format_type == 3) {  // signature scores
-                    if (sampleID in ChartDocument.chartDataMap) {
-                        var obj = geneData;
-                        var fields = domain.field.split('.');
-                        fields.map(function(field){ obj = obj[field]; });
-
-                        // console.log("found", label, geneName, sampleID, obj, fields, geneData);
-			if (!(sampleID in ChartDocument.chartDataMap))
-                            ChartDocument.chartDataMap[sampleID] = {};
-                        ChartDocument.chartDataMap[sampleID][label] = obj;
-			if (ChartDocument.metadata[label] == null)
-			    ChartDocument.metadata[label] = { 
-				collection: domain.collection,
-				crf: null, 
-				label: label,
-				type: domain.field_type
-			    };
-                    }
-
-                } else if (domain.format_type == 2) {  // sample names are stored as attributes
+                if (domain.format_type == 2) {  // sample names are stored as attributes
                     if (sampleID in ChartDocument.chartDataMap) {
                         var obj = geneData;
                         var fields = domain.field.split('.');
@@ -418,45 +409,7 @@ function JoinAllGeneLikeInformation(ChartDocument) {
 				type: domain.field_type
 			    };
                     }
-                } else if (domain.format_type == 1) {  // sample names are stored as labels
-                    var label = ('transcript' in geneData) 
-                        ? geneName + ' ' + geneData.transcript + ' ' + domain.labelItem
-                        : geneName + ' ' + domain.labelItem
-                    label = label.replace(/\./g,"_");
-                    var samplelist =  ChartDocument.samplelist  && ChartDocument.samplelist.length > 0 ?
-			_.intersection( ChartDocument.samplelist, Object.keys(geneData.samples) )
-			: Object.keys(geneData.samples);
-
-
-                    samplelist.map(function (sampleID) {
-                        var fields = domain.field.split('.');
-
-                        var obj = geneData.samples[sampleID];
-                        fields.map(function(field){ obj = obj[field]; });
-
-                        var f = parseFloat(obj);
-                        if (!isNaN(f)) {
-                            if (!(sampleID in ChartDocument.chartDataMap))
-                                ChartDocument.chartDataMap[sampleID] = {};
-                            ChartDocument.chartDataMap[sampleID][label] = f;
-
-                            if (ChartDocument.metadata[label] == null) {
-                                var m = {
-                                    collection: domain.collection,
-                                    crf: null, 
-                                    label: label,
-                                    type: domain.field_type
-                                };
-                                if (domain.field_type == "String" && typeof(obj) == "string") {
-                                   if (m.allowedValues == null) m.allowedValues = [];
-                                    m.allowedValues = _.union( m.allowedValues, obj);
-                                }
-
-                                ChartDocument.metadata[label] = m;
-                            }
-                        }
-                    });
-                } // else if geneData.gene
+                }
             }); //cursor.forEach
 
             //  Samples without mutations need to have a wt
