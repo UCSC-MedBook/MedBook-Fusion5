@@ -10,12 +10,12 @@
 
             <div class="panel panel-default">
                 <div class="panel-heading" >
-                    <h4>Select a study and a table name</h4>
+                    <h4>Select a data_set and a table name</h4>
 
-                        <select id="DataImportStudy" >
-                            <option selected value="{{myStudy}}">{{myStudy}}</option>
-                            {{#each studies}}
-                                <option value="{{this.id}}">{{this.name}}</option>
+                        <select id="DataImportDataSet" >
+                            <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+                            {{#each data_sets}}
+                                <option value="{{this._id}}">{{this.name}}</option>
                             {{/each}}
                         </select>
 

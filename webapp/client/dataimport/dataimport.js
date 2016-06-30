@@ -1,7 +1,7 @@
 DataImportSpreadSheet = null;
 
 Meteor.startup(function() {
-    Session.set("DataImportStudy", MyStudy())
+    Session.set("DataImportDataSet", MyStudy())
 });
 
 
@@ -47,14 +47,14 @@ function initHandsontable() {
 Template.DataImport.rendered = initHandsontable;
 
 Template.DataImport.helpers({
-   studies : function() {
-      var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+   data_sets : function() {
+      var ret = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
       return ret;
    },
    tables : function() {
-       var dis = Session.get("DataImportStudy");
+       var dis = Session.get("DataImportDataSet");
        if (dis)
-           return Collections.Metadata.find({study: dis}, {fields: {"name":1}})
+           return Collections.Metadata.find({data_set: dis}, {fields: {"name":1}})
        return [];
    }
 });
@@ -186,7 +186,7 @@ function saveTable(rowData) {
 
     busy();
     Meteor.call("newTableFromSpreadsheet", 
-       $("#newTableName").val(), $("#DataImportStudy").val(), fields, rowData, 
+       $("#newTableName").val(), $("#DataImportDataSet").val(), fields, rowData, 
 
        function(err, ret) {
            unbusy();
@@ -198,7 +198,7 @@ function saveTable(rowData) {
     );
 }
 
-var types = ["Unknown", "Number","String", "Date", "Exclude", "Sample_ID", "Patint_ID"];
+var types = ["Unknown", "Number","String", "Date", "Exclude", "sample_label", "Patint_ID"];
 
 function selectType(columnNumber, current) {
 
@@ -301,15 +301,15 @@ Template.DataImport.events({
      DataImportSpreadSheet.types[columnnumber] = evt.target.value;
   },
 
- 'change #DataImportStudy' : function(evt, tmpl) {
-    var study = $("#DataImportStudy").val();
-    Session.set("DataImportStudy", study);
+ 'change #DataImportDataSet' : function(evt, tmpl) {
+    var data_set = $("#DataImportDataSet").val();
+    Session.set("DataImportDataSet", data_set);
   },
 
  'change #DataImportTable' : function(evt, tmpl) {
-    var study = Session.get("DataImportStudy");
+    var data_set = Session.get("DataImportDataSet");
     var table = $("#DataImportTable").val();
-    Meteor.subscribe("CRFs", [study], [table])
+    Meteor.subscribe("CRFs", [data_set], [table])
     Session.set("DataImportTable", table);
 
     Meteor.autorun(function() {
@@ -319,8 +319,8 @@ Template.DataImport.events({
             DataImportSpreadSheet.destroy();
             initHandsontable();
         } else {
-            var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
-            var md = Collections.Metadata.findOne({study: study, name: table});
+            var dataAsDocs = Collections.CRFs.find({ "data_set_id" : data_set, "CRF" : table }, { sort: { sample_label: 1, patient_label:1 }}).fetch();
+            var md = Collections.Metadata.findOne({data_set: data_set, name: table});
             var dataAsRows = [md.fieldOrder];
             dataAsDocs.map(function(doc) {
                 var row = [];

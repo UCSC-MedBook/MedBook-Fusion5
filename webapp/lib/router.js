@@ -66,7 +66,7 @@ function waitOn() {
       Meteor.subscribe('TheChart', this.params._id || this.params.query.id),
       Meteor.subscribe('FusionFeatures'),
       Meteor.subscribe('Metadata'),
-      Meteor.subscribe('studies')
+      Meteor.subscribe('data_sets')
     ];
 }
 
@@ -119,11 +119,11 @@ Router.map(function() {
       return [
 	  Meteor.subscribe('Metadata'),
 	  Meteor.subscribe('FusionFeatures'),
-	  Meteor.subscribe('studies')
+	  Meteor.subscribe('data_sets')
       ];
     },
     onBeforeAction : function(arg) {
-       Session.set("BrowseStudies", null);
+       Session.set("BrowseDataSets", null);
        Session.set("BrowseTable", null);
        this.next();
     }
@@ -138,7 +138,7 @@ Router.map(function() {
     template: null,
     onBeforeAction : function(arg) {
 	var data = Session.get('ChartDataFinal');
-	var name = Session.get('CurrentChart').studies.join("_") + "_" + data.length + ".txt";
+	var name = Session.get('CurrentChart').data_sets.join("_") + "_" + data.length + ".txt";
 	var keys = Session.get("ChartDataFinalKeys");
 
 	saveTextAs(ConvertToTSV(data, keys), name);
@@ -157,11 +157,11 @@ Router.map(function() {
       return [
 	  Meteor.subscribe('Metadata'),
 	  Meteor.subscribe('FusionFeatures'),
-	  Meteor.subscribe('studies')
+	  Meteor.subscribe('data_sets')
       ];
     },
     onBeforeAction : function(arg) {
-       Session.set("BrowseStudies", null);
+       Session.set("BrowseDataSets", null);
        Session.set("BrowseTable", null);
        this.next();
     }
@@ -177,11 +177,11 @@ Router.map(function() {
       return [
 	  Meteor.subscribe('Metadata'),
 	  Meteor.subscribe('FusionFeatures'),
-	  Meteor.subscribe('studies')
+	  Meteor.subscribe('data_sets')
       ];
     },
     onBeforeAction : function(arg) {
-       Session.set("BrowseStudies", null);
+       Session.set("BrowseDataSets", null);
        Session.set("BrowseTable", null);
        this.next();
     }
@@ -189,28 +189,28 @@ Router.map(function() {
 });
 
 Router.map(function() {
-  this.route('fusionTablesStudyTable', {
+  this.route('fusionTablesDataSets', {
     template: "TableBrowser",
-    path: '/fusion/tables/:_study/:_table/',
+    path: '/fusion/tables/:_data_set/:_table/',
     data: data,
     waitOn: function() {
        return [Meteor.subscribe("Metadata"), Meteor.subscribe('FusionFeatures')]
     },
     onBeforeAction : function(arg) {
-       var study =  this.params._study;
+       var data_set =  this.params._data_set;
        var table = this.params._table;
        var user = Meteor.user();
 
-       if (study === null) {
+       if (data_set === null) {
 	   var last = user && user.profile && user.profile.lastCRFroute;
 	   if (last) {
 	       var a = last.split("/");
-	       study = a[2];
+	       data_set = a[2];
 	       table = a[3];
 	   }
        }
 
-       Session.set("BrowseStudies", [study]);
+       Session.set("BrowseDataSets", [data_set]);
        Session.set("BrowseTable", table);
        this.next();
     }
@@ -226,7 +226,7 @@ Router.map(function() {
        return [
 	   Meteor.subscribe("Metadata"),
 	   Meteor.subscribe('FusionFeatures'),
-	   Meteor.subscribe('studies')
+	   Meteor.subscribe('data_sets')
      ];
     }
   });
@@ -245,12 +245,12 @@ Router.map(function() {
           Meteor.subscribe('TheChart', this.params._id || this.params.query.id),
           Meteor.subscribe('FusionFeatures'),
           Meteor.subscribe('Metadata'),
-          Meteor.subscribe('studies')
+          Meteor.subscribe('data_sets')
       ];
     },
 
     onBeforeAction : function(arg) {
-       Session.set("BrowseStudies", null);
+       Session.set("BrowseDataSets", null);
        Session.set("BrowseTable", null);
        this.next();
     }
@@ -282,14 +282,14 @@ function parseCookies (request) {
     return list;
 }
 
-function genomicDataMutations(coll, samplesAllowed, study, response)  {
-  var cursor = coll.find( { study_label: study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+function genomicDataMutations(coll, samplesAllowed, data_set, response)  {
+  var cursor = coll.find( { data_set_label: data_set._id }, {sort:{gene_label:1, sample_label:1, data_set_label:1}});
   cursor.forEach(function(doc) { response.write(JSON.stringify(doc)); });
 }
 
 
-function genomicDataMutationsRectangle(coll, samplesAllowed, study, stream)  {
-  var cursor = coll.find( { study_label: study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+function genomicDataMutationsRectangle(coll, samplesAllowed, data_set, stream)  {
+  var cursor = coll.find( { data_set_label: data_set._id }, {sort:{gene_label:1, sample_label:1, data_set_label:1}});
   var gene_label = null;
   var bucket = {};
   function flush(symbol) {
@@ -314,13 +314,13 @@ function genomicDataMutationsRectangle(coll, samplesAllowed, study, stream)  {
   flush(gene_label);
 }
 
-function genomicDataSamples3(coll, study, response)  {
-      var sort_order = study.Sample_IDs.sort().map(function( sample_id) {
-	  return study.gene_expression_index[sample_id];
+function genomicDataSamples(coll, data_set, response)  {
+      var sort_order = data_set.sample_labels.sort().map(function( sample_id) {
+	  return data_set.gene_expression_index[sample_id];
       })
       var tick = Date.now();
 
-      var cursor = Expression3.find({ study_label:  study.id }, {sort:{gene_label:1, sample_label:1, study_label:1}});
+      var cursor = GeneExpression.find({ data_set_label:  data_set._id }, {sort:{gene_label:1, sample_label:1, data_set_label:1}});
       var count = cursor.count();
       console.log( "core uncork end", response.cork == null, response.uncork == null, response.end == null);
       console.log("cork", response.cork == null);
@@ -350,10 +350,10 @@ function genomicDataSamples3(coll, study, response)  {
 }
 
 
-function clinical(coll, samplesAllowed, study_label, response)  {
+function clinical(coll, samplesAllowed, data_set_label, response)  { FIX
   coll.find(
-	  {Study_ID: study_label},
-	  {sort:{gene:1, studies:1}}).forEach(function(doc) {
+	  {data_set_id: data_set_id},
+	  {sort:{gene:1, data_sets:1}}).forEach(function(doc) {
 	      var line = doc.gene;
 	      if ('transcript' in doc) // for isoforms
 		 line  += ' '+ doc.transcript;
@@ -379,12 +379,12 @@ if (Meteor.isServer) {
 	GeneLikeDataDomainsPrototype.map(function(domain) {
 	    if (domain.index) {
 	        console.log("Ensuring index ", domain.collection);
-		DomainCollections[domain.collection]._ensureIndex(domain.index);
+		// DomainCollections[domain.collection]._ensureIndex(domain.index);
 	    }
 	})
-        Expression3._ensureIndex( {study_label: 1} );
-        Expression3._ensureIndex( {gene_label:1, sample_label:1, study_label:1});
-        Expression3._ensureIndex( {study_label:1, gene_label:1, sample_label:1, study_label:1});
+        GeneExpression._ensureIndex( {data_set_label: 1} );
+        GeneExpression._ensureIndex( {gene_label:1, sample_label:1, data_set_label:1});
+        GeneExpression._ensureIndex( {data_set_label:1, gene_label:1, sample_label:1, data_set_label:1});
     });
 };
 
@@ -440,27 +440,27 @@ exportData = function() {
       table = this.params.query.table;
   }
 
-  // Studies requsted parameter, default to prad_wcdt for now
-  var study_query = { }
-  if (this.params && this.params.query && this.params.query.study && this.params.query.study.length > 0)
-      study_query.id = this.params.query.study;
+  // DataSets requsted parameter, default to prad_wcdt for now
+  var data_set_query = { }
+  if (this.params && this.params.query && this.params.query.data_set && this.params.query.data_set.length > 0)
+      data_set_query._id = this.params.query.data_set;
   else
-      study_query.id = "prad_wcdt";
+      data_set_query._id = "prad_wcdt";
 
   // Filename parameter
-  var attachmentFilename = table + '_' + study_query.id + '.txt';
+  var attachmentFilename = table + '_' + data_set_query._id + '.txt';
   if (this.params && this.params.query && this.params.query.filename)
       attachmentFilename = this.params.query.filename;
 
 
-  // Filter studies to only thosea allowed by collaborations
+  // Filter data_sets to only thosea allowed by collaborations
   if (!isLocal) 
-      study_query.collaborations = {$in: ["public"].concat(collaborations)};
+      data_set_query.collaborations = {$in: ["public"].concat(collaborations)};
 
-  study = Collections.studies.findOne( study_query );
+  data_set = Collections.data_sets.findOne( data_set_query );
 
-  if (study == null) {
-     console.log("No Study Found", study_query);
+  if (data_set == null) {
+     console.log("No Study Found", data_set_query);
      response.end();
      return;
   }
@@ -506,26 +506,26 @@ exportData = function() {
   if (kind == "genomic") {
 
       outstream.write("Gene");
-      study.Sample_IDs.map(function(sample_label) {
+      data_set.sample_labels.map(function(sample_label) {
 	  outstream.write("\t");
 	  outstream.write(sample_label);
       });
       outstream.write("\n");
       var coll =  DomainCollections[table];
       if (table == "Mutations")
-	  genomicDataMutations(coll, study.Sample_IDs, study, outstream);
+	  genomicDataMutations(coll, data_set.sample_labels, data_set, outstream);
       else 
-	  genomicDataSamples3(Expression3, study, outstream);
+	  genomicDataSamples(GeneExpression, data_set, outstream);
 
   } else if (kind == "clinical") {
       var meta = Collections.Metadata.findOne({name: table});
       var q = {
 	      CRF: table,
-	      Study_ID: study.id,
+	      data_set_id: data_set._id,
 	  };
       console.log("q", q);
 
-      var data = Collections.CRFs.find(q, {sort: {Sample_ID:1}}).fetch();
+      var data = Collections.CRFs.find(q, {sort: {sample_label:1}}).fetch();
 
       data.map(function(row,i) {
 	  Object.keys(row).map(function(key) {
@@ -575,7 +575,7 @@ exportChart = function() {
   var chart = Charts.findOne({_id: this.params.query.id });
   if (chart) {
       var ptc = chart.pivotTableConfig;
-      var keys = ["Patient_ID", "Sample_ID"].concat(ptc.cols, ptc.rows);
+      var keys = ["patient_label", "sample_label"].concat(ptc.cols, ptc.rows);
       response.write(keys.join("\t")+"\n");
 
       chart.chartData.map(function(doc) {

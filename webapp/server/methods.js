@@ -58,7 +58,7 @@ summarizeVariances = function(collName) {
                console.log("summarizeVariances", geneDoc.gene, n);
             var samples = geneDoc.samples;
             var data = Object.keys(samples)
-            if (geneDoc.Study_ID == "prad_wcdt")
+            if (geneDoc.data_set_id == "prad_wcdt")
                 data = data.filter(function(sampleName) {
                                     return sampleName.match(/^DTB/);
                                 });
@@ -80,24 +80,24 @@ summarizeVariances = function(collName) {
 };
 
 Meteor.startup(function() {
-    GeneStatistics._ensureIndex({ study_label: 1, gene_label:1}); 
+    GeneStatistics._ensureIndex({ data_set_label: 1, gene_label:1}); 
 });
 
 /*
 migrateExpressionToGeneExpression = function() {
-    Expression.find({Study_ID: "prad_tcga"}).forEach(function(doc) {
+    Expression.find({data_set_id: "prad_tcga"}).forEach(function(doc) {
         console.log(doc.gene);
         Object.keys(doc.samples).map(function(sample_label) {
             GeneExpression.upsert(
             {
                 collaborations: doc.collaborations,
-                study_label: doc.Study_ID,
+                data_set_label: doc.data_set_id,
                 gene_label: doc.gene,
                 sample_label: sample_label
             },
             {
                 collaborations: doc.collaborations,
-                study_label: doc.Study_ID,
+                data_set_label: doc.data_set_id,
                 gene_label: doc.gene,
                 sample_label: sample_label
             }
@@ -115,28 +115,28 @@ makeStats = function(args) {
     var start = new Date();
     var collections = [ GeneExpression ];
     var genes = GeneExpression.distinct("gene_label");
-    var studies = Collections.studies.find().fetch();
+    var data_sets = Collections.data_sets.find().fetch();
 
     console.log("makeStats");
-    studies.map(function(study) {
-        if (study.Sample_IDs == null || study.Sample_IDs.length == 0)
+    data_sets.map(function(data_set) {
+        if (data_set.sample_labels == null || data_set.sample_labels.length == 0)
             return;
 
-        if (args != null && study.id != args[0])
+        if (args != null && data_set._id != args[0])
             return;
 
 
         // hack
-        if (study.id == "prad_wcdt")
-            study.Sample_IDs = study.Sample_IDs.filter(function(sampleName) { return sampleName.match(/^DTB/); });
+        if (data_set._id == "prad_wcdt")
+            data_set.sample_labels = data_set.sample_labels.filter(function(sampleName) { return sampleName.match(/^DTB/); });
 
         var countGenes = 0;
         var countValues = 0;
         genes.map(function(gene_label) {
-            var geneData = GeneExpression.find({study_label: study.id, gene_label: gene_label, sample_label: {$in: study.Sample_IDs }}).fetch();
+            var geneData = GeneExpression.find({data_set_label: data_set._id, gene_label: gene_label, sample_label: {$in: data_set.sample_labels }}).fetch();
             var data = geneData.map(function(geneDatum) { return geneDatum.values.quantile_counts_log;});
 
-            console.log("makeStats", study.id,  gene_label, geneData.length);
+            console.log("makeStats", data_set._id,  gene_label, geneData.length);
 
             var variance = ss.variance(data);
             var mean = ss.mean(data);
@@ -146,7 +146,7 @@ makeStats = function(args) {
 
             GeneStatistics.upsert(
                 {
-                    study_label: study.id,
+                    data_set_label: data_set._id,
                     gene_label: gene_label,
                 }, 
                 {$set: {
@@ -156,7 +156,7 @@ makeStats = function(args) {
             }});
 
         });
-        console.log("makeStats", study.id,  "time", new Date() - start, "countGenes",countGenes, "countValues", countValues);;
+        console.log("makeStats", data_set._id,  "time", new Date() - start, "countGenes",countGenes, "countValues", countValues);;
     });
 }
 
@@ -188,7 +188,7 @@ Meteor.methods({
    muts: function() {
         var expfile = path.join(workDir, 'expdata.tab')
 
-        console.log('sample list length from study', studyID , Object.keys(sampleList).length )
+        console.log('sample list length from data_set', data_setID , Object.keys(sampleList).length )
         console.log('input files', expfile, phenofile)
 
         var exp_curs = Expression.find({'gene':{$in:gene}}, sampleList);
@@ -233,7 +233,7 @@ Meteor.methods({
 
                    var geneId = d._id;
                    if (!(patientId in patientMap)) {
-                       var patientRow = {Patient_ID : patientId};
+                       var patientRow = {patient_label : patientId};
                        patientMap[patientId] = patientRow;
                        patientList.push(patientRow);
                    }
@@ -280,7 +280,7 @@ Meteor.methods({
        });
        s += "\n";
        patientList.map(function(patient) {
-           s += patient.Patient_ID;
+           s += patient.patient_label;
            keyList.map(function(key) {
                if (key in patient)
                    s += "\t" + patient[key];

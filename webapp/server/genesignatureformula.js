@@ -117,20 +117,20 @@ ProcessGeneSignatureFormula = function(chart) {
 
     var geneCache = {};
     var q = {
-	study_label: {$in: chart.studies},
+	data_set_label: {$in: chart.data_sets},
 	gene_label: {$in: gene_labels}
     } 
-    Expression3.find(q).forEach(function(gene) {
-       geneCache[gene.study_label + gene.gene_label] = gene;
+    GeneExpression.find(q).forEach(function(gene) {
+       geneCache[gene.data_set_label + gene.gene_label] = gene;
     });
 
 
 
-    var studiesCache = {};
+    var data_setsCache = {};
     var sample_labels = [];
-    Collections.studies.find({ id: {$in: chart.studies} }).forEach(function(study) { 
-	studiesCache[study.id] = study;
-	sample_labels = _.union(sample_labels, study.Sample_IDs);
+    Collections.data_sets.find({ _id: {$in: chart.data_sets} }).forEach(function(data_set) { 
+	data_setsCache[data_set._id] = data_set;
+	sample_labels = _.union(sample_labels, data_set.sample_labels);
     });
     if (chart.samplelist && chart.samplelist.length > 0)
 	sample_labels = _.intersection(sample_labels, chart.samplelist);
@@ -143,12 +143,12 @@ ProcessGeneSignatureFormula = function(chart) {
 	var sandbox = {gene_label: gene_label};
 	chart.chartData.map(function(elem) {
 	    // Tricky join.
-	    var study = studiesCache[elem.Study_ID];
-	    var gene = geneCache[ elem.Study_ID + gene_label ]; 
-	    var n = gene ?  gene.rsem_quan_log2[study.gene_expression_index[ elem.Sample_ID]] : "NA"
+	    var data_set = data_setsCache[elem.data_set_id];
+	    var gene = geneCache[ elem.data_set_id + gene_label ]; 
+	    var n = gene ?  gene.rsem_quan_log2[data_set.gene_expression_index[ elem.sample_label]] : "NA"
 	    if (n == null) 
 	    	n = "NA";
-	    sandbox[elem.Sample_ID] = n;
+	    sandbox[elem.sample_label] = n;
 	});
 	gene_sandbox.push(sandbox);
     });
@@ -176,7 +176,7 @@ ProcessGeneSignatureFormula = function(chart) {
 	    scores.map(function(score) { score_map[score.sample_label] = score; });
 
 	    chart.chartData.map(function(elem) {
-		var score = score_map[elem.Sample_ID];
+		var score = score_map[elem.sample_label];
 		if (score)
 		   Object.keys(score).map(function(score_label) {
 		       elem[score_label] = Number(score[score_label]);

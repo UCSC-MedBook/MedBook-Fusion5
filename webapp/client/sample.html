@@ -49,24 +49,24 @@
         <div class="panel panel-default">
           <div class="panel-heading" data-toggle="collapse" data-target="#p1" >
 
-              <h3 class="panel-title">1. Select Studies and Tables (required)</h3>
+              <h3 class="panel-title">1. Select DataSets and Tables (required)</h3>
            </div>
            <div id="p1" class="panel-body collapse">
 
-             <select id="studies"  multiple="multiple">
-                {{#each studies}}
+             <select id="data_sets"  multiple="multiple">
+                {{#each data_sets}}
                     <option {{this.selected}} value="{{this.id}}">{{this.name}}</option>
                 {{/each}}
              </select>
              <div>
                 <ul class="list-unstyled" >
-                   {{#each studiesSelected2}}
+                   {{#each data_setsSelected2}}
                        <li >
                            <ul class="list-unstyled" >
                                <b>{{this.name}}</b>
                            {{#each tablesFor this}}
                                <li style="margin-left:15px;"> {{this.name}} 
-                               <input class="StartTables" data-study="{{this.study}}" data-table="{{this.name}}" {{this.checked}} type="checkbox" id="cbox1" >
+                               <input class="StartTables" data-data_set="{{this.data_set}}" data-table="{{this.name}}" {{this.checked}} type="checkbox" id="cbox1" >
                                </li>
                             {{else}}
                                 <li style="margin-left:8px;"><i>No tables for {{this.name}}</i></li>
@@ -123,12 +123,12 @@
            </div>
            <div id="p4" class="panel-body collapse">
                   Highlight these samples:
-                  <input style="width:100%;" id="focuslist" placeholder="Enter PatientID or Sample ID">
+                  <input style="width:100%;" id="focuslist" placeholder="Enter patient_label or sample_label">
 
                   <div style="margin:20px"></div>
 
                   Show only these samples:
-                  <input style="width:100%;" id="samplelist" placeholder="Enter PatientID or Sample ID">
+                  <input style="width:100%;" id="samplelist" placeholder="Enter patient_label or sample_label">
                   <div id="builder"></div>
             </div>
         </div>
