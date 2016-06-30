@@ -204,7 +204,7 @@ function saveTable(rowData) {
 
     busy();
     Meteor.call("newTableFromSpreadsheet", 
-       table_name, $("#DataImportDataSet").val(), fields, rowData, 
+       table_name, Session.get("DataSaveDataset"), fields, rowData, 
 
        function(err, ret) {
            unbusy();
@@ -295,6 +295,11 @@ function cleanUp() {
     false);
    Overlay("MessageOver", { text: "Clean up done" })
 };
+
+Template.DataSave.onRendered(function(){
+    var data_set = $("#DataSaveDataset").val();
+    Session.set("DataSaveDataset", data_set);
+})
 
 Template.DataSave.events({
  'change #DataSaveDataset' : function(evt, tmpl) {
