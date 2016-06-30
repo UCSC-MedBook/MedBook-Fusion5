@@ -64,42 +64,42 @@ Contrast.deny({
   remove: function (userId, doc) { return false; }
 });
 
-Meteor.publish('studies', function()  {
+Meteor.publish('data_sets', function()  {
     var collaborations = ["public"]
     if (this.userId) {
         var user_record = Meteor.users.findOne({_id:this.userId}, {_id:0,'profile.collaborations':1})
         // console.log('concat',user_record.profile.collaborations)
         collaborations = collaborations.concat(user_record.profile.collaborations)
     }
-    var cnt = Collections.studies.find({collaborations: {$in: collaborations}}).count();
-    // console.log ('member of',cnt, 'study based on ',collaborations)
-    return Collections.studies.find({collaborations: {$in: collaborations}});
+    var cnt = Collections.data_sets.find({collaborations: {$in: collaborations}}).count();
+    // console.log ('member of',cnt, 'data_set based on ',collaborations)
+    return Collections.data_sets.find({collaborations: {$in: collaborations}});
 });
 
-Meteor.publish('GeneExpression', function(studies, genes) {
-    var q = ({Study_ID:{$in: studies}, gene: {$in: genes}});
+Meteor.publish('GeneExpression', function(data_sets, genes) {
+    var q = ({data_set_id:{$in: data_sets}, gene: {$in: genes}});
     var cursor =  Expression.find(q);
     // console.log("Expression publish", q,"returns", cursor.count());
     return cursor;
 });
 
-Meteor.publish('GeneExpressionIsoform', function(studies, genes) {
-    var cursor =  ExpressionIsoform.find({Study_ID:{$in: studies}, gene: {$in: genes}});
-    // console.log("ExpressionIsoform publish", studies, genes, cursor.count());
+Meteor.publish('GeneExpressionIsoform', function(data_sets, genes) {
+    var cursor =  ExpressionIsoform.find({data_set_id:{$in: data_sets}, gene: {$in: genes}});
+    // console.log("ExpressionIsoform publish", data_sets, genes, cursor.count());
     return cursor;
 });
 
-Meteor.publish('GeneSignatureScores', function(studies, genes) {
-    var cursor =  SignatureScores.find({Study_ID:{$in: studies}, gene: {$in: genes}});
-    // console.log("SignatureScores publish", studies, genes, cursor.count());
+Meteor.publish('GeneSignatureScores', function(data_sets, genes) {
+    var cursor =  SignatureScores.find({data_set_id:{$in: data_sets}, gene: {$in: genes}});
+    // console.log("SignatureScores publish", data_sets, genes, cursor.count());
     return cursor;
 });
 
-Meteor.publish('GeneMutations', function(studies, genes) {
-    var q = { // Study_ID:{$in: studies},
+Meteor.publish('GeneMutations', function(data_sets, genes) {
+    var q = { // data_set_id:{$in: data_sets},
             Hugo_Symbol: {$in: genes} };
     var cursor =  Mutations.find( q, { fields: {"Hugo_Symbol":1, sample: 1, Variant_Type:1 } });
-    // console.log("Mutations publish", studies, genes, cursor.count());
+    // console.log("Mutations publish", data_sets, genes, cursor.count());
     return cursor;
 });
 
@@ -119,18 +119,18 @@ Meteor.publish('Metadata', function() {
     // console.log("Metadata publish", cursor.count());
     return cursor;
 });
-Meteor.publish('CRFs', function(studies, crfs) {
-    console.log("this.userId", this.userId, studies, crfs);
+Meteor.publish('CRFs', function(data_sets, crfs) {
+    console.log("this.userId", this.userId, data_sets, crfs);
 
     var user_record = Meteor.users.findOne({_id:this.userId}, {fields: {'profile.collaborations':1}});
     // console.log("user_record", user_record);
     var collaborations = ["public"];
 
     collaborations = _.union(collaborations, user_record.profile.collaborations);
-    studies = _.union(studies, "user:" + user_record.username);
+    data_sets = _.union(data_sets, "user:" + user_record.username);
 
     // console.log("collaborations", collaborations);
-    // console.log("studies", studies);
+    // console.log("data_sets", data_sets);
     // console.log("crfs", crfs);
 
     var metadata = Collections.Metadata.findOne({name: {$in: crfs}}, { sort: {"name":1}});
@@ -139,31 +139,31 @@ Meteor.publish('CRFs', function(studies, crfs) {
         return [];
     }
 
-    var studyQuery = {
+    var data_setQuery = {
 	collaborations: {$in: collaborations}
     };
 
-    if (!_.contains(studies, "common")) {
-	studyQuery.id = {$in: studies};
+    if (!_.contains(data_sets, "common")) {
+	data_setQuery._id = {$in: data_sets};
     }
 
     var crfsQuery = Array.isArray(crfs) ? {CRF: {$in: crfs}} : crfs;
 
-    if (metadata.study == "common") {
-	var study_ids = Collections.studies.find(
-	    studyQuery, 
+    if (metadata.data_set == "common") {
+	var data_set_ids = Collections.data_sets.find(
+	    data_setQuery, 
 	    {fields:{id:1}}
-	).map(function(study){ return study.id});
+	).map(function(data_set){ return data_set._id});
 
-	if (study_ids.length == 0)  // The user is not a collaborator in any of the selected studies
+	if (data_set_ids.length == 0)  // The user is not a collaborator in any of the selected data_sets
 	    return [];
 	else
-	    crfsQuery.Study_ID = {$in: study_ids};
+	    crfsQuery.data_set_id = {$in: data_set_ids};
     }
 
     var cursor =  Collections.CRFs.find(crfsQuery, { sort: {"name":1}});
 
-    // console.log("CRFs publish", crfs, studies, study_ids, cursor.count());
+    // console.log("CRFs publish", crfs, data_sets, data_set_ids, cursor.count());
     return cursor;
 });
 
@@ -226,7 +226,7 @@ Meteor.publish('MyCharts', function(_id) {
 
 
 
-// var fields = {fields: { "_id":1, "updatedAt":1, "userId":1, "pivotTableConfig":1, "selectedFieldNames":1,"studies":1,"gene_list: "exclusions":1, "html":1 }};
+// var fields = {fields: { "_id":1, "updatedAt":1, "userId":1, "pivotTableConfig":1, "selectedFieldNames":1,"data_sets":1,"gene_list: "exclusions":1, "html":1 }};
 /*
 Meteor.publish('TheChart', function(_id) {
     var cursor = Charts.find({_id: _id}, fields);

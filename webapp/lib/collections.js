@@ -1,14 +1,11 @@
 Collections = {};
-Collections.studies = new Meteor.Collection('studies');
+Collections.data_sets = new Meteor.Collection('data_sets');
 Collections.Metadata = new Meteor.Collection("Metadata");
 Collections.CRFs = new Meteor.Collection("CRFs");
 Collections.FusionFeatures = new Meteor.Collection("FusionFeatures");
 
 DIPSC_coll = new Meteor.Collection("DIPSC");
 Charts = new Meteor.Collection("Charts");
-Expression = new Meteor.Collection('expression2');
-Expression3 = new Meteor.Collection('expression3');
-ExpressionIsoform = new Meteor.Collection('expression_isoform');
 Mutations = new Meteor.Collection('mutations');
 SignatureScores = new Meteor.Collection('signature_scores');
 GeneSets = new Meteor.Collection('gene_sets');
@@ -41,9 +38,7 @@ Meteor.startup(function() {
 
 
 DomainCollections = {
-  'Expression' : Expression,
-  'Expression3' : Expression3,
-  'ExpressionIsoform' : ExpressionIsoform,
+  'GeneExpression' : GeneExpression,
   'Mutations' : Mutations,
   'SignatureScores' : SignatureScores,
   'GeneExpression' : GeneExpression

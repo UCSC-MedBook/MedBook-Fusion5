@@ -5,7 +5,7 @@ echo MEDBOOK_WORKSPACE is $MEDBOOK_WORKSPACE
 
 cd webapp
 
-export MONGO_URL=mongodb://localhost:27017/MedBook
+export MONGO_URL=mongodb://localhost:27017/MedBookIO
 export ROOT_URL=https://su2c-dev.ucsc.edu/fusion/
 export ROOT_URL_PATH_PREFIX=fusion
 meteor --release 1.1  --port 10011

@@ -1,18 +1,18 @@
 fs = Npm.require('fs');
 
 Meteor.startup(function() {
-    Expression3._ensureIndex({study_label: 1});
-    GeneStatistics._ensureIndex({study_label: 1});
-    Expression3._ensureIndex({gene_label:1,  study_label: 1});
-    GeneStatistics._ensureIndex({gene_label:1, study_label: 1});
+    GeneExpression._ensureIndex({data_set_label: 1});
+    GeneStatistics._ensureIndex({data_set_label: 1});
+    GeneExpression._ensureIndex({gene_label:1,  data_set_label: 1});
+    GeneStatistics._ensureIndex({gene_label:1, data_set_label: 1});
 });
 
 Meteor.methods({
 
 
-    expressionVariance: function(study_label) {
+    expressionVariance: function(data_set_label) {
 	var data = GeneStatistics.aggregate([
-            { $match: { study_label: study_label}},
+            { $match: { data_set_label: data_set_label}},
             { $sort: {variance: -1}},
             { $project:
                 { _id: 0,
@@ -20,20 +20,20 @@ Meteor.methods({
                  value: "$variance.rsem_quan_log2",
                 }
             }]);
-	console.log("expressionVariance", study_label, data.length);
+	console.log("expressionVariance", data_set_label, data.length);
 	return data;
     },
-    prepareGeneStatistics: function(study_label) {
+    prepareGeneStatistics: function(data_set_label) {
         return;
-	console.log("prepareGeneStatistics", study_label);
+	console.log("prepareGeneStatistics", data_set_label);
 
-        var study = Collections.studies.findOne({id: study_label});
-	var index = study.cohort.map(function(sample) { return study.gene_expression_index[sample]});
+        var data_set = Collections.data_sets.findOne({_id: data_set_label});
+	var index = data_set.cohort.map(function(sample) { return data_set.gene_expression_index[sample]});
 	var i = 0;
 	var start = Date.now();
 
-	if (Expression3.find({study_label: study_label}).count() > GeneExpression.find({study_label: study_label}).count()) {
-	    Expression3.find({study_label: study_label}).forEach(function(ge) {
+	if (GeneExpression.find({data_set_label: data_set_label}).count() > GeneExpression.find({data_set_label: data_set_label}).count()) {
+	    GeneExpression.find({data_set_label: data_set_label}).forEach(function(ge) {
 		if ((++i % 1000) == 0)
 		    console.log(i, ge.gene_label, (Date.now() - start) / 1000);
 		var data = index.map(function(i) { return ge.rsem_quan_log2[i] });
@@ -43,12 +43,12 @@ Meteor.methods({
 
 		    GeneStatistics.upsert(
 			{ 
-			  study_label: study_label,
+			  data_set_label: data_set_label,
 			  gene_label: ge.gene_label
 			},
 			
 			{$set: {
-			    study_label: study_label,
+			    data_set_label: data_set_label,
 			    gene_label: ge.gene_label,
 			    mean: mean,
 			    variance: variance
@@ -59,7 +59,7 @@ Meteor.methods({
 	console.log("prepareGeneStatistics done", i, Date.now() - start);
     },
 
-    prepareDIPSC: function(study_label, genelist) {
+    prepareDIPSC: function(data_set_label, genelist) {
 
         var directory = process.env.MEDBOOK_WORKSPACE + "bridge/" + "DIPSC" + "/";
 	fss.mkdirsSync(directory);
@@ -77,7 +77,7 @@ Meteor.methods({
 	function flush() {
 	   if (firstline) {
 	       firstline = false;
-	       var buf =  study_label;
+	       var buf =  data_set_label;
 	       line.map(function(elem) {
 		   buf += "\t";
 		   buf +=  String(elem.sample_label);
@@ -102,7 +102,7 @@ Meteor.methods({
 	   line = [];
 	}
 
-	var cursor = GeneExpression.find({study_label: study_label, gene_label: {$in: genelist}  }, {
+	var cursor = GeneExpression.find({data_set_label: data_set_label, gene_label: {$in: genelist}  }, {
 	   fields: {gene_label:1, sample_label:1, "values.quantile_counts_log": 1},
 	   sort: {gene_label:1, sample_label: 1},
 	});
@@ -159,10 +159,10 @@ function getPhe(chart_id) {
 
    // PHENOTYPE MUTATIONS
    var topMuts = topMutatedGenes();
-   chart.selectedFieldNames.unshift("Sample_ID");
+   chart.selectedFieldNames.unshift("sample_label");
 
 
-   chart.samplelist = _.pluck(chart.chartData, "Sample_ID");
+   chart.samplelist = _.pluck(chart.chartData, "sample_label");
 
 
    topMuts.map(function whenDone(mut) {
@@ -173,7 +173,7 @@ function getPhe(chart_id) {
            geneMap[sample] = true;
        });
        chart.chartData.map(function(patient)  {
-           patient[field] = patient.Sample_ID in geneMap ? 1 : 0;
+           patient[field] = patient.sample_label in geneMap ? 1 : 0;
        });
    }); /// topMuts
    return chart;
@@ -242,13 +242,13 @@ dipsc_adapter = function(chart) {
    var pValuesFileName = dir + "pValues.tab";
    var varFileName = dir + "variances.tab";
 
-   var phenotype = ConvertToTSV(chart.chartData, ["Sample_ID"].concat(chart.selectedFieldNames));
+   var phenotype = ConvertToTSV(chart.chartData, ["sample_label"].concat(chart.selectedFieldNames));
    phenotype = phenotype.replace(/N\/A/g, "");
    fs.writeFile(pheFileName, phenotype);
 
    // EXPRESSION
    var expressionData = [];
-   Expression.find({ "Study_ID" : "prad_wcdt" }, 
+   Expression.find({ "data_set_id" : "prad_wcdt" }, 
        {fields: {"gene":1, "samples":1, "variance":1},
         limit: 1000,
         sort: { "variance.rsem_quan_log2" : -1} })
@@ -257,8 +257,8 @@ dipsc_adapter = function(chart) {
        var row = e.samples;
        var newRow = {};
        Object.keys(row)
-           .filter(function(Sample_ID) { return Sample_ID.match(/DTB-.*/) != null; })
-           .map(function(Sample_ID) { newRow[Sample_ID] = row[Sample_ID].rsem_quan_log2 })
+           .filter(function(sample_label) { return sample_label.match(/DTB-.*/) != null; })
+           .map(function(sample_label) { newRow[sample_label] = row[sample_label].rsem_quan_log2 })
        newRow.gene = e.gene;
        if (e.variance) {
            expressionData.push(newRow);
@@ -523,19 +523,19 @@ SAMtest = function() {
     var sampleList = []
     chart.chartData.map(function(o) {
         if (o[abi_phe]) {
-            sampleList.push(o.Sample_ID);
-            abi_phenotypeMap[o.Sample_ID] = o[abi_phe] == "Resistant";
+            sampleList.push(o.sample_label);
+            abi_phenotypeMap[o.sample_label] = o[abi_phe] == "Resistant";
         }
         if (o[enz_phe]) {
-            sampleList.push(o.Sample_ID);
-            enz_phenotypeMap[o.Sample_ID] = o[enz_phe] == "Resistant";
+            sampleList.push(o.sample_label);
+            enz_phenotypeMap[o.sample_label] = o[enz_phe] == "Resistant";
         }
     });
 
    // EXPRESSION
    var expressionData = [];
    var geneList = [];
-   Expression.find({ "Study_ID" : "prad_wcdt" }, 
+   Expression.find({ "data_set_id" : "prad_wcdt" }, 
        {fields: {"gene":1, "samples":1, "variance":1},
         limit: 500,
         sort: { "variance.rsem_quan_log2" : -1} })
@@ -545,8 +545,8 @@ SAMtest = function() {
        var row = e.samples;
        var newRow = {};
        Object.keys(row)
-           .filter(function(Sample_ID) { return Sample_ID.match(/DTB-.*/) != null; })
-           .map(function(Sample_ID) { newRow[Sample_ID] = row[Sample_ID].rsem_quan_log2 })
+           .filter(function(sample_label) { return sample_label.match(/DTB-.*/) != null; })
+           .map(function(sample_label) { newRow[sample_label] = row[sample_label].rsem_quan_log2 })
        newRow.gene = e.gene;
        if (e.variance) {
            expressionData.push(newRow);
@@ -610,7 +610,7 @@ DIPSCtest = function() {
     var sampleList = []
     chart.chartData = chart.chartData.map(function(o) {
         var elem = {};
-        elem.Sample_ID = o.Sample_ID;
+        elem.sample_label = o.sample_label;
         if (o[abi_phe]) {
             elem[abi_phe]  = o[abi_phe] == "Resistant";
         }

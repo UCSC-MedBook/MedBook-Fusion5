@@ -35,10 +35,19 @@
   z-index:2000;
   background-color: rgba(0,0,0,0.5);
 }
+#overlayContent {
+  margin: auto;
+  max-width:500px;
+  width: 50%;
+}
 
 .overlay-dalog {
   background-color: white;
 }
+#overlayClose {
+  margin:20px;
+}
+
 
 .noscroll { 
     overflow: hidden;

@@ -76,8 +76,8 @@ Template.TableBrowser.helpers({
           return {name: gld.label, collection: gld.collection};
       });
     },
-    studies : function() {
-      var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+    data_sets : function() {
+      var ret = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
       return ret;
     },
     mergeClass : function() {
@@ -88,16 +88,16 @@ Template.TableBrowser.helpers({
        return a;
     },
     myTables : function() {
-       return Collections.Metadata.find({}, {fields: {"name":1, study:1, fieldOrder: 1}});
+       return Collections.Metadata.find({}, {fields: {"name":1, data_set:1, fieldOrder: 1}});
     },
 
     browseTable : function() {
        var table = Session.get("BrowseTable");
-       var studies = Session.get("BrowseStudies");
+       var data_sets = Session.get("BrowseDataSets");
 
-       if (studies != null && table != null) {
-          Meteor.subscribe("CRFs", studies, [table]);
-          var data = Collections.CRFs.find({CRF: table/*, Study_ID: {$in: studies} */}).fetch();
+       if (data_sets != null && table != null) {
+          Meteor.subscribe("CRFs", data_sets, [table]);
+          var data = Collections.CRFs.find({CRF: table/*, data_set_id: {$in: data_sets} */}).fetch();
 	  data.map(function(row,i) {
 	      Object.keys(row).map(function(key) {
 	          if (Array.isArray(row[key]))
@@ -128,7 +128,7 @@ Template.TableBrowser.helpers({
         rowsPerPage: 10,
         showFilter: true,
         fields: [ 
-	   { key: "study", label: "Study",
+	   { key: "data_set", label: "Study",
 	     headerClass: 'col-md1'
 	   },
 
@@ -147,10 +147,10 @@ Template.TableBrowser.events({
        var table = Session.get("BrowseTable");
        var data = Session.get("BrowseTableData");
        var fields = Session.get("BrowseTableFields");
-       var studies = Session.get("BrowseStudies");
+       var data_sets = Session.get("BrowseDataSets");
 
        if (table && data && fields) {
-          var name = table + "_" + studies.join("_") + "_" + data.length + ".txt";
+          var name = table + "_" + data_sets.join("_") + "_" + data.length + ".txt";
           saveTextAs(ConvertToTSV(data, fields), name);
        }
  },
@@ -162,7 +162,7 @@ Template.TableBrowser.events({
      else if (evt.target.parentNode.data)
         data = evt.target.parentNode.data;
      if (data) {
-         Session.set("BrowseStudies", [data.study]);
+         Session.set("BrowseDataSets", [data.data_set]);
          Session.set("BrowseTable", data.name);
      }
  },
@@ -171,10 +171,10 @@ Template.TableBrowser.events({
  },
  'click .existingTablesRow' : function(evt, tmpl) {
     Session.set("BrowseTable", this.name);
-    var prevStudies = Session.get("BrowseStudies");
-    var nextStudies = prevStudies && prevStudies.length > 0 ?  _.union(prevStudies, this.study) : [this.study];
-    nextStudies = nextStudies.sort();
-    Session.set("BrowseStudies", nextStudies);
+    var prevDataSets = Session.get("BrowseDataSets");
+    var nextDataSets = prevDataSets && prevDataSets.length > 0 ?  _.union(prevDataSets, this.data_set) : [this.data_set];
+    nextDataSets = nextDataSets.sort();
+    Session.set("BrowseDataSets", nextDataSets);
  },
 
  'click #TableBrowser' : function(evt, tmpl) {
@@ -184,9 +184,9 @@ Template.TableBrowser.events({
 
     var target_name = $("#newTableName").val();
     var source_fields = null;
-    var studyForNewTable = $("#studyForNewTable").val()
+    var data_setForNewTable = $("#data_setForNewTable").val()
 
-    Meteor.call("newTable", target_name, studyForNewTable, source_fields, source_chart_id, function(err, status) { });
+    Meteor.call("newTable", target_name, data_setForNewTable, source_fields, source_chart_id, function(err, status) { });
   }
 });
 
