@@ -62,7 +62,7 @@ window.makeHandsontable = function(theChart, extraOptions, length, column) {
 	   try { hot.destroy(); } catch (err) {};
 
 	var cw = document.getElementById('ChartWrapper');
-        if (cw.length == 0)
+        if (cw == null || cw.length == 0)
             return;
 
 	window.hot = new Handsontable(document.getElementById('ChartWrapper'), { 

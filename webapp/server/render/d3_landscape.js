@@ -79,11 +79,11 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var gene_labels = _.union.apply(null, _.pluck(gene_panel, "feature_list"));
     // console.log("gene_labels", gene_labels);
 
-    var sample_labels = _.pluck(chartDocument.chartData, "Sample_ID");
+    var sample_labels = _.pluck(chartDocument.chartData, "sample_label");
     // console.log("sample_labels", sample_labels.sort());
-    var study_labels = chartDocument.studies;
+    var data_set_labels = chartDocument.data_sets;
     var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
-	   study_label: {$in: study_labels},
+	   data_set_label: {$in: data_set_labels},
 	   gene_label: {$in: gene_labels},
 	   sample_label: {$in: sample_labels}
     }).fetch();
@@ -92,9 +92,9 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     // console.log("sample_labels", sample_labels.sort());
 
     function query(chartDocument, gene_list) {
-       var study_labels = chartDocument.studies;
+       var data_set_labels = chartDocument.data_sets;
        var gene_data = Mutations.find({ "chasm_driver_p_value": {$lte: 0.05}, 
-	   study_label: {$in: study_labels},
+	   data_set_label: {$in: data_set_labels},
 	   gene_label: {$in: gene_list}
 	   // sample_label: {$in: chartDocument.sample_list}
        }).fetch();
@@ -112,8 +112,8 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
     var sample_label_map = {};
     var n = 0;
     chartDocument.chartData.map(function(doc) {
-	if (_.indexOf(sample_labels, doc.Sample_ID, true) >= 0)
-	    sample_label_map[doc.Sample_ID] = n++;
+	if (_.indexOf(sample_labels, doc.sample_label, true) >= 0)
+	    sample_label_map[doc.sample_label] = n++;
     });
     // console.log("number of samples", n);
 
@@ -337,7 +337,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 	    }
 
 	    chartDocument.chartData.map(function(doc) {
-		var i = sample_label_map[doc.Sample_ID];
+		var i = sample_label_map[doc.sample_label];
 
 		var value = doc[field];
 		var color = "orange";
@@ -347,7 +347,7 @@ D3Landscape = function(window, chartDocument, opts, exclusions) {
 		    color = numerical_color_map(value);
 		}
 
-		rect(i, j, 0, doc.Sample_ID, field, String(value), color);
+		rect(i, j, 0, doc.sample_label, field, String(value), color);
 	    })
 	    svg.append("text")
 		.text(field)

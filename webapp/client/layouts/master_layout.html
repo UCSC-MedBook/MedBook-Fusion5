@@ -16,18 +16,18 @@
                             </div>
                             </td>
 		            <td>
-						<div class="studies-panel">
-			 Study:
+						<div class="data_sets-panel">
+			 Data Set:
                          <!--
-			{{#with studies}}
-				<select id="study" class="span1-12">
-					<option value="">Select a Study ...</option>
+			{{#with data_sets}}
+				<select id="data_set" class="span1-12">
+					<option value="">Select a Data Set ...</option>
 					{{#each this}}
-					<option  value="{{id}}" selected={{selected}}>{{short_name}}</option>
+                                            <option  value="{{id}}" selected={{selected}}>{{short_name}}</option>
 					{{/each}}
 				</select>
 			{{else}}
-				No studies yet.
+				No Data Sets 
 			{{/with}}
                         -->
 			<button class="nuc">Reset</button>
@@ -60,12 +60,8 @@
 		</div>
 		{{/if}}
                 <div class="overlay hidden" >
-                    <div id="overlayControl">
-                        <div id="overlayPanel" class="white_content"> 
-                            <a id="overlayClose" class="btn btn-primary btn-lg pull-right" href="#">&times;</a>
-                            <br>
-                            <div id="overlayContent" style="margin-top:80px;" class="white_content"> </div>
-                        </div>
+                    <div id="overlayContent" style="margin-top:80px;" class="white_content">
+                        <a id="overlayClose" class="btn btn-primary btn-lg pull-right" href="#">&times;</a>
                     </div>
                 </div>
                 <div class="busy hidden" >

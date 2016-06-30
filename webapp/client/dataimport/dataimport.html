@@ -8,26 +8,27 @@
                 </div>
             </div>
 
-            <div class="panel panel-default">
-                <div class="panel-heading" >
-                    <h4>Select a study and a table name</h4>
 
-                        <select id="DataImportStudy" >
-                            <option selected value="{{myStudy}}">{{myStudy}}</option>
-                            {{#each studies}}
-                                <option value="{{this.id}}">{{this.name}}</option>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" data-toggle="collapse" data-target="#i1">
+                    <h3 class="panel-title">Load from database</h3>
+                </div>
+
+
+                <div id="i1" class="panel-body collapse">
+                        <select id="DataImportDataSet" >
+                            <option selected value="{{myStudy}}">Select a data set</option>
+                            {{#each data_sets}}
+                                <option value="{{this._id}}">{{this.name}}</option>
                             {{/each}}
                         </select>
-
                         <select id="DataImportTable" style="margin-top:20px;">
-                            <option selected value="New Table">New Table</option>
+                            <option selected value="none">Select an associated table</option>
                             {{#each tables}}
                                 <option value="{{this._id}}">{{this.name}}</option>
                             {{/each}}
                         </select>
-
-                        <br>
-                        <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
                 </div>
             </div>
 
@@ -42,6 +43,7 @@
                     Supported formats include tab-separated-values (.tab or .tsv), comma-separated-values (.csv), and JavaScript Object Notation (.json) files
                 </div>
             </div>
+
         </div>
         <div class="rightdivOverflow" style="padding-left:10px;">
             <div id="importTableArea" class="panel panel-default encompass" style="min-height:300px; min-width:300px;">
@@ -59,4 +61,40 @@
             </div>
         </div>
     </div>
+</template>
+
+<template name="DataSave">
+
+ <div class="MessageOver">
+    <div class="panel panel-default" style="padding:20px;">
+      <div class="panel-heading" > <h3>Save Data</h3> </div>
+      <div  class="panel-body ">
+        <br>
+        <select id="DataSaveDataset" >
+            <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+            {{#each data_sets}}
+                <option value="{{this._id}}">{{this.name}}</option>
+            {{/each}}
+        </select>
+        <br>
+        <select id="DataSaveTable" style="margin-top:20px;">
+            <option selected value="none">Change an existing table</option>
+            {{#each tables}}
+                <option value="{{this._id}}">{{this.name}}</option>
+            {{/each}}
+            <option value="New Table">Create a New Table</option>
+        </select>
+        <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
+
+          <center>
+          <span>
+              <button class="OK btn btn-primary" style="margin:10px;" type="button">OK</button>
+              &nbsp;
+              <button class="CANCEL btn btn-primary" style="margin:10px;" type="button">CANCEL</button>
+          </span>
+          </center>
+        </div>
+     </div>
+ </div>
+
 </template>

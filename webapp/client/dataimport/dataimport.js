@@ -1,7 +1,7 @@
 DataImportSpreadSheet = null;
 
 Meteor.startup(function() {
-    Session.set("DataImportStudy", MyStudy())
+    Session.set("DataImportDataSet", MyStudy())
 });
 
 
@@ -47,17 +47,31 @@ function initHandsontable() {
 Template.DataImport.rendered = initHandsontable;
 
 Template.DataImport.helpers({
-   studies : function() {
-      var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+   data_sets : function() {
+      var ret = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
       return ret;
    },
    tables : function() {
-       var dis = Session.get("DataImportStudy");
+       var dis = Session.get("DataImportDataSet");
        if (dis)
-           return Collections.Metadata.find({study: dis}, {fields: {"name":1}})
+           return Collections.Metadata.find({data_set: dis}, {fields: {"name":1}})
        return [];
    }
 });
+
+Template.DataSave.helpers({
+   data_sets : function() {
+      var ret = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
+      return ret;
+   },
+   tables : function() {
+       var dis = Session.get("DataSaveDataset");
+       if (dis)
+           return Collections.Metadata.find({data_set: dis}, {fields: {"name":1}})
+       return [];
+   }
+});
+
 
 
 function transpose(data) {
@@ -165,15 +179,15 @@ function analyze(rowData) {
 
 function saveTable(rowData) {
     DocumentModified = false;
+    if (rowData == null || rowData.length < 2)
+       return Overlay("MessageOver", { text: "Need a header line and at least one line of content" })
+
     var headers = _.clone(rowData[0]);
     var primaryKeys = rowData.map(function(row) { return row[0]; });
-
     var headerTypes = [];
-
     $("select.SelectType").each(function() {
         headerTypes[$(this).data("columnnumber")] = this.value;
     });
-
 
     var fields =  headers.map(function(fieldName, columnNumber) {
 	return {
@@ -184,21 +198,25 @@ function saveTable(rowData) {
     });
     console.log(fields, fields);
 
+    var table_name = Session.get("DataSaveTable");
+    if (table_name == null || table_name == "New Table" || table_name == "")
+        return alert("please fill in new table name");
+
     busy();
     Meteor.call("newTableFromSpreadsheet", 
-       $("#newTableName").val(), $("#DataImportStudy").val(), fields, rowData, 
+       table_name, Session.get("DataSaveDataset"), fields, rowData, 
 
        function(err, ret) {
            unbusy();
 	   if (err)
-	       Overlay("MessageOver", { text: err })
+	       Overlay("MessageOver", { text: "ERROR:" +err })
 	   else 
 	       Overlay("MessageOver", { text: ret })
        }
     );
 }
 
-var types = ["Unknown", "Number","String", "Date", "Exclude", "Sample_ID", "Patint_ID"];
+var types = ["Unknown", "Number","String", "Date", "Exclude", "sample_label", "Patint_ID"];
 
 function selectType(columnNumber, current) {
 
@@ -278,6 +296,37 @@ function cleanUp() {
    Overlay("MessageOver", { text: "Clean up done" })
 };
 
+Template.DataSave.onRendered(function(){
+    var data_set = $("#DataSaveDataset").val();
+    Session.set("DataSaveDataset", data_set);
+})
+
+Template.DataSave.events({
+ 'change #DataSaveDataset' : function(evt, tmpl) {
+    var data_set = $(evt.target).val();
+    Session.set("DataSaveDataset", data_set);
+  },
+
+ 'change #DataSaveTable' : function(evt, tmpl) {
+    var table_name = $(evt.target).val();
+    Session.set("DataSaveTable", table_name);
+  },
+
+ 'change #newTableName' : function(evt, tmpl) {
+    var table_name = $(evt.target).val();
+    Session.set("DataSaveTable", table_name);
+  },
+
+ 'click .CANCEL' : function(evt, tmpl) {
+       OverlayClose();
+ },
+ 'click .OK' : function(evt, tmpl) {
+    var rowData = _.clone(DataImportSpreadSheet.getData());
+    saveTable(rowData);
+    OverlayClose();
+  }, 
+});
+
 Template.DataImport.events({
  'click #cleanUp' : function(evt, tmpl) {
     if (tmpl.dataAnalyzed) {
@@ -290,8 +339,7 @@ Template.DataImport.events({
 
  'click #save' : function(evt, tmpl) {
     if (tmpl.dataAnalyzed) {
-        var rowData = _.clone(DataImportSpreadSheet.getData());
-        saveTable(rowData);
+       Overlay("DataSave")
     } else
        Overlay("MessageOver", { text: "Please click analyze first and review each column's type" })
   }, 
@@ -301,15 +349,15 @@ Template.DataImport.events({
      DataImportSpreadSheet.types[columnnumber] = evt.target.value;
   },
 
- 'change #DataImportStudy' : function(evt, tmpl) {
-    var study = $("#DataImportStudy").val();
-    Session.set("DataImportStudy", study);
+ 'change #DataImportDataSet' : function(evt, tmpl) {
+    var data_set = $("#DataImportDataSet").val();
+    Session.set("DataImportDataSet", data_set);
   },
 
  'change #DataImportTable' : function(evt, tmpl) {
-    var study = Session.get("DataImportStudy");
+    var data_set = Session.get("DataImportDataSet");
     var table = $("#DataImportTable").val();
-    Meteor.subscribe("CRFs", [study], [table])
+    Meteor.subscribe("CRFs", [data_set], [table])
     Session.set("DataImportTable", table);
 
     Meteor.autorun(function() {
@@ -319,8 +367,8 @@ Template.DataImport.events({
             DataImportSpreadSheet.destroy();
             initHandsontable();
         } else {
-            var dataAsDocs = Collections.CRFs.find({ "Study_ID" : study, "CRF" : table }, { sort: { Sample_ID: 1, Patient_ID:1 }}).fetch();
-            var md = Collections.Metadata.findOne({study: study, name: table});
+            var dataAsDocs = Collections.CRFs.find({ "data_set_id" : data_set, "CRF" : table }, { sort: { sample_label: 1, patient_label:1 }}).fetch();
+            var md = Collections.Metadata.findOne({data_set: data_set, name: table});
             var dataAsRows = [md.fieldOrder];
             dataAsDocs.map(function(doc) {
                 var row = [];

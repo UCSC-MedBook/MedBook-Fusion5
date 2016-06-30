@@ -13,9 +13,9 @@
        </div>
        <div id="p1" class="panel-body ">
 	   <div class="input-group ">
-		 <select style="width:250px;" class="form-control" id="studyForNewTable">
-	   	    <option selected value="{{myStudy}}">{{myStudy}}</option>
-		    {{#each studies}}
+		 <select style="width:250px;" class="form-control" id="data_setForNewTable">
+	   	    <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+		    {{#each data_sets}}
 			<option value="{{this._id}}">{{this.name}}</option>
 		    {{/each}}
 		 </select>

@@ -27,8 +27,8 @@ id_text = function(array) {
 Meteor.startup(function() {
     Meteor.subscribe("GeneSets");
     Meteor.subscribe("Biopsy_Research");
-    Handlebars.registerHelper("studies", function() {
-        return Collections.studies.find({}, {sort: {"name":1}});
+    Handlebars.registerHelper("data_sets", function() {
+        return Collections.data_sets.find({}, {sort: {"name":1}});
     });
 });
 
@@ -62,10 +62,10 @@ Template.Field_Attribute.helpers({
    shorten: shorten
 });
 
-function studiesSelected() {
- var studies = CurrentChart("studies");
- if (studies && studies.length > 0)
-    return Collections.studies.find({id: {$in: studies }}, {sort: {"name":1}});
+function data_setsSelected() {
+ var data_sets = CurrentChart("data_sets");
+ if (data_sets && data_sets.length > 0)
+    return Collections.data_sets.find({_id: {$in: data_sets }}, {sort: {"name":1}}).fetch();
  else
     return [];
 }
@@ -107,7 +107,7 @@ Template.Controls.helpers({
    Join : function() {
       var j = CurrentChart("Join");
       if (j == null) {
-          j = "Sample_ID";
+          j = "sample_label";
       }
 
       $('button[value="' + j + '"]').addClass("active").siblings().removeClass("active");
@@ -188,10 +188,10 @@ Template.Controls.helpers({
       return prevGeneLikeDataDomains;
    },
 
-   tablesFor: function(study) {
-     var allTables = Collections.Metadata.find({study: study.id}).fetch();
+   tablesFor: function(data_set) {
+     var allTables = Collections.Metadata.find({data_set: data_set._id}).fetch();
      var usedTables = CurrentChart("startTables").filter(function(pair) { 
-         return pair.study == study.id }).map(function(pair) {
+         return pair.data_set == data_set._id }).map(function(pair) {
              return pair.name });
      allTables.map(function(table) {
          if (_.contains(usedTables, table.name))
@@ -200,27 +200,28 @@ Template.Controls.helpers({
      return allTables;
    },
 
-   studiesSelected: studiesSelected, 
-   studiesSelected2: function() {
-       var myStudy = "user:" + Meteor.user().username;
+   data_setsSelected: data_setsSelected, 
+   data_setsSelected2: function() {
+       /* var myStudy = "user:" + Meteor.user().username;
        var ss2 = [ {
-           id: myStudy,
+           _id: myStudy,
            name: myStudy
-       }].concat( studiesSelected().fetch()) ;
-       return ss2;
+       }].concat( data_setsSelected()) ; 
+       return ss2;*/
+       return data_setsSelected() ; 
    },
 
 
-   studiesSelectedSettings: function () {
+   data_setsSelectedSettings: function () {
       return {
         rowsPerPage: 10,
         showFilter: false,
-        fields: [ "id", "description",
+        fields: [ "description",
         /*
            The description field is in HTML. But this recipe for displaying HTML in reactive table
            causes an error in the console log.  Need a better recipe.
 
-            { key: 'id' }, 
+            { key: '_id' }, 
             {
               key: 'description',
               fn: function (value) { 
@@ -233,11 +234,11 @@ Template.Controls.helpers({
     };
    },
 
-   studies : function() {
-      var studies = CurrentChart("studies");
-      var ret = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+   data_sets : function() {
+      var data_sets = CurrentChart("data_sets");
+      var ret = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
       ret.map(function(r) {
-          if (_.contains(studies, r.id)) {
+          if (_.contains(data_sets, r._id)) {
               r.selected = "selected";
           } else {
               r.selected = "";
@@ -275,20 +276,22 @@ Template.Controls.helpers({
        var others = [];
        var rest = [];
        coll.map(function(c) {
-          if (c.study == "admin")
+          if (c.data_set == null)
 	      return;
-          else if (c.study == myStudy)
+          if (c.data_set == "admin")
+	      return;
+          else if (c.data_set == myStudy)
 	      mine.push(c);
-	  else if (c.study.indexOf("user:") == 0)
+	  else if (c.data_set.indexOf("user:") == 0)
 	      others.push(c);
 	  else 
 	      rest.push(c);
        });
        function ss(a, b){
           try {
-	      var studyA=a.study.toLowerCase(), studyB=b.study.toLowerCase()
-	      if (studyA < studyB) return -1 
-	      if (studyA > studyB) return 1
+	      var data_setA=a.data_set.toLowerCase(), data_setB=b.data_set.toLowerCase()
+	      if (data_setA < data_setB) return -1 
+	      if (data_setA > data_setB) return 1
 
 	      var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
 	      if (nameA < nameB) return -1 
@@ -307,21 +310,21 @@ Template.Controls.helpers({
 
        coll.map(function(vv) {
            var collName = vv.name;
-           html += '<optGroup label="'+vv.study+":"+ collName +'">';
+           html += '<optGroup label="'+vv.data_set+":"+ collName +'">';
 
            var ft = vv.fieldTypes;
-           var hasSample_ID = false;
+           var hassample_label = false;
            vv.fieldOrder.map(function(fieldName, i) {
-               if (fieldName == "Sample_ID")
-                   hasSample_ID = true;
+               if (fieldName == "sample_label")
+                   hassample_label = true;
            });
            vv.fieldOrder.map(function(fieldName, i) {
 
                var meta = { 
 		   c: collName,
 		   f: fieldName, 
-                   j: hasSample_ID ? "Sample_ID" : "Patient_ID" ,
-		   s: vv.study
+                   j: hassample_label ? "sample_label" : "patient_label" ,
+		   s: vv.data_set
                };
                var value = escape(JSON.stringify(meta));
 	       var selected = _.contains(additionalQueries, value) ? "selected" : "";
@@ -352,7 +355,7 @@ Template.Controls.events({
       var startTables = [];
       $.each($(".StartTables:checked"), function(){            
           startTables.push({
-              study: $(this).data("study"),
+              data_set: $(this).data("data_set"),
               name: $(this).data("table")
           });
       });
@@ -545,7 +548,7 @@ Template.Controls.events({
    'click #TableBrowser': function(evt, tmpl) {
 	var currentChart = CurrentChart();
 	/*
-	var fields = ["Patient_ID", "Sample_ID"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
+	var fields = ["patient_label", "sample_label"].concat(currentChart.pivotTableConfig.cols.concat( currentChart.pivotTableConfig.rows ));
 	var data = currentChart.chartData.map( function(doc) {
 	    var newDoc = {};
 	    fields.map(function(f) {
@@ -569,9 +572,9 @@ Template.Controls.events({
         var data = CurrentChart(v);
         Overlay("Inspector", { data: data });
    },
-   'change #studies' : function(evt, tmpl) {
-       var s = $("#studies").select2("val");
-       UpdateCurrentChart("studies", s);
+   'change #data_sets' : function(evt, tmpl) {
+       var s = $("#data_sets").select2("val");
+       UpdateCurrentChart("data_sets", s);
    },
    'change #additionalQueries' : function(evt, tmpl) {
        var additionalQueries = $("#additionalQueries").select2("val");
@@ -637,19 +640,19 @@ function initializeHtmlElements(document) {
 	      $("input[name='" + gld.checkBoxName + "']").prop(gld.state);
 	  });
 
-     $('.studiesSelectedTable th').hide();
+     $('.data_setsSelectedTable th').hide();
 
      $(".dataExplorerControlPanel").resizable().resize(window.hotSet);
 }
 
 function initializeJQuerySelect2(document) {
      $("#additionalQueries").select2( {
-       placeholder: "type in diease or study name",
+       placeholder: "type in diease or data_set name",
        allowClear: true
      } );
 
-     $("#studies").select2( {
-       placeholder: "Select one or more studies",
+     $("#data_sets").select2( {
+       placeholder: "Select one or more data_sets",
        allowClear: true
      } );
 

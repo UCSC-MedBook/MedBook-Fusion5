@@ -1,21 +1,21 @@
 
 
-function getClinicalData(study, mlt) {
-  return ["Clinical_Info"].concat(study.tables).sort().map(function(table) {
+function getClinicalData(data_set, mlt) {
+  return ["Clinical_Info"].concat(data_set.tables).sort().map(function(table) {
       return {text: "Download " + table,
-      	href: '/fusion/export?study=' + study.id + "&table=" + table + "&kind=clinical"
+      	href: '/fusion/export?data_set=' + data_set._id + "&table=" + table + "&kind=clinical"
             + "&mlt=" + mlt
       }
   });
 }
 
 
-function getGenomicData(study, mlt) {
+function getGenomicData(data_set, mlt) {
   return GeneLikeDataDomainsPrototype.sort(function(a,b) { return a.label.localeCompare(b.label)})
       .filter(function(gld) { return gld && gld.label && gld.collection;})
       .map(function(gld) {
       return {text: 'Download ' + gld.label, 
-      	href: '/fusion/export?study=' + study.id + "&table=" + gld.collection + "&kind=genomic" 
+      	href: '/fusion/export?data_set=' + data_set._id + "&table=" + gld.collection + "&kind=genomic" 
             + "&mlt=" + mlt
       };
   });
@@ -26,7 +26,7 @@ function l(a) {
 }
 
 function getTree() {
-  var studies = Collections.studies.find({}, {sort: {"name":1}}).fetch();
+  var data_sets = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
 
   var cookies = {};
   document.cookie && document.cookie.split(';').forEach(function( cookie ) {
@@ -35,16 +35,16 @@ function getTree() {
   });
   var mlt = cookies.meteor_login_token;
 
-  var tree = studies.map(function(study){ 
-      var p  = l(study.Patient_IDs);
-      var s  = l(study.Sample_IDs);
+  var tree = data_sets.map(function(data_set){ 
+      var p  = l(data_set.patient_labels);
+      var s  = l(data_set.sample_labels);
 
-      var clin = getClinicalData(study,mlt);
-      var gen = getGenomicData(study,mlt);
+      var clin = getClinicalData(data_set,mlt);
+      var gen = getGenomicData(data_set,mlt);
 
       return {
-	  text: study.name + " " + p + " patients, " + s + " samples",
-	  Study_ID: study._id,
+	  text: data_set.name + " " + p + " patients, " + s + " samples",
+	  data_set_id: data_set._id,
 	  nodes: [
 	     {
 	         text: "Clinical Data " + String(clin.length)+ " tables",
@@ -80,7 +80,7 @@ Template.Download.rendered = function() {
 	    onNodeSelected: function(event, data) {
               $('#tree').treeview('toggleNodeExpanded', data.nodeId, { silent: true } );
 	      var table = data.collection;
-	      var studies = [ data.Study_ID];
+	      var data_sets = [ data.data_set_id ];
 	    } // onNodeSelected 
         })
 }
