@@ -65,7 +65,7 @@ Template.Field_Attribute.helpers({
 function data_setsSelected() {
  var data_sets = CurrentChart("data_sets");
  if (data_sets && data_sets.length > 0)
-    return Collections.data_sets.find({_id: {$in: data_sets }}, {sort: {"name":1}});
+    return Collections.data_sets.find({_id: {$in: data_sets }}, {sort: {"name":1}}).fetch();
  else
     return [];
 }
@@ -206,9 +206,9 @@ Template.Controls.helpers({
        var ss2 = [ {
            _id: myStudy,
            name: myStudy
-       }].concat( data_setsSelected().fetch()) ; 
+       }].concat( data_setsSelected()) ; 
        return ss2;*/
-       return data_setsSelected().fetch() ; 
+       return data_setsSelected() ; 
    },
 
 
@@ -276,6 +276,8 @@ Template.Controls.helpers({
        var others = [];
        var rest = [];
        coll.map(function(c) {
+          if (c.data_set == null)
+	      return;
           if (c.data_set == "admin")
 	      return;
           else if (c.data_set == myStudy)

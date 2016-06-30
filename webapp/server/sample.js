@@ -54,13 +54,14 @@ function SampleJoin(userId, ChartDocument, fieldNames) {
 } 
 
 function loadTableIntoDocument(ChartDocument, q) {
+    var original_study_name  = Collections.data_sets.findOne({_id: q.data_set}).name;
+
     var table = Collections.Metadata.findOne(q);
     if (table.fieldOrder == null || table.fieldOrder.length == 0)
         return
     var primaryKey = table.fieldOrder[0]
     var fullKey = q.data_set + "/" + q.name + "/" + primaryKey;
 
-    ChartDocument.primaryKeys.push(fullKey);
 
     var metadata = table.schema;
     if (typeof(metadata) == "string")
@@ -90,17 +91,20 @@ function loadTableIntoDocument(ChartDocument, q) {
         if (join_value == null)
             return;
 
-        var data_set = doc.data_set_id;
-        if ("Study" in doc) data_set = doc.Study
-        else if ("data_set" in doc) data_set = doc.dtudy
+        if (!("study_name" in doc)) {
+            doc.study_name = original_study_name
+            ChartDocument.metadata.study_name = { type: "String" };
+        }
 
-        var full_ID = data_set + "/" + join_value;
-        if (full_ID in ChartDocument.chartDataMap) {
-            extend(ChartDocument.chartDataMap[ full_ID ], doc);
+        var primary_key_value = doc.study_name + "/" + join_value;
+        if (primary_key_value in ChartDocument.chartDataMap) {
+            extend(ChartDocument.chartDataMap[ primary_key_value ], doc);
         } else {
+            doc._primaryKey = primary_key_value;
+            ChartDocument.metadata._primaryKey = { type: "String" };
             ChartDocument.chartData.push(doc);
-            ChartDocument.chartDataMap[ full_ID ] = doc;
-            ChartDocument.samplelist.push(full_ID);
+            ChartDocument.chartDataMap[ primary_key_value ] = doc;
+            ChartDocument.samplelist.push(primary_key_value);
         }
     });
 }
@@ -145,7 +149,7 @@ function SeedDataFromStartTables(ChartDocument) {
 
     // polish in memory data structure set up
     ChartDocument.chartData.sort( function (a,b) { 
-        return a[ChartDocument.Join].localeCompare(b[ChartDocument.Join])
+        return a._primaryKey.localeCompare(b._primaryKey)
     });
     ChartDocument.samplelist.sort();
 }
@@ -153,7 +157,6 @@ function SeedDataFromStartTables(ChartDocument) {
 // These are temporary in memory datastructures which speed up the computation, but are not saved to the database.
 function initTemporaryDatabase(ChartDocument,fieldNames) {
     ChartDocument.fieldNames = fieldNames; 
-    ChartDocument.primaryKeys = []
     ChartDocument.chartDataMap = {};
 }
 
@@ -320,109 +323,6 @@ change = function(ChartDocument, fields) {
     ChartDocument.fieldNames = _.union(ChartDocument.fieldNames, fields);
 }
 
-
-// Step 1. Use Clinical_Info as primary key
-// IN: samplelist, data_sets 
-// OUT: chartData, samplelist, metadata
-function SeedDataFromClincialInfo(ChartDocument) {
-    /*
-    if (ChartDocument.samplelist != null && unchanged(ChartDocument, ["samplelist", "data_sets"]))
-        return;
-    */
-    change(ChartDocument, [ "samplelist", "metadata"]);
-    
-    var inDataSets = {$in:ChartDocument.data_sets}; 
-    ChartDocument.data_setCache = {};
-
-    ChartDocument.chartData = [];
-    ChartDocument.metadata  = {};
-
-    Collections.data_sets.find({_id: inDataSets}).forEach(function(data_set) {
-        console.log("adding data_set", data_set.id, data_set.name);
-
-        // TBD: make sure the user has access to this data_set.
-        //
-        ChartDocument.data_setCache[data_set._id] = data_set;
-
-        var q =  {data_set_id: data_set._id};
-
-        // case 1,the user specified a form to start with in the user interface (TBD)
-        if (ChartDocument.start_crf)
-            q.CRF = ChartDocument.start_crf;
-
-        // case 2,there is a well known form specified in the data_set (TBD)
-        else if (data_set.start_crf) 
-            q.CRF = data_set.start_crf;
-
-        // case 3, we use a CRF whose name has Clinical_Info in it. 
-        else {
-            // But we don't know what it is, so find it.
-            var ci = Collections.CRFs.findOne({ CRF: /.*Clinical_Info/, data_set_id: data_set._id});
-            if (ci)
-                q.CRF = ci.CRF;
-            }
-
-
-        // HACK 
-        // HACK 
-        // HACK 
-        if (q.CRF == null) {
-            // use any CRF table
-            var ci = Collections.CRFs.findOne({ data_set_id: data_set._id});
-            if (ci)
-                q.CRF = q.ci.CRF;
-            else {
-                // SHOULD WE return;  // SKIP THIS STUDY
-            }
-        }
-
-        if (q.CRF && data_set.gene_expression_index) {
-            Collections.CRFs.find(q).forEach( function(cd) {  
-
-                if (cd[ChartDocument.Join] in data_set.gene_expression_index) {  // FINALLY LOAD IT!
-                    delete cd["_id"];
-                    delete cd["CRF"];
-
-                    ChartDocument.chartData.push(cd);
-                }
-            })
-
-            var metadata = Collections.Metadata.findOne({ name: q.CRF}).schema;  
-            if (typeof(metadata) == "string")
-               metadata = JSON.parse(metadata);
-
-            Object.keys(metadata).map(function(f) {
-                ChartDocument.metadata[f] = metadata[f];
-                ChartDocument.metadata[f].collection = "CRFs";
-                ChartDocument.metadata[f].crf = q.CRF;
-            });
-        } else {
-            // Second best case
-            // MAKE INITIAL CHART DATA RECORDS HERE
-            var primary_keys = [];
-
-            if (data_set.gene_expression_index)
-                primary_keys = Object.keys(data_set.gene_expression_index);
-            else
-                primary_keys = data_set.sample_labels;
-
-            primary_keys.map(function (primary_key) {
-                ChartDocument.chartData.push({sample_label: primary_key, data_set_id: data_set.i_d});
-            });
-            if (!("sample_label" in ChartDocument.metadata))
-                ChartDocument.metadata["sample_label"] = {collection: "data_sets", type: "String"};
-            if (!("data_set_id" in ChartDocument.metadata))
-                ChartDocument.metadata["data_set_id"] = {collection: "data_sets", type: "String"};
-        }
-        console.log("ChartDocument.chartData.length", ChartDocument.chartData.length);
-    });
-
-    ChartDocument.chartData.sort( function (a,b) { return a[ChartDocument.Join].localeCompare(b[ChartDocument.Join])});
-    ChartDocument.samplelist = ChartDocument.chartData.map(function(ci) { 
-        ChartDocument.chartDataMap[ ci[ChartDocument.Join] ] = ci;
-        return ci[ChartDocument.Join];
-    }).sort();
-}
 
 // Step 2. Join all the Gene like information into the samples into the ChartDataMap table
 // IN:  geneLikeDataDomain, genelist, samplelist
@@ -597,12 +497,14 @@ function MergeCRFs(ChartDocument) {
     change(ChartDocument, ["chartData"]);
 
     var mappatient_label_to_JoinKey = {};
+    /*
     ChartDocument.chartData.map(function(cd) {
 	 if (!(cd.patient_label in mappatient_label_to_JoinKey))
-	     mappatient_label_to_JoinKey[cd.patient_label] = [ cd[ChartDocument.Join] ]
+	     mappatient_label_to_JoinKey[cd.patient_label] = [ cd._primaryKey ]
 	 else
-	     mappatient_label_to_JoinKey[cd.patient_label].push(cd[ChartDocument.Join]);
+	     mappatient_label_to_JoinKey[cd.patient_label].push(cd._primaryKey);
     });
+    */
     if (ChartDocument.additionalQueries)
         ChartDocument.additionalQueries.map(function(query) {
              var query = JSON.parse(unescape(query));
@@ -639,14 +541,14 @@ function MergeCRFs(ChartDocument) {
              var fl = {};
              fl[fieldName] = 1;
 	     fl[ChartDocument.Join] = 1;
+	     fl["_primaryKey"] = 1;
 	     fl.patient_label = 1;
 
 	     // the following query needs data_set_id and perhaps sample_list
              Collections.CRFs.find({CRF:crfName}, {fields: fl }).forEach(function(doc) {
 
-
-                 if (doc[ChartDocument.Join] && doc[ChartDocument.Join] in ChartDocument.chartDataMap) {
-                     ChartDocument.chartDataMap[doc[ChartDocument.Join]][label] = doc[fieldName];
+                 if (doc._primaryKey && doc._primaryKey in ChartDocument.chartDataMap) {
+                     ChartDocument.chartDataMap[doc._primaryKey][label] = doc[fieldName];
                  } else {
                      if (doc.patient_label in mappatient_label_to_JoinKey) {
                          mappatient_label_to_JoinKey[doc.patient_label].map(function(sample_ID) {
