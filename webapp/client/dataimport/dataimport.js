@@ -165,15 +165,15 @@ function analyze(rowData) {
 
 function saveTable(rowData) {
     DocumentModified = false;
+    if (rowData == null || rowData.length < 2)
+       return Overlay("MessageOver", { text: "Need a header line and at least one line of content" })
+
     var headers = _.clone(rowData[0]);
     var primaryKeys = rowData.map(function(row) { return row[0]; });
-
     var headerTypes = [];
-
     $("select.SelectType").each(function() {
         headerTypes[$(this).data("columnnumber")] = this.value;
     });
-
 
     var fields =  headers.map(function(fieldName, columnNumber) {
 	return {
