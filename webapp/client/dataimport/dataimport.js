@@ -59,6 +59,20 @@ Template.DataImport.helpers({
    }
 });
 
+Template.DataSave.helpers({
+   data_sets : function() {
+      var ret = Collections.data_sets.find({}, {sort: {"name":1}}).fetch();
+      return ret;
+   },
+   tables : function() {
+       var dis = Session.get("DataImportDataSet");
+       if (dis)
+           return Collections.Metadata.find({data_set: dis}, {fields: {"name":1}})
+       return [];
+   }
+});
+
+
 
 function transpose(data) {
   var newData = [];

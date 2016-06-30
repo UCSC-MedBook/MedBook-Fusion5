@@ -8,26 +8,27 @@
                 </div>
             </div>
 
-            <div class="panel panel-default">
-                <div class="panel-heading" >
-                    <h4>Select a data_set and a table name</h4>
 
+
+            <div class="panel panel-default">
+                <div class="panel-heading" data-toggle="collapse" data-target="#i1">
+                    <h3 class="panel-title">Load from database</h3>
+                </div>
+
+
+                <div id="i1" class="panel-body collapse">
                         <select id="DataImportDataSet" >
-                            <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+                            <option selected value="{{myStudy}}">Select a data set</option>
                             {{#each data_sets}}
                                 <option value="{{this._id}}">{{this.name}}</option>
                             {{/each}}
                         </select>
-
                         <select id="DataImportTable" style="margin-top:20px;">
-                            <option selected value="New Table">New Table</option>
+                            <option selected value="none">Select an associated table</option>
                             {{#each tables}}
                                 <option value="{{this._id}}">{{this.name}}</option>
                             {{/each}}
                         </select>
-
-                        <br>
-                        <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
                 </div>
             </div>
 
@@ -42,6 +43,7 @@
                     Supported formats include tab-separated-values (.tab or .tsv), comma-separated-values (.csv), and JavaScript Object Notation (.json) files
                 </div>
             </div>
+
         </div>
         <div class="rightdivOverflow" style="padding-left:10px;">
             <div id="importTableArea" class="panel panel-default encompass" style="min-height:300px; min-width:300px;">
@@ -59,4 +61,20 @@
             </div>
         </div>
     </div>
+</template>
+
+<template name="DataSave">
+    <select id="DataSave" >
+        <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+        {{#each data_sets}}
+            <option value="{{this._id}}">{{this.name}}</option>
+        {{/each}}
+    </select>
+    <select id="DataSave" style="margin-top:20px;">
+        <option selected value="New Table">New Table</option>
+        {{#each tables}}
+            <option value="{{this._id}}">{{this.name}}</option>
+        {{/each}}
+    </select>
+    <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
 </template>
