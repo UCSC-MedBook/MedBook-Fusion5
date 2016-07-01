@@ -17,7 +17,7 @@ function Viz(name, script) {
 	if (outfilename2)
 	    outfilename2 = dirs +  "/" + outfilename2;
 
-	var fields = ["Patient_ID", "Sample_ID"].concat(chartDocument.pivotTableConfig.rows, chartDocument.pivotTableConfig.cols);
+	var fields = ["Patient_ID", "__primaryKey"].concat(chartDocument.pivotTableConfig.rows, chartDocument.pivotTableConfig.cols);
 
 	var output = ConvertToTSV(chartDocument.chartData, fields);
 	fs.writeFileSync(infilename1, output);

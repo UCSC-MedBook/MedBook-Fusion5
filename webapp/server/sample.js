@@ -504,8 +504,8 @@ function MergeCRFs(ChartDocument) {
                      ChartDocument.chartDataMap[doc._primaryKey][label] = doc[fieldName];
                  } else {
                      if (doc.patient_label in mappatient_label_to_JoinKey) {
-                         mappatient_label_to_JoinKey[doc.patient_label].map(function(sample_ID) {
-                             ChartDocument.chartDataMap[sample_ID][label] = doc[fieldName];
+                         mappatient_label_to_JoinKey[doc.patient_label].map(function(primaryKey) {
+                             ChartDocument.chartDataMap[primaryKey][label] = doc[fieldName];
                          });
 			  // console.log("joined through patient_label", doc);
 		     } 

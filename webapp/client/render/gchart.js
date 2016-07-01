@@ -60,9 +60,9 @@ GoogleChart = function(chartDocument, opts) {
         });
         cols.push("count");
 
-    } else { // push Sample_IDs
+    } else { // push __primaryKeys
         if ( _.every(aa, function(elem) { return elem.isNumbers; })) {
-            cols.unshift("Sample_ID");
+            cols.unshift("__primaryKey");
         }
     }
 

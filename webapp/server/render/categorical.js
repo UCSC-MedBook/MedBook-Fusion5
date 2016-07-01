@@ -124,7 +124,7 @@ BoxPlotCategorical = function(chartDocument, exclusions) {
                 var value = elem[phenotype];
                 var f = parseFloat(value);
                 var g = { 
-                    Label: elem.Sample_ID ? elem.Sample_ID : elem.Gene, 
+                    Label: elem.__primaryKey ? elem.__primaryKey : elem.Gene, 
                     Study_ID: elem.Study_ID, 
                     ValueClass: "BoxPlotToolTipHover " + rowLabel,
                     ValueColor: value_color,

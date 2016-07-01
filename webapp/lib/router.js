@@ -315,8 +315,8 @@ function genomicDataMutationsRectangle(coll, samplesAllowed, data_set, stream)  
 }
 
 function genomicDataSamples(coll, data_set, response)  {
-      var sort_order = data_set.sample_labels.sort().map(function( sample_id) {
-	  return data_set.gene_expression_index[sample_id];
+      var sort_order = data_set.sample_labels.sort().map(function( primaryKey) {
+	  return data_set.gene_expression_index[primaryKey];
       })
       var tick = Date.now();
 

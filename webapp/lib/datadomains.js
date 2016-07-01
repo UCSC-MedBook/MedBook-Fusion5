@@ -12,7 +12,7 @@ GeneLikeDataDomainsPrototype = [
         subscriptionName: "GeneExpression",
         queryField: 'gene_label',
         field: "rsem_quan_log2",
-        state: true,
+        state: false,
         data_set_label_name: 'data_set_id',
         sample_label_name: null,
         gene_label_name: 'gene_label',

@@ -75,7 +75,7 @@ D3ScatterChart = function(window, pivotData, opts, exclusions) {
             if (minX > xx) minX = xx;
             if (minY > yy) minY = yy;
 
-            sample.label = elem.Sample_ID || elem.Patient_ID;
+            sample.label = elem.__primaryKey || elem.Patient_ID;
 
             var text = "";
             function f(e) { 

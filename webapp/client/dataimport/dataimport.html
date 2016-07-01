@@ -71,19 +71,22 @@
       <div  class="panel-body ">
         <br>
         <select id="DataSaveDataset" >
-            <!-- <option selected value="{{myStudy}}">{{myStudy}}</option> -->
+            <option selected >Choose a study</option>
             {{#each data_sets}}
                 <option value="{{this._id}}">{{this.name}}</option>
             {{/each}}
         </select>
         <br>
-        <select id="DataSaveTable" style="margin-top:20px;">
-            <option selected value="none">Change an existing table</option>
-            {{#each tables}}
-                <option value="{{this._id}}">{{this.name}}</option>
-            {{/each}}
-            <option value="New Table">Create a New Table</option>
-        </select>
+        <span>
+            <select id="DataSaveTable" style="margin-top:20px;">
+                <option selected value="none">Change an existing table</option>
+                {{#each tables}}
+                    <option value="{{this._id}}">{{this.name}}</option>
+                {{/each}}
+                <option value="New Table">Create a New Table</option>
+            </select>
+            <button id="create_new_study" class="btn btn-primary" style="margin:10px;" type="button">Create New Study</button>
+        </span>
         <input id="newTableName" placeholder="new table name" style="margin-top:20px;width:100%;">
 
           <center>

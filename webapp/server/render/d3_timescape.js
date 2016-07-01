@@ -50,7 +50,7 @@ D3Timescape = function(window, chartDocument) {
     var min = 0;  // should this be MAXINT
 
     function aggregate(crf) {
-	Collections.CRFs.find({CRF: crf, Study_ID: "prad_wcdt"}, {sort: {Patient_ID:1, Sample_ID:1}})
+	Collections.CRFs.find({CRF: crf, Study_ID: "prad_wcdt"}, {sort: {Patient_ID:1, __primaryKey:1}})
 	   .forEach(function(treatment) {
 	       var patient = patients[treatment.Patient_ID];
 	       if (patient == null)

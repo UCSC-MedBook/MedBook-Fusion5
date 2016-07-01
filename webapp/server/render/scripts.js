@@ -15,10 +15,10 @@ function WrapScript(name, script) {
 	var outfilename1 =   "plot.svg";
 	var outfilename2 =   "stats";
 
-	var fields = ["Patient_ID", "Sample_ID"].concat(chartDocument.pivotTableConfig.rows, chartDocument.pivotTableConfig.cols);
+	var fields = ["Patient_ID", "__primaryKey"].concat(chartDocument.pivotTableConfig.rows, chartDocument.pivotTableConfig.cols);
 	var fields = chartDocument.pivotTableConfig.rows.concat( chartDocument.pivotTableConfig.cols);
-	if (fields[0] != "Sample_ID")
-	    fields.unshift("Sample_ID");
+	if (fields[0] != "__primaryKey")
+	    fields.unshift("__primaryKey");
 	var output = ConvertToTSV(chartDocument.chartData, fields);
 	fs.writeFileSync(cwd + infilename1, output);
 

@@ -19,8 +19,8 @@ function TableData(theChart, exclusions) {
     return data.map(function(elem) { 
         var s =  { } ;
         s.Patient_ID = elem.Patient_ID;
-        if ("Sample_ID" in elem)
-            s.Sample_ID = elem.Sample_ID;
+        if ("__primaryKey" in elem)
+            s.__primaryKey = elem.__primaryKey;
         keys.map(function(key) {  s[key] = elem[key]; });
         return s;
     });
@@ -80,8 +80,8 @@ window.makeHandsontable = function(theChart, extraOptions, length, column) {
 
                   var src = this.instance.getSourceDataAtRow(row)
                   var className = "Row_Patient Row_Patient_ID_"  + src.Patient_ID;
-		  if (src.Sample_ID)
-		      className += " " + src.Sample_ID;
+		  if (src.__primaryKey)
+		      className += " " + src.__primaryKey;
 
                   var cellProperties = {className: className};
  
